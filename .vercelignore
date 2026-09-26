@@ -1,0 +1,12 @@
+docs/
+scripts/
+test-results/
+playwright-report/
+.git/
+.env
+.env.*
+*.pem
+*.key
+*.nkey
+*secret*
+*private*key*
