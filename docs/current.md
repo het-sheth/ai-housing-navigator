@@ -2,6 +2,12 @@
 
 Updated September 26, 2026. Branch `feat/first-prototype`. No remote, deployment or public publication. App: `/home/het/personal/ai-housing-navigator`.
 
+## Publication update, September 26, 2026
+
+Het subsequently authorized pushing this application repository publicly and inviting Rushi (`Baburaoooo`) with write access. Repository: https://github.com/het-sheth/ai-housing-navigator . Feature branch: `feat/first-prototype`; main is a GitHub-generated README baseline. The existing prototype and four previously untracked interview/research notes are included in the publication batch. Rushi has a write invitation pending acceptance; this is not accepted collaborator access. No deployment was performed.
+
+The implementation remains the bounded Lanark prototype. The accepted expanded product specification and new technical design/plan live in the separate research wiki and remain local/unpublished in this session. Earlier interview notes below and in this repository preserve historical proposals; they are not the latest product authority. No expanded application implementation is authorized by publishing this prototype. Dataset reuse questions remain unresolved for public deployment; no dataset license is granted by this repository.
+
 ## Open and run
 
 Working workbench: http://127.0.0.1:5173/. Design system and interactive walkthrough sample: http://127.0.0.1:5173/design-system. Restart with `npm run dev -- --port 5173 --strictPort`.
