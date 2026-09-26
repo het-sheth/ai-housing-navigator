@@ -1,0 +1,2 @@
+# Housing Navigator
+Fresh local prototype authorized September 26, 2026. Keep application code here and research in ../ai-housing-hackathon-wiki. No remote or deployment authorized. Use npm, React, TypeScript and Vite. No credentials or personal records. No em dashes. Preserve parcel identifiers as strings, unknowns and source conflicts. No permission verdicts or numerical feasibility scoring. Run npm test, npm run typecheck, npm run lint and npm run build after changes. Feature branches only.
