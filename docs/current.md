@@ -1,5 +1,59 @@
 # Current app handoff
 
+Publication checkpoint: [PR #2](https://github.com/het-sheth/ai-housing-navigator/pull/2) contains the complete guided-workspace and live-property work, including the previously uncommitted source and tests. The user authorized merging this verified checkpoint into `main` and stopping. Resume from `main` after checking the PR merge state; retain the feature branch as history. No deployment accompanied publication.
+
+## Active live-property work, September 26, 2026
+
+The current user instruction authorizes one live property slice in the original guided workspace: address or parcel lookup, explicit parcel confirmation, actual boundary and the latest available assessment observation. Preserve the existing question panel and right-hand interactive map. It supersedes the older AI-first pause below. No further paid AI request is authorized; the configured DeepSeek model and budget guard remain unchanged.
+
+Lanark audit: `createDraft()` starts with an empty property query and no parcel. `/projects/new` restores the device's current IndexedDB draft, which explains Lanark in an existing guided draft. The `/` route is the historical hardcoded comparison, and the previous static page title also mentioned Lanark across routes. The saved example map uses dated geometry only when that parcel is selected; it is not an unknown-address fallback. The user's actual browser storage was not inspected.
+
+GitHub verification in this session confirmed PR #1 merged at `74f496493123d564d5c168accc02882cd8bb1c98`, and no guided-workspace PR existed at the start. Work continues on `feat/guided-project-workspace`, preserving its tracked and untracked changes.
+
+Source selection: County assessments use the WPRDC CKAN `datastore_search` API and its `property_assessments_table` resource alias. Boundaries use the [County Web_Parcels layer](https://gisdata.alleghenycounty.us/arcgis/rest/services/EGIS/Web_Parcels/MapServer/0) with exact string `PIN`, a small field whitelist and `outSR=4326`. This County layer declares its source spatial reference, avoiding an assumption about the WPRDC WKT file. The organizer catalog lists assessments, parcel boundaries and the County GIS portal in rows 1, 3 and 4; the working endpoint was verified during implementation. Search and confirmation trigger requests. There is no background countywide scan or paid AI call in property lookup.
+
+Implemented flow: enter a house number and street or exact parcel ID, click Search property, select a candidate and click Confirm parcel. Search returns at most 20 candidates with a refine-search notice for truncation. It does not geocode or silently choose a nearby parcel. Confirmation fetches the selected assessment and boundary with independent availability states. The map draws only a confirmed returned boundary, or an explicitly labeled historical saved example. Assessment file date and retrieval time are separate; the County boundary dataset effective date remains unknown. No permit, zoning or proposal feasibility evaluation is implied by an available assessment record.
+
+Draft behavior: Start new project archives the current draft before creating an empty one. Saved projects can be restored from the existing footer controls. Legacy confirmed Lanark drafts migrate to historical provenance; live confirmations store a distinct provenance marker and string parcel ID. Live observations and geometry are transient, so returning to a live draft requires Refresh live property data. Archived corrupt records remain untouched and do not hide valid records. Drafts remain device-local; Supabase and authentication are not connected.
+
+The API remains local development code at port 5175, proxied through the Vite UI at port 5173. The static Vercel configuration does not host these API routes. No deployment or infrastructure work was performed.
+
+The user then requested a good stopping point with all application work in `main`. This supersedes the earlier draft-only/no-merge limit and authorizes merging through a feature-branch PR after final checks and review, never pushing main directly. Stop feature work at this live-property checkpoint.
+
+Verification: `npm test` passed 96 tests; `npm run typecheck`, `npm run lint` and `npm run build` exited 0. The existing Three.js chunk-size warning remains. Read-only implementation review found no remaining critical or important issue after fixing stale-request/draft-switch races and independent archive validation. The historical comparison and welcome browser regressions also passed.
+
+`node scripts/live-property-smoke.mjs`, `npm run test:guided` and `node scripts/guided-map-smoke.mjs` passed in isolated Chromium. The live Mountford flow returned parcel `0046R00029000000`, assessment file date `2026-09-01`, residential single-family classification and 1,620 sq ft lot area. Desktop, 390px and 320px map screenshots show real OSM tiles and the returned boundary without horizontal overflow. Mobile captures must scroll the map into view and allow painting after resize; an earlier offscreen capture was gray despite loaded tile elements. Final screenshots: `/tmp/housing-guided-live-property/confirmed-live-parcel-{1440,390,320}.png`.
+
+Synthetic browser cases are separate from live assertions: no match, search failure, stale search response, candidate lock during confirmation, assessment failure with boundary available, pending search cancelled by new project, and saved historical Lanark archive/restore. All property/guided/map browser contexts blocked `/api/assist`; no paid request was made.
+
+To test locally: open `http://127.0.0.1:5173/projects/new`, use Start new project if a saved draft resumes, continue to Your property, search `2003 Mountford Ave` (or `0046R00029000000`), select the candidate and click Confirm parcel. Check the right-hand boundary and assessment file/retrieval dates. Reload, then explicitly Refresh live property data. Saved projects remains available in the footer after starting another project.
+
+## Earlier guided workspace checkpoint, September 26, 2026
+
+Continue from [the detailed handoff](resume-guided-workspace.md). Keep the existing `feat/guided-project-workspace` checkout and all unfinished work. PR #1, the historical Lanark prototype, merged into `main` as `74f4964` on September 26. Its exact source commit passed 41 tests, typecheck, lint and build in an isolated snapshot. A separate draft PR is being prepared for the guided workspace; do not merge that follow-up without further direction. No deployment or infrastructure provisioning occurred.
+
+The user selected the original guided interface and authorized replacing only its right-hand site-context box with an interactive map. Leaflet uses live OpenStreetMap tiles for Pittsburgh context. The fixed-example picker is removed. Existing saved Lanark drafts retain their explicitly dated parcel context, using the stored County geometry projected from EPSG:2272 to EPSG:4326. New addresses remain unresolved; entered text is not sent to the map. This is not a live parcel lookup or a survey. The six-step form, IndexedDB draft persistence, manual choices, review and Markdown export remain in the original flow.
+
+Local URLs: `http://127.0.0.1:5173/projects/new` and `/welcome`. The historical comparison remains at `/`, and the design-system specimen at `/design-system`. The separate map design concept at port 5178 is not the application. The user preferred the original guided layout over that concept.
+
+## AI intake and budget checkpoint
+
+The configured model remains `deepseek/deepseek-v4-flash-0731` through `deepinfra/fp8`, with no fallback. The server guard now accepts the approved $3 weekly key limit and checks reported lifetime key usage plus a $0.01 reserve against $10. The key is loaded only by `npm run api:dev` on port 5175; Vite proxies the local UI requests. Credential files must not be inspected.
+
+One actual inference returned HTTP 200 but misclassified the synthetic intake. The prompt was clarified; its corrected semantic behavior has not been verified with a real response. Mocked browser checks cover explicit selection, stale responses and manual-choice preservation. Automatic approval review blocked a second paid request because the single authorized request had been consumed. Further paid testing requires renewed approval. No Jev call or model switch occurred.
+
+OpenRouter offers `typesafe/jev-1.13` through its Decisions API at $0.042 per million input tokens with free output. The existing key can be used for an approved trial; the claimed `jev-1.13-free` model and zero-balance access remain unverified. Jev is a possible typed intake classifier, not a source of property facts or permission decisions.
+
+## Live data and remaining work
+
+Bounded public requests returned assessment, parcel and permit records for the known parcel. The City zoning and slope services responded with query-capable metadata. These availability checks do not implement application adapters or prove countywide coverage. The only existing live evidence adapter remains the legacy exact-Lanark assessment refresh. Other example findings are research snapshots.
+
+The next proposed live slice is property lookup, user-confirmed parcel identity, mapped boundary and a fresh assessment observation. Add permits and spatial checks separately with source dates, conflicts, errors and coverage retained. City sources do not cover every Allegheny County municipality. Supabase project storage and Auth are not provisioned; drafts remain device-local. No deployment is authorized.
+
+The test-tool dependency audit reports a moderate Vitest/mocker advisory requiring a separate version upgrade. The existing Three.js build-size warning remains. See the follow-up PR and detailed handoff for the final current validation results.
+
+## Historical prototype handoff
+
 Updated September 26, 2026. Branch `feat/first-prototype`. Public repository and open PR #1; no hosted deployment. App: `/home/het/personal/ai-housing-navigator`.
 
 ## Current product authority and next work
