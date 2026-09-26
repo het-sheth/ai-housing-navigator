@@ -1,5 +1,7 @@
 # Current app handoff
 
+Publication checkpoint: [PR #2](https://github.com/het-sheth/ai-housing-navigator/pull/2) contains the complete guided-workspace and live-property work, including the previously uncommitted source and tests. The user authorized merging this verified checkpoint into `main` and stopping. Resume from `main` after checking the PR merge state; retain the feature branch as history. No deployment accompanied publication.
+
 ## Active live-property work, September 26, 2026
 
 The current user instruction authorizes one live property slice in the original guided workspace: address or parcel lookup, explicit parcel confirmation, actual boundary and the latest available assessment observation. Preserve the existing question panel and right-hand interactive map. It supersedes the older AI-first pause below. No further paid AI request is authorized; the configured DeepSeek model and budget guard remain unchanged.

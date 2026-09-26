@@ -2,6 +2,8 @@
 
 ## Latest instruction: live property slice in original workspace
 
+Publication: [PR #2](https://github.com/het-sheth/ai-housing-navigator/pull/2) contains the complete checkpoint for `main`, including all previously uncommitted application work. The user authorized the merge and requested stopping here. Verify the PR merge state and resume from `main`; the feature branch remains preserved.
+
 September 26, 2026. This section supersedes the older AI-first pause and disconnected-lookup descriptions below. The user explicitly authorized general live property lookup, parcel confirmation, a real boundary and the latest available assessment in the ORIGINAL guided workspace. Preserve its form and right-hand Leaflet map. Do not resume the isolated design concept or expand into unrelated features.
 
 Read the first section of [current.md](current.md) for the current source and draft contracts. The live property server uses WPRDC assessment records and the County Web_Parcels ArcGIS layer, with exact string parcel matching, field whitelists and separate source failure states. Neither lookup nor map operations call AI. Historical Lanark fixtures remain labeled on saved historical drafts and the original comparison route. New projects start empty; Start new project archives the active draft and Saved projects restores it. Source observations are transient and require an explicit refresh after returning.
