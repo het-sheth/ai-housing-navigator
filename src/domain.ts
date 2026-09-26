@@ -148,24 +148,51 @@ function assumptions(p: Proposal): string[] {
   ];
 }
 
+export type FindingComparison = {
+  id: string;
+  title: string;
+  left: Finding;
+  right: Finding;
+  explanationChanged: boolean;
+  reviewStatusChanged: boolean;
+  nextActionChanged: boolean;
+};
+
+export function compareFindings(proposals: [Proposal, Proposal]): FindingComparison[] {
+  const rightById = new Map(evaluate(proposals[1]).map((item) => [item.id, item]));
+  return evaluate(proposals[0]).map((left) => {
+    const right = rightById.get(left.id);
+    if (!right) throw new Error(`Finding ${left.id} is missing from the comparison`);
+    return {
+      id: left.id,
+      title: left.title,
+      left,
+      right,
+      explanationChanged: left.reason !== right.reason || left.missing !== right.missing,
+      reviewStatusChanged: left.state !== right.state,
+      nextActionChanged: left.action !== right.action,
+    };
+  });
+}
+
 export function exportBrief(proposals: [Proposal, Proposal], refreshNote = 'No live refresh performed; source snapshots were retrieved 2026-09-26.'): string {
   const labels = ['existing units', 'proposed units', 'lawful use', 'scope', 'disturbance', 'form', 'nonconformity'];
   const left = assumptions(proposals[0]);
   const right = assumptions(proposals[1]);
   const differences = labels.flatMap((label, index) => left[index] === right[index] ? [] : [`- ${label}: ${left[index].slice(label.length + 2)} vs ${right[index].slice(label.length + 2)}`]);
-  const leftFindings = evaluate(proposals[0]);
-  const rightFindings = evaluate(proposals[1]);
-  const changedFindings = leftFindings.flatMap((item, index) => {
-    const other = rightFindings[index];
-    return item.state === other.state && item.reason === other.reason && item.action === other.action
-      ? []
-      : [`- ${item.title}: ${item.state} vs ${other.state}. ${item.reason} / ${other.reason}`];
-  });
-  const unchangedFindings = leftFindings.flatMap((item, index) => {
-    const other = rightFindings[index];
-    return item.state === other.state && item.reason === other.reason && item.action === other.action
-      ? [`- ${item.title}: ${item.state}`]
-      : [];
+  const comparisons = compareFindings(proposals);
+  const explanationChanges = comparisons.filter((item) => item.explanationChanged);
+  const reviewStatusChanges = comparisons.filter((item) => item.reviewStatusChanged);
+  const nextActionChanges = comparisons.filter((item) => item.nextActionChanged);
+  const changedFindings = comparisons.filter((item) => item.explanationChanged || item.reviewStatusChanged || item.nextActionChanged);
+  const unchangedFindings = comparisons.filter((item) => !item.explanationChanged && !item.reviewStatusChanged && !item.nextActionChanged);
+  const changeLines = changedFindings.flatMap((item) => {
+    const summary = `- ${item.title}: explanation ${item.explanationChanged ? 'changed' : 'unchanged'}; review status ${item.reviewStatusChanged ? 'changed' : 'unchanged'}; next action ${item.nextActionChanged ? 'changed' : 'unchanged'}.`;
+    const details = [summary];
+    if (item.explanationChanged) details.push(`  - Explanation A: ${item.left.reason} Missing: ${item.left.missing}. Explanation B: ${item.right.reason} Missing: ${item.right.missing}.`);
+    if (item.reviewStatusChanged) details.push(`  - Review status A: ${item.left.state}. Review status B: ${item.right.state}.`);
+    if (item.nextActionChanged) details.push(`  - Next action A: ${item.left.action} Next action B: ${item.right.action}`);
+    return details;
   });
   const sections = proposals.map((p, index) => {
     const findings = evaluate(p);
@@ -185,11 +212,16 @@ export function exportBrief(proposals: [Proposal, Proposal], refreshNote = 'No l
     'Different inputs:',
     ...(differences.length ? differences : ['- None supplied.']),
     '',
+    `Explanation changes: ${explanationChanges.length}`,
+    `Review status changes: ${reviewStatusChanges.length}`,
+    `Next-action changes: ${nextActionChanges.length}`,
+    ...(nextActionChanges.length ? nextActionChanges.map((item) => `- ${item.title}: ${item.left.action} / ${item.right.action}`) : ['The next action is the same for both proposals on every finding.']),
+    '',
     'Changed findings:',
-    ...(changedFindings.length ? changedFindings : ['- None.']),
+    ...(changeLines.length ? changeLines : ['- None.']),
     '',
     'Unchanged findings:',
-    ...(unchangedFindings.length ? unchangedFindings : ['- None.']),
+    ...(unchangedFindings.length ? unchangedFindings.map((item) => `- ${item.title}: ${item.left.state}`) : ['- None.']),
     '',
     '## Scorecard and evidence status',
     '',

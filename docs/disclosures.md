@@ -16,6 +16,10 @@ The app's source panel and exported brief retain source URLs, available vintage 
 
 ## Libraries and completion gaps
 
-React, React DOM, TypeScript, Vite, Vitest, ESLint and Playwright are third-party development dependencies; package-lock.json records installed versions and packages retain upstream licenses. Native browser APIs provide export and print. No previous project implementation was reused.
+React, React DOM, TypeScript, Vite, Vitest, ESLint, Playwright and the Fontsource IBM Plex font packages are third-party development dependencies; package-lock.json records installed versions and packages retain upstream licenses. Native browser APIs provide export and print. No previous project implementation was reused.
 
 No practitioner has reviewed the interface. No runtime AI provider, account or budget is configured; the app does not pretend deterministic templates are live AI. A future unstructured-proposal adapter would need explicit unknown outcomes and user confirmation before assigning these structured fields, with credentials held server-side. Overall Development Ease remains not rated, with separate descriptive components and partial evidence completeness. Organizer acceptance of a component-only score is unresolved. This prototype is not the final submission.
+
+## Comparison value boundary
+
+Repair versus expansion with all other evaluated inputs held constant currently changes an explanation but not the review status or next action. The UI and export report those separately. A disturbance/no-disturbance alternative changes a site-plan diligence request only. No tested comparison establishes an approval outcome, preferred acquisition or financial result. Comparison itself is not claimed as unique. TestFit-style building design and pro formas are outside this weekend scope.

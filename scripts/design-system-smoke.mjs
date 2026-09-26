@@ -1,0 +1,31 @@
+import { chromium } from '@playwright/test'
+import assert from 'node:assert/strict'
+const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true})
+try {
+  const page=await browser.newPage({viewport:{width:1440,height:1100}})
+  const errors=[]
+  page.on('pageerror',error=>errors.push(error.message))
+  await page.goto('http://127.0.0.1:5173/design-system')
+  await page.evaluate(()=>document.fonts.ready)
+  await page.getByRole('radio',{name:'The site appears empty'}).check()
+  await page.getByRole('button',{name:'Continue',exact:true}).click()
+  await page.getByRole('radio',{name:'Housing and another use'}).check()
+  await page.getByRole('button',{name:'Continue',exact:true}).click()
+  await page.getByRole('checkbox',{name:'Repair or remodel',exact:true}).check()
+  await page.getByRole('checkbox',{name:'Construct a new building',exact:true}).check()
+  await page.getByRole('button',{name:'Continue',exact:true}).click()
+  await page.getByRole('heading',{name:'Check your answers',exact:true}).waitFor()
+  assert.match(await page.locator('.preview-review').innerText(),/outside current rule coverage/)
+  assert.match(await page.locator('.preview-review').innerText(),/Repair or remodel, Construct a new building/)
+  await page.getByRole('button',{name:'Change Intended use',exact:true}).click()
+  assert.equal(await page.getByRole('radio',{name:'Housing and another use'}).isChecked(),true,'Answers retained when changing a previous answer')
+  await page.getByRole('button',{name:'Back',exact:true}).click()
+  assert.equal(await page.getByRole('radio',{name:'The site appears empty'}).isChecked(),true)
+  await page.getByRole('radio',{name:'I do not know',exact:true}).check()
+  await page.screenshot({path:'/tmp/lanark-design-system.png',fullPage:true})
+  await page.setViewportSize({width:390,height:844})
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true)
+  await page.screenshot({path:'/tmp/lanark-design-system-mobile.png',fullPage:true})
+  assert.deepEqual(errors,[])
+  console.log('PASS: design-system walkthrough, multi-activity selection, unsupported-coverage warning, retained answers, unknown option, mobile width, no browser exceptions')
+} finally {await browser.close()}

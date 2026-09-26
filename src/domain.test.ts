@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultProposals, evaluate, exportBrief, parcel, sources, type Proposal } from './domain';
+import { compareFindings, defaultProposals, evaluate, exportBrief, parcel, sources, type Proposal } from './domain';
 
 const repair: Proposal = {
   name: 'Repair', existingUnits: 1, proposedUnits: 1, lawfulUse: 'yes', scope: 'repair',
@@ -138,6 +138,30 @@ describe('bounded Lanark findings', () => {
     }
   });
 
+  it('separates explanation, review status and next action for the default pair', () => {
+    const comparison = compareFindings(defaultProposals);
+    const pathway = comparison.find((item) => item.id === 'pathway');
+    expect(pathway).toMatchObject({ explanationChanged: true, reviewStatusChanged: false, nextActionChanged: false });
+    expect(comparison.find((item) => item.id === 'condition-conflict')).toMatchObject({ explanationChanged: false, reviewStatusChanged: false, nextActionChanged: false });
+    expect(comparison.map((item) => item.id)).toEqual(evaluate(defaultProposals[0]).map((item) => item.id));
+    const brief = exportBrief(defaultProposals);
+    expect(brief).toContain('Explanation changes: 1');
+    expect(brief).toContain('Review status changes: 0');
+    expect(brief).toContain('Next-action changes: 0');
+    expect(brief).toContain('The next action is the same for both proposals');
+    expect(brief).toContain('Rule pathway: explanation changed; review status unchanged; next action unchanged');
+  });
+
+  it('reports distinct outcomes for other supported proposal pairs', () => {
+    const favorableExpansion: Proposal = { ...repair, name: 'Expand', scope: 'expansion' };
+    const rebuild: Proposal = { ...repair, name: 'Rebuild', scope: 'reconstruction' };
+    const disturbed: Proposal = { ...repair, name: 'Disturb', disturbance: 'yes' };
+    expect(compareFindings([repair, favorableExpansion]).find((item) => item.id === 'pathway')).toMatchObject({ explanationChanged: true, reviewStatusChanged: true, nextActionChanged: false });
+    expect(compareFindings([repair, rebuild]).find((item) => item.id === 'pathway')).toMatchObject({ explanationChanged: true, reviewStatusChanged: true, nextActionChanged: false });
+    expect(compareFindings([repair, disturbed]).find((item) => item.id === 'slope')).toMatchObject({ explanationChanged: true, reviewStatusChanged: false, nextActionChanged: true });
+    expect(exportBrief([repair, disturbed])).toContain('Next-action changes: 1');
+  });
+
   it('retains exact parcel identity and closed geometry', () => {
     expect(parcel.id).toBe('0023C00208000000');
     expect(parcel.ring[0]).toEqual(parcel.ring.at(-1));
@@ -149,4 +173,24 @@ describe('bounded Lanark findings', () => {
 it('does not assume a dwelling pathway for zero existing and proposed homes', () => {
   const result = evaluate({ ...repair, existingUnits: 0, proposedUnits: 0 });
   expect(result.find(item => item.id === 'pathway')?.state).toBe('Review required');
+});
+
+it('isolates the default comparison to scope and display name only', () => {
+  expect({ ...defaultProposals[1], name: defaultProposals[0].name, scope: defaultProposals[0].scope }).toEqual(defaultProposals[0]);
+  const brief = exportBrief(defaultProposals);
+  expect(brief).toContain('2026-09-01');
+  expect(brief).toContain('2026-09-26');
+  expect(brief).toContain('VACANT LAND');
+  expect(brief).toContain('Financial feasibility: unassessed');
+});
+
+it('keeps the disturbance-only experiment narrow under the unknown baseline', () => {
+  const base = defaultProposals[0];
+  const pair: [Proposal, Proposal] = [{ ...base, disturbance: 'no' }, { ...base, disturbance: 'yes' }];
+  const comparison = compareFindings(pair);
+  expect(comparison.filter(item => item.explanationChanged)).toHaveLength(1);
+  expect(comparison.filter(item => item.reviewStatusChanged)).toHaveLength(0);
+  expect(comparison.filter(item => item.nextActionChanged).map(item => item.id)).toEqual(['slope']);
+  const reconstruction = compareFindings([base, { ...base, scope: 'reconstruction' }]);
+  expect(reconstruction.filter(item => item.reviewStatusChanged || item.nextActionChanged)).toHaveLength(0);
 });

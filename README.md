@@ -11,17 +11,24 @@ npm ci
 npm run dev -- --port 5173 --strictPort
 ```
 
-Open http://127.0.0.1:5173/. Select Lanark, edit the two proposals, read the changed and unchanged checks, then download the brief. Print / save as PDF uses the browser print dialog. Inputs reset when the page reloads; export to retain a comparison.
+Open http://127.0.0.1:5173/. Lanark is already selected. Edit the two visible proposals, compare explanation/status/action differences, then export the brief. The default isolates repair versus expansion; its next action remains the same. A separate ground-disturbance example shows a narrower changed diligence task. Print / save as PDF uses the browser print dialog. Inputs reset when the page reloads; export to retain a comparison.
 
 ```sh
 npm test
 npm run typecheck
 npm run lint
 npm run build
-node scripts/smoke.mjs
+npm run test:browser
+npm run test:design-system
 ```
 
 The smoke check needs `/usr/bin/chromium` and a running dev server. It writes screenshots, an actual downloaded brief and a print PDF to `/tmp/lanark-*`. It tests a simulated failed request, then tries the real public assessment endpoint. The real endpoint is allowed to be unavailable; that must remain visible.
+
+## Design and research
+
+Open http://127.0.0.1:5173/design-system for shared visual tokens, reusable controls, evidence states and an interactive four-screen walkthrough preview. This is a design preview, not the full intake or rule engine. The full guided-intake specification is documented separately and is not yet integrated.
+
+See [design system](docs/design-system.md), [guided intake](docs/research/guided-intake-and-rule-scope.md), [live data and deployment](docs/research/live-data-and-deployment.md), and [comparison value test](docs/research/comparison-value-test.md). Public reference research and bounded subagent reviews are documented with primary sources.
 
 ## Scope and evidence
 

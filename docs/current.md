@@ -1,21 +1,39 @@
 # Current app handoff
 
-September 26, 2026, first local prototype. Local repository `/home/het/personal/ai-housing-navigator`, branch `feat/first-prototype`. No remote, deployment or publication. React + TypeScript + Vite, npm lockfile. Fresh code, no previous project implementation reused.
+Updated September 26, 2026. Branch `feat/first-prototype`. No remote, deployment or public publication. App: `/home/het/personal/ai-housing-navigator`.
 
-## Run and use
+## Open and run
 
-Development server: http://127.0.0.1:5173/. Restart with `npm run dev -- --port 5173 --strictPort`. Select Lanark, edit the repair/expansion assumptions, compare findings, download the Markdown brief or print. Inputs are session-only and reset on reload.
+Working workbench: http://127.0.0.1:5173/. Design system and interactive walkthrough sample: http://127.0.0.1:5173/design-system. Restart with `npm run dev -- --port 5173 --strictPort`.
 
-The comparison uses explicitly dated September 26 research evidence with September 1 assessment vintage. A separate live assessment observation succeeded at 17:50:22 UTC on September 26: VACANT LAND, 1,657 sq ft, as of September 1. Snapshot conflicts persist. Source failure remains visible; no silent replacement or constraints clearance.
+Lanark is preselected; proposal inputs are visible immediately. The new black/gold parcel workspace has Proposals, Comparison and Evidence views. The 412 steelmark-inspired mark supplies the requested Steelers reference. No copied Rescope product assets or fabricated geography. Source details and unchanged findings are secondary, not removed. Export is available from the top bar. Inputs remain session-only.
+
+## Latest steering and consequential comparison
+
+The user rejected text-heavy pages and the first decorative bridge/card design, requested frontend-design guidance and Rescope inspection, then requested subagent internet research on guided intake, property types, live connectors and deployment. Two bounded research agents contributed primary-source notes in `docs/research/`.
+
+The latest steering challenged explanation changes being counted as consequential differences. This is implemented: the default pair differs only in repair versus expansion (plus display name). Result: one explanation change, zero review-status changes, zero next-action changes. The UI and Markdown explicitly state that the next action stays the same.
+
+A separate ground-disturbance preset keeps repair and every other input fixed. It changes one slope-related preparation task, without changing review status, clearing the conflict, or establishing a go/no-go outcome. No supported pair proves a different approval or financial result. Do not manufacture an action difference or claim comparison is unique. TestFit-style design and pro formas are out of scope.
+
+## Design system and research
+
+`docs/design-system.md` records tokens, components, evidence states, question flow, coverage boundaries and implementation order. Shared CSS tokens and React controls live under `src/design-system/` and are used by the app. The four-screen sample demonstrates site condition, intended use, multiple work activities, unknowns and editable review. It is explicitly a design preview, not a completed intake/evaluator integration.
+
+`docs/research/guided-intake-and-rule-scope.md` specifies the fuller question flow, separating physical form, existing use, legal-use evidence, proposed use, unit count, work activities and tenure. `docs/research/live-data-and-deployment.md` inventories five sources and proposes Vercel or Cloudflare hosting with a small same-origin API. `docs/research/comparison-value-test.md` records the tested comparison limits.
+
+## Evidence and readiness
+
+The comparison retains the September 26 snapshot with September 1 assessment vintage. A browser-side exact-PARID, field-whitelisted assessment request succeeded at 18:19:33 UTC on September 26: VACANT LAND, 1,657 sq ft, as of September 1. It is displayed/exported separately from the snapshot. A research agent's sandbox DNS request failed; this does not contradict the successful browser check. Deployment-origin CORS and other live connectors remain unverified.
+
+Other live adapters, provider/model access, full rule dependencies, practitioner validation, organizer score acceptance and financial modeling remain unimplemented/unresolved. Overall ease remains not rated. Public deployment and dataset redistribution terms need resolution before publishing; neither a remote nor a hosting account was configured.
 
 ## Verification
 
-Final app checks: 27 tests pass; typecheck, ESLint and production build exit 0. Local Chromium smoke test exits 0: selection, added-unit change, favorable assumptions with persistent conflict, invalid input without crashing, simulated network failure, actual downloaded Markdown and its contents, mobile width at 390px, actual live refresh and print rendering. No page exceptions. Print PDF text retains refresh timestamp, observation, parcel ID, conflict and source section. Desktop screenshot visually inspected. Test artifacts: `/tmp/lanark-desktop.png`, `/tmp/lanark-mobile.png`, `/tmp/lanark-comparison-brief.md`, `/tmp/lanark-print.pdf`.
+Final checks passed: 41 tests including semantic comparisons and 10 token contrast assertions; typecheck, ESLint and production build all exited 0. Browser suites exercise visible inputs, scope toggles, tab/source navigation, default 1/0/0 change counts, alternate action change, invalid units, persistent conflict, failed/live assessment, actual download, mobile width, printing hidden tabs, and the separate walkthrough's multiple activities/unsupported warning/retained answers. Both browser suites exited 0.
 
-The in-app browser connector was not callable; local Playwright/Chromium was used. Chromium requires execution outside the sandbox here. Tests are in `src/*.test.ts` and `scripts/smoke.mjs`. Independent focused review identified comparison alignment on invalid inputs and print provenance; both were fixed and covered by regression checks. Zero-home and other unsupported unit-count pathways were also guarded.
+Desktop comparison and design-system screenshots were visually inspected. Artifacts: `/tmp/lanark-desktop.png`, `/tmp/lanark-comparison.png`, `/tmp/lanark-mobile.png`, `/tmp/lanark-design-system.png`, `/tmp/lanark-design-system-mobile.png`, `/tmp/lanark-comparison-brief.md`, `/tmp/lanark-print.pdf`. PDF text confirms source dates, live provenance, the source conflict and explicit same-next-action wording. Local Chromium requires outside-sandbox execution here; the in-app browser connector was unavailable.
 
-## Boundaries and next iteration
+## Next concrete step
 
-One parcel, structured assumptions, conditional checks, partial evidence. No AI/model access, financial engine, full code dependencies/effective dates, complete hazards, title, utilities or lawful-use confirmation. Overall ease is not rated. Practitioner fit and organizer acceptance of component-only scoring remain unvalidated. Dataset reuse terms need resolution before publication. No approval or acquisition advice.
-
-Next smallest iteration: walk the running repair-versus-expansion flow with Het, choose one usability change, and validate one precise rule trace with a practitioner/City source. Do not restart broad research. A later unstructured-proposal helper must return bounded fields with explicit unknowns for user confirmation and use a server-side provider boundary. Structured inputs need no redundant AI call.
+Walk the four-screen sample with Het, then integrate a typed shared-baseline intake and coverage registry before adding broader property/work choices to the real evaluator. Validate a real changed diligence action with a practitioner before expanding the comparison claim. Add exact-parcel PLI/boundary adapters before whole-polygon zoning/slope. A hosted preview is a separate action; no publishing authorization has been assumed from questions about deployment.

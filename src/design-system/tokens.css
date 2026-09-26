@@ -1,0 +1,35 @@
+:root {
+  --color-black: #000000;
+  --color-gold: #ffb612;
+  --color-white: #ffffff;
+  --color-surface: #f1f2f2;
+  --color-text: #202224;
+  --color-text-secondary: #53616b;
+  --color-line: #d2d7db;
+  --color-field-border: #87949e;
+  --color-focus: #705000;
+  --color-warning-bg: #fff6db;
+  --color-warning-text: #72520c;
+  --color-live-bg: #e9f2ec;
+  --color-live-text: #315d42;
+  --color-snapshot-bg: #edf0f4;
+  --color-snapshot-text: #465467;
+  --color-error-bg: #fff0ee;
+  --color-error-text: #973b30;
+  --color-assumption-bg: #f2edf7;
+  --color-assumption-text: #645075;
+  --font-body: 'IBM Plex Sans', sans-serif;
+  --font-data: 'IBM Plex Mono', monospace;
+  --text-small: 0.857rem;
+  --text-body: 1rem;
+  --text-question: 1.857rem;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --radius-control: 4px;
+  --radius-panel: 8px;
+  --control-height: 44px;
+}
