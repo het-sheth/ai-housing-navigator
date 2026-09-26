@@ -1,5 +1,9 @@
 # Current app handoff
 
+## Session stopped: current WIP checkpoint
+
+Read [resume-guided-workspace.md](resume-guided-workspace.md) first. The active branch is `feat/guided-project-workspace`. The user authorized the guided build, early financial-diligence question and illustrative 3D intro, then stopped the session. New domain/storage code passes 71 total unit tests; the UI is unfinished and typecheck/build/lint currently fail as documented. No finished 3D scene, deployment or runtime AI exists. The instructions below describe the earlier published prototype and are historical where they conflict with this checkpoint.
+
 Updated September 26, 2026. Branch `feat/first-prototype`. Public repository and open PR #1; no hosted deployment. App: `/home/het/personal/ai-housing-navigator`.
 
 ## Current product authority and next work
