@@ -32,6 +32,14 @@ describe('guided draft contracts', () => {
     expect(draft.description).toBe('  Add a bedroom, not a dwelling.\nMaybe an addition.  ')
   })
 
+  it('migrates an existing device draft without erasing its saved parcel', () => {
+    const legacy = { ...createDraft() } as Record<string, unknown>
+    delete legacy.propertyEvidence
+    const restored = validateDraft({ ...legacy, parcelId: '0023C00208000000', propertyConfirmed: true })
+    expect(restored.parcelId).toBe('0023C00208000000')
+    expect(restored.propertyEvidence).toBe('historical')
+  })
+
   it.each([-1, 1.5, Infinity, NaN, '2'])('rejects invalid home count %s rather than coerce it', count => {
     expect(() => validateDraft({ ...createDraft(), proposedHomes: count })).toThrow()
   })
@@ -90,9 +98,15 @@ describe('evidence-gap summary', () => {
   })
 
   it('treats the selected Lanark example as dated evidence rather than automated rule coverage', () => {
-    const result = summarizeDraft({ ...createDraft(), parcelId: '0023C00208000000', propertyConfirmed: true, activities: ['demolition', 'mixed_use'] })
+    const result = summarizeDraft({ ...createDraft(), parcelId: '0023C00208000000', propertyConfirmed: true, propertyEvidence: 'historical', activities: ['demolition', 'mixed_use'] })
     expect(result.coverage).toContain('Not yet supported')
     expect(result.tasks.some(task => task.id === 'proposal-review')).toBe(true)
     expect(result.tasks.some(task => task.id === 'lanark-condition')).toBe(true)
+  })
+
+  it('does not apply historical Lanark conflict to a newly confirmed live lookup', () => {
+    const result = summarizeDraft({ ...createDraft(), parcelId: '0023C00208000000', propertyConfirmed: true, propertyEvidence: 'live' })
+    expect(result.tasks.some(task => task.id === 'lanark-condition')).toBe(false)
+    expect(result.coverage).toContain('Live parcel identity')
   })
 })

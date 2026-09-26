@@ -5,6 +5,7 @@ playwright-report/
 .git/
 .env
 .env.*
+!.env.example
 *.pem
 *.key
 *.nkey

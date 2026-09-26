@@ -4,7 +4,7 @@ import './welcome.css'
 const NeighborhoodScene = lazy(() => import('./NeighborhoodScene'))
 
 function NeighborhoodFallback() {
-  return <svg className="welcome-fallback" viewBox="0 0 640 520" role="img" aria-label="Illustration of houses on a neighborhood block">
+  return <svg className="welcome-fallback" data-testid="scene-fallback" viewBox="0 0 640 520" role="img" aria-label="Illustration of houses on a neighborhood block">
     <defs>
       <linearGradient id="fallback-ground" x2="0" y2="1"><stop stopColor="#d8d2bf"/><stop offset="1" stopColor="#aaa895"/></linearGradient>
     </defs>
@@ -25,9 +25,11 @@ function NeighborhoodFallback() {
 }
 
 export default function Welcome() {
-  const [reducedMotion, setReducedMotion] = useState(false)
+  const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   const [paused, setPaused] = useState(false)
   const [webglFailed, setWebglFailed] = useState(false)
+  const [sceneReady, setSceneReady] = useState(false)
+  const [sceneAttempt, setSceneAttempt] = useState(0)
 
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -38,6 +40,11 @@ export default function Welcome() {
   }, [])
 
   const animationPaused = reducedMotion || paused
+  const handleSceneFailure = () => {
+    setSceneReady(false)
+    if (sceneAttempt === 0) setSceneAttempt(1)
+    else setWebglFailed(true)
+  }
 
   return <main className="welcome-screen" data-testid="welcome-screen">
     <a className="welcome-skip" href="/projects/new">Skip introduction</a>
@@ -52,15 +59,15 @@ export default function Welcome() {
         <h1 id="welcome-title">A place to start.<br/><em>A path to build.</em></h1>
         <p className="welcome-intro">A housing idea begins with a property and a lot of unanswered questions. Bring your proposal. We will help you see the evidence, the gaps, and the next conversation to have.</p>
         <div className="welcome-actions"><a className="welcome-primary" href="/projects/new">Start a project <span aria-hidden="true">↗</span></a><a className="welcome-secondary" href="/">Explore the Lanark prototype <span aria-hidden="true">↗</span></a></div>
-        <div className="welcome-smallprint"><span className="welcome-smallprint-icon" aria-hidden="true">i</span><p>Local preview. AI guidance and account saving are not connected yet. Findings show what needs review, not a permission decision.</p></div>
+        <div className="welcome-smallprint"><span className="welcome-smallprint-icon" aria-hidden="true">i</span><p>Local preview. AI can suggest work from your description; it does not check permissions. Account saving is not connected yet.</p></div>
       </div>
       <div className="welcome-visual">
         <div className="welcome-scene-frame">
           <div className="welcome-scene-index"><span>FIG. 01</span><span>THE POSSIBLE BLOCK</span></div>
-          <div className="welcome-scene-content" aria-label="Illustrative animated miniature neighborhood">
-            {webglFailed ? <NeighborhoodFallback/> : <Suspense fallback={<NeighborhoodFallback/>}><NeighborhoodScene paused={animationPaused} onFailure={() => setWebglFailed(true)}/></Suspense>}
+          <div className="welcome-scene-content" data-testid="neighborhood-scene" data-render-state={webglFailed ? 'fallback' : sceneReady ? 'ready' : 'loading'} aria-label="Illustrative miniature neighborhood">
+            {webglFailed ? <NeighborhoodFallback/> : <Suspense fallback={<NeighborhoodFallback/>}><NeighborhoodScene key={sceneAttempt} paused={animationPaused} onReady={() => setSceneReady(true)} onFailure={handleSceneFailure}/></Suspense>}
           </div>
-          <div className="welcome-visual-bottom"><span className="welcome-visual-caption"><span className="welcome-caption-dot"/>Illustrative neighborhood, not a model of your property.</span><button type="button" className="welcome-pause" aria-pressed={animationPaused} onClick={() => setPaused(value => !value)} disabled={reducedMotion}>{animationPaused ? 'Animation paused' : 'Pause animation'} <span aria-hidden="true">{animationPaused ? '▶' : 'Ⅱ'}</span></button></div>
+          <div className="welcome-visual-bottom"><span className="welcome-visual-caption"><span className="welcome-caption-dot"/>Illustrative neighborhood, not a model of your property.</span>{webglFailed ? <span className="welcome-static-label">Static illustration</span> : <button type="button" className="welcome-pause" aria-pressed={animationPaused} onClick={() => setPaused(value => !value)} disabled={reducedMotion}>{reducedMotion ? 'Motion reduced' : animationPaused ? 'Resume animation' : 'Pause animation'} <span aria-hidden="true">{animationPaused ? '▶' : 'Ⅱ'}</span></button>}</div>
         </div>
       </div>
     </section>

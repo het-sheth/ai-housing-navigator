@@ -88,3 +88,61 @@ export function clearDraft(): Promise<void> {
     await transact('readwrite', store => store.delete(currentKey))
   })
 }
+
+export function startNewDraft(current: Draft, next: Draft): Promise<void> {
+  const previous = validateDraft(current)
+  const fresh = validateDraft(next)
+  return enqueue(async () => {
+    const db = await openDatabase()
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(storeName, 'readwrite')
+      const store = transaction.objectStore(storeName)
+      store.put(previous, `archive:${previous.id}`)
+      store.put(fresh, currentKey)
+      transaction.oncomplete = () => { db.close(); resolve() }
+      transaction.onabort = () => { db.close(); reject(new Error('Could not preserve the previous draft.')) }
+      transaction.onerror = () => { db.close(); reject(new Error('Could not preserve the previous draft.')) }
+    })
+  })
+}
+
+export function listArchivedDrafts(): Promise<{ drafts: Draft[]; invalidCount: number }> {
+  return enqueue(async () => {
+    const db = await openDatabase()
+    return new Promise<{ drafts: Draft[]; invalidCount: number }>((resolve, reject) => {
+      const transaction = db.transaction(storeName, 'readonly')
+      const store = transaction.objectStore(storeName)
+      const keys = store.getAllKeys()
+      const values = store.getAll()
+      transaction.oncomplete = () => {
+        db.close()
+        const drafts: Draft[] = []
+        let invalidCount = 0
+        values.result.forEach((value, index) => {
+          if (!String(keys.result[index]).startsWith('archive:')) return
+          try { drafts.push(validateDraft(value)) } catch { invalidCount += 1 }
+        })
+        resolve({ drafts: drafts.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), invalidCount })
+      }
+      transaction.onabort = () => { db.close(); reject(new Error('Could not read saved projects.')) }
+      transaction.onerror = () => { db.close(); reject(new Error('Could not read saved projects.')) }
+    })
+  })
+}
+
+export function restoreArchivedDraft(current: Draft, archived: Draft): Promise<void> {
+  const previous = validateDraft(current)
+  const restored = validateDraft(archived)
+  return enqueue(async () => {
+    const db = await openDatabase()
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(storeName, 'readwrite')
+      const store = transaction.objectStore(storeName)
+      store.put(previous, `archive:${previous.id}`)
+      store.put(restored, currentKey)
+      transaction.oncomplete = () => { db.close(); resolve() }
+      transaction.onabort = () => { db.close(); reject(new Error('Could not restore the saved project.')) }
+      transaction.onerror = () => { db.close(); reject(new Error('Could not restore the saved project.')) }
+    })
+  })
+}
