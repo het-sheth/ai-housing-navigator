@@ -757,11 +757,13 @@ const sources = [
     "granularity": "School / district",
     "catalogUrl": "https://nces.ed.gov/programs/edge/Geographic/SchoolLocations",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://nces.ed.gov/opengis/rest/services/K12_School_Locations/EDGE_GEOCODE_PUBLICSCH_2324/MapServer/0",
+    "note": "Bounded 2023-24 public school location count and up to 19 school identities by county, state or point. No attendance assignment is inferred.",
+    "queryMode": "live_school_location_context",
+    "queryRequirements": [
+      "countyFips or stateFips or latitude+longitude"
+    ]
   },
   {
     "catalogId": 55,

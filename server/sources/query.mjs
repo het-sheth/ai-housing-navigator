@@ -1,6 +1,7 @@
 import { queryWprdcSource } from './wprdc.mjs'
 import { queryCoreSource } from './core.mjs'
 import { querySpatialReferenceSource } from './spatial-reference.mjs'
+import { queryNcesSource } from './nces.mjs'
 
 const headers = { 'content-type': 'application/json', 'cache-control': 'no-store' }
 const contextKeys = new Set(['parcelId', 'municipality', 'zip', 'tract', 'countyFips', 'stateFips', 'year', 'metroCode', 'latitude', 'longitude'])
@@ -60,7 +61,7 @@ export async function querySource(catalogId, context, options = {}) {
   const { queryRegionalSource } = await import('./regional.mjs')
   const regional = await queryRegionalSource(catalogId, context, options)
   if (regional) return regional
-  return querySpatialReferenceSource(catalogId, context, options)
+  return await querySpatialReferenceSource(catalogId, context, options) ?? queryNcesSource(catalogId, context, options)
 }
 
 export async function handleSourceQuery(request, { fetcher = fetch, now = () => new Date().toISOString(), trustedOrigin = 'http://127.0.0.1:5173' } = {}) {
