@@ -1,4 +1,5 @@
 import type { ActivityId, Draft } from './contracts'
+import { isOneHomeAssessment, type OneHomeAssessment } from './one-home-assessment'
 
 export type ScreeningCheck = {
   id: string
@@ -31,6 +32,7 @@ export type ScreeningResult = {
   municipality: 'Pittsburgh' | 'other' | 'unresolved'
   checks: ScreeningCheck[]
   sourceObservations?: SourceObservation[]
+  oneHomeAssessment?: OneHomeAssessment
   nextActions: string[]
   retrievedAt: string
   caveat: string
@@ -73,6 +75,6 @@ export async function requestScreening(draft: Draft, fetcher: typeof fetch = fet
   })
   if (!response.ok) throw new Error('screening_unavailable')
   const result: unknown = await response.json()
-  if (!isRecord(result) || result.parcelId !== draft.parcelId || !isRecord(result.proposal) || !Array.isArray(result.proposal.activities) || result.proposal.activities.length !== draft.activities.length || result.proposal.activities.some((id: unknown, index: number) => id !== draft.activities[index]) || result.proposal.proposedHomes !== draft.proposedHomes || result.proposal.housingForm !== draft.housingForm || result.proposal.groundDisturbance !== draft.groundDisturbance || !['pending', 'scored'].includes(String(result.status)) || !['Pittsburgh', 'other', 'unresolved'].includes(String(result.municipality)) || typeof result.rubricVersion !== 'string' || typeof result.retrievedAt !== 'string' || !Number.isFinite(Date.parse(result.retrievedAt)) || typeof result.caveat !== 'string' || !Array.isArray(result.checks) || !result.checks.every(isScreeningCheck) || (result.sourceObservations !== undefined && (!Array.isArray(result.sourceObservations) || result.sourceObservations.length > sourceObservationIds.size || !result.sourceObservations.every(isSourceObservation) || new Set(result.sourceObservations.map((item: SourceObservation) => item.id)).size !== result.sourceObservations.length)) || !Array.isArray(result.nextActions) || !result.nextActions.every((action: unknown) => typeof action === 'string') || (result.status === 'pending' && result.score !== null) || (result.status === 'scored' && (!isRecord(result.score) || typeof result.score.lower !== 'number' || typeof result.score.upper !== 'number' || !Number.isFinite(result.score.lower) || !Number.isFinite(result.score.upper) || result.score.lower < 0 || result.score.upper > 100 || result.score.lower > result.score.upper))) throw new Error('screening_invalid_response')
+  if (!isRecord(result) || result.parcelId !== draft.parcelId || !isRecord(result.proposal) || !Array.isArray(result.proposal.activities) || result.proposal.activities.length !== draft.activities.length || result.proposal.activities.some((id: unknown, index: number) => id !== draft.activities[index]) || result.proposal.proposedHomes !== draft.proposedHomes || result.proposal.housingForm !== draft.housingForm || result.proposal.groundDisturbance !== draft.groundDisturbance || !['pending', 'scored'].includes(String(result.status)) || !['Pittsburgh', 'other', 'unresolved'].includes(String(result.municipality)) || typeof result.rubricVersion !== 'string' || typeof result.retrievedAt !== 'string' || !Number.isFinite(Date.parse(result.retrievedAt)) || typeof result.caveat !== 'string' || !Array.isArray(result.checks) || !result.checks.every(isScreeningCheck) || (result.sourceObservations !== undefined && (!Array.isArray(result.sourceObservations) || result.sourceObservations.length > sourceObservationIds.size || !result.sourceObservations.every(isSourceObservation) || new Set(result.sourceObservations.map((item: SourceObservation) => item.id)).size !== result.sourceObservations.length)) || !Array.isArray(result.nextActions) || !result.nextActions.every((action: unknown) => typeof action === 'string') || !isOneHomeAssessment(result.oneHomeAssessment, { municipality: String(result.municipality), proposal: result.proposal as ScreeningResult['proposal'] }) || (result.status === 'pending' && result.score !== null) || (result.status === 'scored' && (!isRecord(result.score) || typeof result.score.lower !== 'number' || typeof result.score.upper !== 'number' || !Number.isFinite(result.score.lower) || !Number.isFinite(result.score.upper) || result.score.lower < 0 || result.score.upper > 100 || result.score.lower > result.score.upper))) throw new Error('screening_invalid_response')
   return result as ScreeningResult
 }

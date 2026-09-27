@@ -77,6 +77,41 @@ describe('preliminary Pittsburgh screening', () => {
     expect(body.score).toBeNull()
     expect(body.proposal).toEqual(input.proposal)
     expect(body.municipality).toBe('other')
+    expect(body).not.toHaveProperty('oneHomeAssessment')
+  })
+
+  it('assesses the Tweed R1D-H baseline and County recorded area without changing check scores', async () => {
+    const tweed = '0042J00243000000'
+    const { fetcher } = sources({ parcelPin: tweed, zone: 'R1D-H' })
+    const withArea = vi.fn(async (value: string | URL | Request, init?: RequestInit) => {
+      const url = new URL(String(value))
+      if (url.searchParams.get('resource_id') === 'property_assessments_table') return response({ success: true, result: { total: 1, records: [{ PARID: tweed, LOTAREA: 3000, ASOFDATE: '2026-09-01' }] } })
+      return fetcher(value, init)
+    })
+    const body = await (await handleScreening(request({ ...input, parcelId: tweed }), { fetcher: withArea, now: () => '2026-09-27T12:00:00.000Z' })).json()
+    expect(body.oneHomeAssessment).toMatchObject({ applicability: 'applicable', mappedDistrict: 'R1D-H', lotAreaComparison: { status: 'recorded_meets_base_minimum', baseMinimumSqFt: 1200 } })
+    expect(body.oneHomeAssessment.recordedLotArea).toMatchObject({ status: 'available', sqFt: 3000 })
+    expect(body.checks.find((item: { id: string }) => item.id === 'zoning-other').status).toBe('unknown')
+    expect(body.checks.find((item: { id: string }) => item.id === 'process').status).toBe('unknown')
+    expect(body.checks.find((item: { id: string }) => item.id === 'infrastructure').status).toBe('unknown')
+    expect(body.score).toBeNull()
+  })
+
+  it('keeps multiple mapped districts unresolved for one-home evidence', async () => {
+    const { fetcher } = sources()
+    const split = vi.fn(async (value: string | URL | Request, init?: RequestInit) => {
+      const url = new URL(String(value))
+      if (url.pathname.includes('Zoning/MapServer')) return response({ features: [
+        { attributes: { OBJECTID: 2, zon_new: 'R1D-H', status: 'Approved' } },
+        { attributes: { OBJECTID: 3, zon_new: 'R1D-L', status: 'Approved' } },
+      ] })
+      return fetcher(value, init)
+    })
+    const body = await (await handleScreening(request(), { fetcher: split })).json()
+    expect(body.oneHomeAssessment).toMatchObject({ applicability: 'unknown', mappedDistrict: null, lotAreaComparison: { status: 'out_of_scope' } })
+    expect(body.oneHomeAssessment.districtRetrievedAt).toBeNull()
+    expect(body.checks.find((item: { id: string }) => item.id === 'zoning-use').status).toBe('error')
+    expect(split.mock.calls.some(call => String(call[0]).includes('property_assessments_table'))).toBe(false)
   })
 
   it('keeps description-only proposals pending without fetching source data', async () => {

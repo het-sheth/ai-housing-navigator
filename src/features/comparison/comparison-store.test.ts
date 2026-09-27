@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createComparison } from './comparison-model'
 import { loadComparison, saveComparison } from './comparison-store'
+import sample from '../projects/one-home-assessment.fixture.json'
 
 const entries = new Map<string, string>()
 vi.stubGlobal('localStorage', {
@@ -10,6 +11,17 @@ vi.stubGlobal('localStorage', {
 afterEach(() => entries.clear())
 
 describe('comparison storage', () => {
+  it('rejects a corrupt focused finding without changing saved bytes', () => {
+    const saved = createComparison('0046R00029000000')
+    saved.proposals.A.input = { ...saved.proposals.A.input, activities: ['new_construction'], proposedHomes: 1, housingForm: 'detached' }
+    const payload = { status: 'pending', score: null, rubricVersion: 'test', parcelId: saved.parcelId, proposal: saved.proposals.A.input, municipality: 'Pittsburgh', checks: [], nextActions: [], retrievedAt: '2026-09-27T12:00:00Z', caveat: '', ...sample }
+    const data = { ...saved, proposals: { ...saved.proposals, A: { ...saved.proposals.A, result: { ...payload, oneHomeAssessment: { ...sample.oneHomeAssessment, processGuidance: { ...sample.oneHomeAssessment.processGuidance, sourceUrl: 'http://insecure.test' } } } } } }
+    const key = 'housing-navigator-comparison-v1:0046R00029000000'
+    const bytes = JSON.stringify(data)
+    entries.set(key, bytes)
+    expect(() => loadComparison(saved.parcelId)).toThrow(/invalid/i)
+    expect(entries.get(key)).toBe(bytes)
+  })
   it('keeps leading zeroes in distinct parcel keys and restores both sides', () => {
     const saved = createComparison('0046R00029000000')
     saved.proposals.A.input.description = 'One home'

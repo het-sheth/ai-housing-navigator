@@ -1,11 +1,22 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createDraft } from '../projects/contracts'
 import { createComparison } from '../comparison/comparison-model'
+import sample from '../projects/one-home-assessment.fixture.json'
 import { localWalkthroughCopy, restoreCloudSnapshot, validateCloudSnapshot } from './snapshot'
 
 afterEach(() => vi.unstubAllGlobals())
 
 describe('cloud snapshot validation', () => {
+  it('keeps older comparison results and rejects a malformed focused addition', () => {
+    const cloud = createComparison('0046R00029000000')
+    cloud.proposals.A.input = { ...cloud.proposals.A.input, activities: ['new_construction'], proposedHomes: 1, housingForm: 'detached' }
+    const result = { status: 'pending', score: null, rubricVersion: 'test', parcelId: cloud.parcelId, proposal: { activities: ['new_construction'], proposedHomes: 1, housingForm: 'detached', groundDisturbance: 'unknown' }, municipality: 'Pittsburgh', checks: [], nextActions: [], retrievedAt: '2026-09-27T12:00:00Z', caveat: '' }
+    const data = structuredClone(cloud) as unknown as { proposals: { A: { result: unknown } } }
+    data.proposals.A.result = result
+    expect(validateCloudSnapshot('comparison', data)).toEqual(data)
+    data.proposals.A.result = { ...result, ...sample, oneHomeAssessment: { ...sample.oneHomeAssessment, lotAreaComparison: { ...sample.oneHomeAssessment.lotAreaComparison, baseMinimumSqFt: 900 } } }
+    expect(() => validateCloudSnapshot('comparison', data)).toThrow(/invalid/i)
+  })
   it('accepts a complete walkthrough draft without changing its parcel identifier', () => {
     const draft = { ...createDraft(), parcelId: '0046R00029000000', propertyConfirmed: true, propertyEvidence: 'live' as const }
     expect(validateCloudSnapshot('walkthrough', draft)).toEqual(draft)

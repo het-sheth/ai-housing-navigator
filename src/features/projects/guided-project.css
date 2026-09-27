@@ -17,6 +17,8 @@
 @media(max-width:350px){.gp-region-map{height:220px}}
 
 .gp-project-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin: 0 0 28px; padding-bottom: 14px; border-bottom: 1px solid var(--gp-line); font-size: 12px; }
+.gp-one-home{border:1px solid var(--gp-line);background:#f8f8f4;padding:17px 19px;margin:16px 0}.gp-one-home h3{font-size:17px;margin:0 0 8px}.gp-one-home p{font-size:13px;line-height:1.5;margin:8px 0}.gp-one-home .gp-one-home-sources{font-size:11px;color:var(--gp-muted)}.gp-one-home table{width:100%;border-collapse:collapse;font-size:11px}.gp-one-home caption{text-align:left;color:var(--gp-muted);padding:8px 0}.gp-one-home th,.gp-one-home td{border-top:1px solid var(--gp-line);padding:7px 8px;text-align:left;vertical-align:top}.gp-one-home th{font-weight:600;width:38%}.gp-one-home td:nth-child(2){white-space:nowrap}.gp-one-home .gp-details{margin:12px 0;padding:12px 0}.gp-one-home a{overflow-wrap:anywhere}
+@media(max-width:520px){.gp-one-home{padding:14px}.gp-one-home table{display:block;overflow-x:auto}}
 .gp-project-actions > .gp-text-button { min-height: 44px; white-space: nowrap; }
 .gp-project-actions .cloud-save-control { flex-wrap: wrap; min-width: 0; max-width: 100%; }
 .gp-project-actions .cloud-save-message { position: static; box-shadow: none; width: auto; max-width: 100%; }
