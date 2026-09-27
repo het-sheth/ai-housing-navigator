@@ -82,7 +82,7 @@ async function run(browser, width) {
   assert.equal(await page.evaluate(() => [...document.fonts].some(face => face.family === 'IBM Plex Sans' && face.status === 'loaded')), true, 'Production font did not load')
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `Horizontal overflow at ${width}px`)
   await page.screenshot({ path: `${screenshots}/handoff-${width}.png`, fullPage: true })
-  await page.getByRole('link', { name: 'Property explorer' }).click()
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Explore properties', exact: true }).click()
   await expect(page).toHaveURL(`${origin}/explore`)
   await expect(page.getByRole('heading', { name: 'Find a parcel to study.' })).toBeVisible()
   assert.deepEqual(calls, { ai: 0, candidates: 1, parcel: 2, screening: 2 })

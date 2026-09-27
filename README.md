@@ -13,7 +13,7 @@ npm ci
 npm run dev -- --port 5173 --strictPort
 ```
 
-Run `npm run api:dev` in a second terminal using the existing local server configuration. Open http://127.0.0.1:5173/projects/new for the guided workspace. Drafts and archives remain on the device; source checks are transient. The root route preserves the historical Lanark proposal-comparison prototype. The new explorer and comparison pages remain unfinished in separate worktrees.
+Run `npm run api:dev` in a second terminal using the existing local server configuration. Open http://127.0.0.1:5173/ for the animated landing page. Shared navigation connects the guided assessment at `/projects/new`, Property Explorer at `/explore` and same-parcel Proposal Comparison at `/compare`. The historical Lanark example is at `/prototype`; `/welcome` remains a landing-page alias. Drafts and archives remain on the device; walkthrough source checks are transient.
 
 ```sh
 npm test

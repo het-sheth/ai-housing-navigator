@@ -7,6 +7,7 @@ import { searchCandidates, type CandidateSearch, type ExplorerCandidate, type Re
 import { reconcileCandidate } from './reconcile-candidate'
 import '../projects/guided-project.css'
 import './explorer.css'
+import { AppHeader } from '../../components/AppHeader'
 
 const useChoices: { value: RecordedUse; label: string; note: string }[] = [
   { value: 'vacant_land', label: 'Recorded vacant land', note: 'An assessment label, not proof that a site is empty or available.' },
@@ -111,7 +112,7 @@ export default function PropertyExplorer() {
   const refreshedAddress = detail?.assessment.record?.address?.trim() || (detail ? `Parcel ${detail.parcelId}` : null)
 
   return <div className="ex-page">
-    <header className="ex-header"><a className="ex-brand" href="/welcome"><span>412</span><strong>Housing Navigator</strong></a><nav aria-label="Main navigation"><a href="/projects/new">Project walkthrough</a><span aria-current="page">Property explorer</span></nav></header>
+    <AppHeader current="/explore" />
     <main className="ex-layout">
       <section className="ex-panel" aria-labelledby="ex-title">
         <div className="ex-intro"><span className="ex-eyebrow">01 / Explore a site</span><h1 id="ex-title">Find a parcel to study.</h1><p>Describe your housing idea, review the search criteria, then inspect matching assessment records on the map.</p></div>

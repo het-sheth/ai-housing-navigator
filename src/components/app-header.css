@@ -1,0 +1,35 @@
+.site-header {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr) 170px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 28px;
+  min-height: 88px;
+  padding: 16px clamp(16px, 4.4vw, 76px);
+  border-bottom: 1px solid #c9c5b7;
+  background: #f4f1e8;
+  color: #151713;
+  font-family: var(--font-body);
+}
+.site-header .site-brand { display: flex; align-items: center; gap: 12px; flex: none; color: #151713; font-size: 13px; line-height: 1.05; font-weight: 600; text-decoration: none; }
+.site-brand-mark { position: relative; display: grid; place-items: center; width: 48px; height: 48px; background: #151713; color: #efb83c; font: 20px var(--font-data); letter-spacing: -.1em; padding-right: 3px; }
+.site-brand-mark > span { position: absolute; top: 3px; right: 4px; font-size: 9px; }
+.site-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.site-header .site-nav a { display: flex; align-items: center; min-height: 44px; padding: 10px 13px; color: #4e534a; font-size: 12px; font-weight: 500; text-decoration: none; border-bottom: 2px solid transparent; }
+.site-header .site-nav a:hover { background: #e9e5d9; color: #151713; }
+.site-header .site-nav a[aria-current='page'] { color: #151713; background: #ece4ce; border-bottom-color: #ad7911; }
+.site-header a:focus-visible, .site-header button:focus-visible { outline: 3px solid #9d7013; outline-offset: 3px; }
+.site-header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 14px; font-size: 12px; }
+.site-header .gp-local { color: #606656; }
+@media (max-width: 1100px) {
+  .site-header { grid-template-columns: 1fr auto; }
+  .site-nav { grid-column: 1 / -1; grid-row: 2; }
+  .site-header-actions { grid-column: 2; grid-row: 1; }
+}
+@media (max-width: 760px) {
+  .site-header { gap: 12px; }
+  .site-brand-mark { width: 40px; height: 40px; font-size: 17px; }
+  .site-nav { order: 3; width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+  .site-header .site-nav a { justify-content: center; padding: 8px; font-size: 12px; text-align: center; }
+}
+@media print { .site-header { display: none; } }

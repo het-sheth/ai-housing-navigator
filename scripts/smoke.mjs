@@ -6,7 +6,7 @@ try {
   const page = await browser.newPage({ viewport: {width:1440,height:1000} })
   const errors = []
   page.on('pageerror', error=>errors.push(error.message))
-  await page.goto('http://127.0.0.1:5173/')
+  await page.goto(`${process.env.APP_ORIGIN ?? 'http://127.0.0.1:5173'}/prototype`)
   await page.evaluate(()=>document.fonts.ready)
   await page.getByLabel('Proposed homes').first().waitFor()
   assert.equal(await page.getByLabel('Proposed homes').count(),2,'Both proposal inputs must be present after the route loads')

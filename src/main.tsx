@@ -13,8 +13,8 @@ const screen = path === '/design-system' ? <DesignSystem />
   : path === '/projects/new' ? <GuidedProject />
     : path === '/compare' ? <ProposalComparison />
     : path === '/explore' ? <PropertyExplorer />
-    : path === '/welcome' ? <Welcome />
-      : <App />
+    : path === '/prototype' ? <App />
+      : <Welcome />
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

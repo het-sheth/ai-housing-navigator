@@ -2,6 +2,8 @@
 
 This is the earlier page-branch handoff. The pages are now combined with the walkthrough and source stack on `feat/consolidate-application`. The current map contract uses a selected candidate state for Explorer and a saved parcel state for comparison, with real inspection and current-record retry callbacks. See [the consolidated handoff](application-consolidation.md).
 
+Current navigation supersedes the historical root-route note below: `/` and `/welcome` open the animated home, all three application pages share navigation, and `/prototype` preserves the historical Lanark example.
+
 ## For Humans
 
 The `/explore` page lets a user confirm bounded County assessment search criteria, inspect one returned parcel and open `/compare?parcelId=<encoded ID>`. The comparison page treats that ID as a suggestion. It loads current County observations for the exact string ID only after a second explicit confirmation, then permits two independent proposal screens. Editing one proposal clears only its own result. Both pages keep the existing right-hand 2D site map.

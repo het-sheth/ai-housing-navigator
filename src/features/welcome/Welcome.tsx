@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
+import { AppHeader } from '../../components/AppHeader'
 import './welcome.css'
 
 const NeighborhoodScene = lazy(() => import('./NeighborhoodScene'))
@@ -48,18 +49,15 @@ export default function Welcome() {
 
   return <main className="welcome-screen" data-testid="welcome-screen">
     <a className="welcome-skip" href="/projects/new">Skip introduction</a>
-    <header className="welcome-header">
-      <a className="welcome-brand" href="/welcome" aria-label="Housing Navigator home"><span className="welcome-brand-mark">412<span className="welcome-brand-spark" aria-hidden="true">✦</span></span><span>Housing<br/>Navigator</span></a>
-      <nav aria-label="Welcome navigation"><a href="/">Lanark prototype <span aria-hidden="true">↗</span></a><a className="welcome-nav-start" href="/projects/new">Start a project <span aria-hidden="true">↗</span></a></nav>
-    </header>
+    <AppHeader current="/" />
 
     <section className="welcome-hero" aria-labelledby="welcome-title">
       <div className="welcome-copy">
         <p className="welcome-eyebrow"><span className="welcome-eyebrow-line"/>PITTSBURGH <span className="welcome-eyebrow-separator">/</span> ALLEGHENY COUNTY</p>
         <h1 id="welcome-title">A place to start.<br/><em>A path to build.</em></h1>
-        <p className="welcome-intro">A housing idea begins with a property and a lot of unanswered questions. Bring your proposal. We will help you see the evidence, the gaps, and the next conversation to have.</p>
-        <div className="welcome-actions"><a className="welcome-primary" href="/projects/new">Start a project <span aria-hidden="true">↗</span></a><a className="welcome-secondary" href="/">Explore the Lanark prototype <span aria-hidden="true">↗</span></a></div>
-        <div className="welcome-smallprint"><span className="welcome-smallprint-icon" aria-hidden="true">i</span><p>Local preview. AI can suggest work from your description; it does not check permissions. Account saving is not connected yet.</p></div>
+        <p className="welcome-intro">Turn your housing idea into sourced findings, clear unknowns, and a useful next step.</p>
+        <div className="welcome-actions"><a className="welcome-primary" href="/projects/new">Assess a property <span aria-hidden="true">↗</span></a><a className="welcome-secondary" href="/explore">Explore properties <span aria-hidden="true">↗</span></a></div>
+        <div className="welcome-smallprint"><span className="welcome-smallprint-icon" aria-hidden="true">i</span><p>Public records, clear unknowns, and useful next steps. Checks have limited coverage and do not determine permission. Saved projects stay on this device.</p></div>
       </div>
       <div className="welcome-visual">
         <div className="welcome-scene-frame">
@@ -72,6 +70,15 @@ export default function Welcome() {
       </div>
     </section>
 
+    <section className="welcome-paths" aria-labelledby="welcome-paths-title">
+      <div className="welcome-paths-heading"><p className="welcome-eyebrow">ONE WORKSPACE / THREE WAYS IN</p><h2 id="welcome-paths-title">Choose your starting point.</h2><p>A site in mind, a place to find, or two ideas to weigh.</p></div>
+      <div className="welcome-path-grid">
+        <a className="welcome-path welcome-path-primary" href="/projects/new"><span className="welcome-path-number">01 / I HAVE A SITE</span><h3>Turn a proposal<br/>into a next step.</h3><p>Confirm your property, describe the work, and review sourced findings and the evidence still needed.</p><span className="welcome-path-action">Assess a property <span aria-hidden="true">↗</span></span></a>
+        <a className="welcome-path" href="/explore"><span className="welcome-path-number">02 / I NEED A PLACE</span><h3>Find a parcel<br/>worth a closer look.</h3><p>Search bounded County assessment records and inspect candidate parcels on the map. Suitability remains unassessed.</p><span className="welcome-path-action">Explore properties <span aria-hidden="true">↗</span></span></a>
+        <a className="welcome-path" href="/compare"><span className="welcome-path-number">03 / I HAVE TWO IDEAS</span><h3>One property.<br/>Two possibilities.</h3><p>Compare two proposals on the same confirmed parcel. See which findings, unknowns, and next actions differ.</p><span className="welcome-path-action">Compare proposals <span aria-hidden="true">↗</span></span></a>
+      </div>
+    </section>
     <section className="welcome-process" aria-label="How it works"><p className="welcome-process-label">FROM QUESTION TO NEXT STEP</p><ol><li><span>01</span><strong>Property</strong><small>Start with an address or parcel.</small></li><li><span>02</span><strong>Proposal</strong><small>Describe what you hope to do.</small></li><li><span>03</span><strong>Next steps</strong><small>See evidence, gaps, and who to ask.</small></li></ol><p className="welcome-process-note">Built for honest early diligence.</p></section>
+    <footer className="welcome-footer"><span>412 / Independent housing project workspace</span><a href="/prototype">Historical Lanark example <span aria-hidden="true">↗</span></a></footer>
   </main>
 }
