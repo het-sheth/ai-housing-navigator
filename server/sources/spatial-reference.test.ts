@@ -112,6 +112,19 @@ describe('spatial and reference source adapters', () => {
     expect(result.records[0]).not.toHaveProperty('sectionUrl')
   })
 
+  it('reads PRT GTFS route and stop records with a bounded nearby point count', async () => {
+    const encoder = new TextEncoder()
+    const entries = new Map([
+      ['routes.txt', encoder.encode('route_id,route_short_name,route_type\nR1,16,3\nR2,RED,2\n')],
+      ['stops.txt', encoder.encode('stop_id,stop_name,stop_lat,stop_lon,location_type\nS1,"Main, Station",40.45,-79.98,0\nS2,Far,40.5,-79.9,0\n')],
+      ['feed_info.txt', encoder.encode('feed_start_date,feed_end_date\n20260628,20261014\n')],
+    ])
+    const zipReader = async () => ({ entries })
+    const result = await querySpatialReferenceSource(31, { latitude: 40.45, longitude: -79.98 }, { zipReader, now })
+    expect(result).toMatchObject({ status: 'available', sourceDate: '2026-06-28/2026-10-14', records: [{ routeCount: 2, stopLocationCount: 2, nearbyStopLocationCount: 1 }, { stopId: 'S1', name: 'Main, Station', distanceMeters: 0 }] })
+    expect(result.summary).toMatch(/not.*accessibility/i)
+  })
+
   it('reports a missing catalog report distinctly from a denied GET', async () => {
     const missing = await querySpatialReferenceSource(16, {}, { fetcher: async () => new Response(null, { status: 404 }), now })
     const failed = await querySpatialReferenceSource(16, {}, { fetcher: async () => { throw Error('timeout') }, now })

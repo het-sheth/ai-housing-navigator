@@ -19,7 +19,7 @@ describe('source coverage registry', () => {
     expect(body.sources.find((item: { catalogId: number }) => item.catalogId === 22)).toMatchObject({ queryMode: 'live_point', queryRequirements: ['latitude', 'longitude'] })
     expect(body.sources.find((item: { catalogId: number }) => item.catalogId === 52)).toMatchObject({ queryMode: 'live_2010_tract_context', queryRequirements: ['tract'] })
     expect(body.sources.find((item: { catalogId: number }) => item.catalogId === 54)).toMatchObject({ queryMode: 'not_connected' })
-    expect(body.sources.find((item: { catalogId: number }) => item.catalogId === 31)).toMatchObject({ queryMode: 'not_connected' })
+    expect(body.sources.find((item: { catalogId: number }) => item.catalogId === 31)).toMatchObject({ queryMode: 'live_gtfs_feed_or_point', runtimeStatus: 'source_query' })
     expect(body.sources.find((item: { catalogId: number }) => item.catalogId === 19)).toMatchObject({ queryMode: 'live_tract', queryRequirements: ['tract'] })
     expect(body.sources.find((item: { catalogId: number }) => item.catalogId === 32)).toMatchObject({ queryMode: 'live_point', queryRequirements: ['latitude', 'longitude'] })
     for (const id of [19, 32, 36, 39, 43]) expect(body.sources.find((item: { catalogId: number }) => item.catalogId === id).runtimeUrl).toMatch(/^https:\/\//)

@@ -1,14 +1,18 @@
+import { readZipEntries } from './zip-range.mjs'
+
 const tractLayer = 'https://tigerweb.geo.census.gov/arcgis/rest/services/Census2020/Tracts_Blocks/MapServer/0'
 const trafficLayer = 'https://gis.penndot.gov/arcgis/rest/services/opendata/roadwaytraffic/MapServer/0'
 const elevationEndpoint = 'https://epqs.nationalmap.gov/v1/json'
 const amlLayer = 'https://gis.dep.pa.gov/depgisprd/rest/services/emappa/eMapPA_External/FeatureServer/36'
 const nlcdLayer = 'https://di-nlcd.img.arcgis.com/arcgis/rest/services/USA_NLCD_Annual_LandCover/ImageServer'
+const gtfsUrl = 'https://www.rideprt.org/developerresources/GTFS.zip'
 
 const documents = new Map([
   [10, ['https://ecode360.com/45474054', 'Pittsburgh Title 9 Zoning Code', 'City of Pittsburgh', 'legal text']],
   [11, ['https://www.pittsburghpa.gov/Training/DCP-BC-Archive/Zoning-Board-of-Adjustment', 'Pittsburgh Zoning Board archive', 'City of Pittsburgh', 'decision index']],
   [12, ['https://www.generalcode.com/text-library/?clbc=true', 'Pennsylvania municipal code library', 'Pennsylvania municipalities', 'code index']],
   [16, ['https://www.alleghenycounty.us/Services/Housing/Housing-Needs-Assessment', 'Allegheny County Housing Needs Assessment', 'Allegheny County', 'report']],
+  [31, ['https://rideprt.org/developerresources/', 'Pittsburgh Regional Transit GTFS download index', 'PRT service region', 'download index']],
   [33, ['https://www.openstreetmap.org/', 'OpenStreetMap', 'Global', 'map data portal']],
   [34, ['https://openaddresses.io/', 'OpenAddresses', 'Global', 'bulk address portal']],
   [35, ['https://www.pasda.psu.edu/', 'Pennsylvania Spatial Data Access', 'Pennsylvania', 'data portal']],
@@ -16,7 +20,7 @@ const documents = new Map([
 ])
 const documentLinkTerms = new Map([
   [10, /zoning|chapter|section|title 9/i], [11, /zba|zoning|appeal/i],
-  [12, /municipal|code|ordinance/i],
+  [12, /municipal|code|ordinance/i], [31, /gtfs|schedule|feed/i],
   [33, /map|data/i], [34, /address|download|data/i],
   [35, /catalog|dataset|data/i], [37, /imagery|ortho/i],
 ])
@@ -133,6 +137,90 @@ async function documentIndex(catalogId, fetcher, retrievedAt) {
   }
 }
 
+function csvRows(text, maximumRows) {
+  const rows = []
+  let row = []
+  let field = ''
+  let quoted = false
+  for (let index = 0; index < text.length; index++) {
+    const char = text[index]
+    if (quoted) {
+      if (char === '"' && text[index + 1] === '"') { field += '"'; index++ }
+      else if (char === '"') quoted = false
+      else field += char
+    } else if (char === '"') {
+      if (field) throw Error('invalid_gtfs_csv')
+      quoted = true
+    } else if (char === ',') { row.push(field); field = '' }
+    else if (char === '\n') {
+      row.push(field.replace(/\r$/, ''))
+      if (row.some(value => value)) rows.push(row)
+      if (rows.length > maximumRows) throw Error('gtfs_row_limit')
+      row = []
+      field = ''
+    } else field += char
+    if (field.length > 4000) throw Error('gtfs_field_limit')
+  }
+  if (quoted) throw Error('invalid_gtfs_csv')
+  if (field || row.length) { row.push(field.replace(/\r$/, '')); rows.push(row) }
+  if (!rows.length || rows.length > maximumRows) throw Error('invalid_gtfs_csv')
+  return rows
+}
+
+function csvTable(bytes, required, maximumRows) {
+  const rows = csvRows(new TextDecoder('utf-8', { fatal: true }).decode(bytes), maximumRows)
+  const header = rows.shift()
+  const index = Object.fromEntries(header.map((name, position) => [name, position]))
+  if (new Set(header).size !== header.length || required.some(name => !Number.isInteger(index[name])) || rows.some(row => row.length !== header.length)) throw Error('invalid_gtfs_schema')
+  return rows.map(row => Object.fromEntries(required.map(name => [name, row[index[name]]])))
+}
+
+function gtfsDate(value) {
+  if (!/^\d{8}$/.test(value ?? '')) throw Error('invalid_gtfs_date')
+  const date = `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`
+  if (new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) !== date) throw Error('invalid_gtfs_date')
+  return date
+}
+
+function distanceMeters(a, b) {
+  const radians = Math.PI / 180
+  const deltaLatitude = (a.latitude - b.latitude) * radians
+  const deltaLongitude = (a.longitude - b.longitude) * radians
+  const value = Math.sin(deltaLatitude / 2) ** 2 + Math.cos(a.latitude * radians) * Math.cos(b.latitude * radians) * Math.sin(deltaLongitude / 2) ** 2
+  return Math.round(12_742_000 * Math.asin(Math.min(1, Math.sqrt(value))))
+}
+
+async function gtfs(context, zipReader, fetcher, retrievedAt) {
+  const point = validPoint(context)
+  const geography = point ? '500-meter radius around supplied point' : 'PRT GTFS service region'
+  const matchMethod = point ? 'point_radius_500m' : 'feed_counts_no_parcel_join'
+  const reply = (status, summary, records = [], sourceDate = null) => shape(31, status, geography, matchMethod, gtfsUrl, retrievedAt, summary, records, sourceDate)
+  try {
+    const { entries } = await zipReader(gtfsUrl, ['routes.txt', 'stops.txt', 'feed_info.txt'], { fetcher, maxArchiveBytes: 32_000_000, maxCompressedBytes: 200_000, maxInflatedBytes: 500_000 })
+    const routes = csvTable(entries.get('routes.txt'), ['route_id', 'route_short_name', 'route_type'], 500)
+    const stops = csvTable(entries.get('stops.txt'), ['stop_id', 'stop_name', 'stop_lat', 'stop_lon', 'location_type'], 10_000)
+    const feed = csvTable(entries.get('feed_info.txt'), ['feed_start_date', 'feed_end_date'], 10)
+    if (feed.length !== 1 || !routes.length || !stops.length || new Set(routes.map(row => row.route_id)).size !== routes.length || new Set(stops.map(row => row.stop_id)).size !== stops.length || routes.some(row => !row.route_id || !/^\d+$/.test(row.route_type))) throw Error('invalid_gtfs_records')
+    const feedStartDate = gtfsDate(feed[0].feed_start_date)
+    const feedEndDate = gtfsDate(feed[0].feed_end_date)
+    if (feedEndDate < feedStartDate) throw Error('invalid_gtfs_period')
+    const sourceDate = `${feedStartDate}/${feedEndDate}`
+    const locations = stops.map(row => {
+      const latitude = Number(row.stop_lat)
+      const longitude = Number(row.stop_lon)
+      if (!row.stop_id || !row.stop_name || row.stop_name.length > 200 || !Number.isFinite(latitude) || !Number.isFinite(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) throw Error('invalid_gtfs_stop')
+      return { stopId: row.stop_id, name: row.stop_name, latitude, longitude, locationType: row.location_type }
+    })
+    const nearby = point ? locations.map(stop => ({ ...stop, distanceMeters: distanceMeters(point, stop) })).filter(stop => stop.distanceMeters <= 500).sort((left, right) => left.distanceMeters - right.distanceMeters || left.stopId.localeCompare(right.stopId)) : []
+    const counts = { routeCount: routes.length, stopLocationCount: locations.length, ...(point ? { nearbyStopLocationCount: nearby.length, radiusMeters: 500 } : {}), feedStartDate, feedEndDate }
+    const records = [counts, ...nearby.slice(0, 19).map(stop => ({ stopId: stop.stopId, name: stop.name, distanceMeters: stop.distanceMeters }))]
+    const status = !point ? 'available' : !nearby.length ? 'empty' : nearby.length > 19 ? 'incomplete' : 'available'
+    return reply(status, 'Official static PRT GTFS route and stop location records. Straight-line proximity is not route service, schedule availability, accessible travel, or an accessibility score.', records, sourceDate)
+  } catch {
+    return reply('error', 'The official PRT GTFS archive could not be read as bounded verified route, stop, and feed-date records.')
+  }
+}
+
 async function tract(context, fetcher, retrievedAt) {
   const reply = (status, url, summary, records = []) => shape(19, status, 'United States, 2020 Census tracts', 'exact 11-digit tract GEOID', url, retrievedAt, summary, records, status === 'available' ? '2020' : null)
   if (!/^\d{11}$/.test(context?.tract ?? '')) return reply('needs_input', tractLayer, 'An 11-digit Census tract GEOID is needed. A parcel ID is not a tract.')
@@ -202,12 +290,13 @@ async function landCover(context, fetcher, retrievedAt) {
   }
 }
 
-export async function querySpatialReferenceSource(catalogId, context, { fetcher = fetch, now = () => new Date().toISOString() } = {}) {
+export async function querySpatialReferenceSource(catalogId, context, { fetcher = fetch, now = () => new Date().toISOString(), zipReader = readZipEntries } = {}) {
   if (!owned.has(catalogId)) return null
   const retrievedAt = now()
   if (catalogId === 19) return tract(context, fetcher, retrievedAt)
   if (catalogId === 32 || catalogId === 39) return nearbyCount(catalogId, context, fetcher, retrievedAt)
   if (catalogId === 36) return elevation(context, fetcher, retrievedAt)
   if (catalogId === 43) return landCover(context, fetcher, retrievedAt)
+  if (catalogId === 31) return gtfs(context, zipReader, fetcher, retrievedAt)
   return documentIndex(catalogId, fetcher, retrievedAt)
 }

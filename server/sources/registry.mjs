@@ -432,10 +432,10 @@ const sources = [
     "granularity": "Stop, route, trip, schedule",
     "catalogUrl": "https://data.wprdc.org/dataset/port-authority-of-allegheny-county-transit-data",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://www.rideprt.org/developerresources/GTFS.zip",
+    "note": "Bounded official GTFS route and stop records, with optional 500-meter straight-line stop proximity. This is not schedule service or an accessibility score.",
+    "queryMode": "live_gtfs_feed_or_point",
     "queryRequirements": []
   },
   {
