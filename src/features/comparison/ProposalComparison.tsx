@@ -3,7 +3,7 @@ import { ACTIVITIES, createDraft } from '../projects/contracts'
 import { hasConfirmedParcel, loadProperty, type PropertyDetail } from '../projects/property-client'
 import { requestScreening, type ScreeningCheck, type ScreeningResult } from '../projects/screening-client'
 import { SiteContextMap } from '../projects/SiteContextMap'
-import { compareChecks, compareInputs, createComparison, updateProposal, validParcelId, visibleScore, type Comparison, type ProposalInput } from './comparison-model'
+import { compareChecks, compareInputs, createComparison, updateProposal, validParcelId, type Comparison, type ProposalInput } from './comparison-model'
 import { loadComparison, saveComparison } from './comparison-store'
 import '../projects/guided-project.css'
 import './proposal-comparison.css'
@@ -23,9 +23,8 @@ function CheckLine({ check }: { check: ScreeningCheck }) {
   return <li className="pc-check"><strong>{check.label}</strong><span>{check.status.replaceAll('_', ' ')}</span><p>{check.reason}</p><small>Source date: {check.sourceDate || 'Unknown'}. Retrieved: {dateLabel(check.retrievedAt)}. {url && <a href={url} target="_blank" rel="noreferrer">Source ↗</a>}</small></li>
 }
 
-function ProposalCard({ side, input, result, state, error, canRun, onInput, onRun }: { side: Side; input: ProposalInput; result: ScreeningResult | null; state: RunState; error: string; canRun: boolean; onInput: (input: ProposalInput) => void; onRun: () => void }) {
+export function ProposalCard({ side, input, result, state, error, canRun, onInput, onRun }: { side: Side; input: ProposalInput; result: ScreeningResult | null; state: RunState; error: string; canRun: boolean; onInput: (input: ProposalInput) => void; onRun: () => void }) {
   const set = (change: Partial<ProposalInput>) => onInput({ ...input, ...change })
-  const score = visibleScore(result)
   return <section className="pc-proposal" aria-labelledby={`proposal-${side}`} data-testid={`proposal-${side}`}>
     <div className="pc-proposal-head"><span className="gp-kicker">Independent proposal</span><h2 id={`proposal-${side}`}>Proposal {side}</h2></div>
     <label className="gp-label" htmlFor={`description-${side}`}>What would you do here?</label>
@@ -38,9 +37,9 @@ function ProposalCard({ side, input, result, state, error, canRun, onInput, onRu
     {!canRun && <p className="gp-helper">Confirm current County parcel records to run new checks.</p>}
     {error && <p className="gp-error-message" role="alert">{error} {result && 'The dated prior result remains below.'}</p>}
     {result ? <div className="pc-result" data-testid={`result-${side}`}>
-      <span className="gp-kicker">{error ? 'Prior dated property screen' : 'Dated property screen'}</span><h3>{score === null ? 'Assessment incomplete' : `Development Ease Score: ${score} / 100`}</h3>
+      <span className="gp-kicker">{error ? 'Prior dated property screen' : 'Dated property screen'}</span><h3>Individual property findings</h3>
       <p>Checked {dateLabel(result.retrievedAt)}. Jurisdiction: {result.municipality}. Rubric: {result.rubricVersion}.</p>
-      {score === null && <p>No Development Ease Score is available. Required factors remain unknown, unsupported or unavailable.</p>}
+      <p>No combined score. Unknown, unsupported and unavailable checks remain unscored.</p>
       <ul className="pc-checks">{result.checks.map(check => <CheckLine check={check} key={check.id} />)}</ul>
       <SourceObservations observations={result.sourceObservations} />
       <div className="pc-actions"><h4>Next actions from this run</h4>{result.nextActions.length ? <ol>{result.nextActions.map((action, index) => <li key={`${index}-${action}`}>{action}</li>)}</ol> : <p>No source actions returned. Review every check before relying on this screen.</p>}</div><p className="gp-helper">{result.caveat}</p>

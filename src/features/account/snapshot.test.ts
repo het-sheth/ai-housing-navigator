@@ -35,6 +35,16 @@ describe('cloud snapshot validation', () => {
     expect(() => validateCloudSnapshot('comparison', malformed)).toThrow(/comparison/i)
   })
 
+  it('validates metric scores in cloud comparison results', () => {
+    const comparison = createComparison('0046R00029000000')
+    const cloud = structuredClone(comparison) as unknown as { proposals: { A: { result: unknown } } }
+    const check = { id: 'zoning-use', label: 'Use table', status: 'screened_low_friction', reason: 'Supported', sourceUrl: 'https://ecode360.com/45476538', sourceDate: null, retrievedAt: '2026-09-27T10:00:00Z', metricScore: { value: 2, max: 2, scope: 'One detached home in R1D', rule: 'City use table' } }
+    cloud.proposals.A.result = { status: 'pending', score: null, rubricVersion: 'test', parcelId: comparison.parcelId, proposal: comparison.proposals.A.input, municipality: 'Pittsburgh', checks: [check], nextActions: [], retrievedAt: '2026-09-27T10:00:00Z', caveat: 'Incomplete' }
+    expect(validateCloudSnapshot('comparison', cloud)).toEqual(cloud)
+    check.metricScore = { ...check.metricScore, value: 1 }
+    expect(() => validateCloudSnapshot('comparison', cloud)).toThrow(/comparison/i)
+  })
+
   it('backs up a device comparison before restoring a cloud version for the same parcel', async () => {
     const entries = new Map<string, string>()
     vi.stubGlobal('localStorage', {

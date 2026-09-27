@@ -1,3 +1,13 @@
+# Review and Results redesign, September 27, 2026
+
+The user approved replacing the confusing final walkthrough steps with Check your project and What the checks found. Review runs checks directly. Results show individual check evidence, inline source links/dates, limited per-metric scores and explicit unscored gaps. No combined score is shown. See [the metric inventory and scoring rules](assessment-metrics.md).
+
+The active branch is `feat/clear-review-results` in `/tmp/ai-housing-consolidated`, based on merged PR #21. The saved parcel boundary reloads on returning to a confirmed live project, with stale-response guards and retry. The remaining historical link is removed from the walkthrough footer; the direct historical route is preserved. Local/cloud drafts, auth, manual work selection and AI spending restrictions remain unchanged.
+
+PR #20 connected the public guest release; PR #21 removed the historical homepage link. The canonical project wiki handoff records exact production identities and verification. Original dirty checkout and prior branches/worktrees remain preserved. This redesign requires final checks and release verification before completion.
+
+# Earlier connected release record
+
 # Live connection release, September 27, 2026
 
 This section supersedes the pre-provisioning checkpoint below. Active work remains in `/tmp/ai-housing-consolidated` on `feat/connected-live-app`, PR #20. Preserve the dirty original checkout and earlier worktrees. The final deployment identity and release verification will be recorded in the project wiki handoff after promotion.

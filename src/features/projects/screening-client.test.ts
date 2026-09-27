@@ -47,6 +47,32 @@ describe('screening request', () => {
     expect(hasCompleteScreen(result)).toBe(false)
   })
 
+  it('accepts a narrow metric score while the overall assessment is pending', async () => {
+    const draft: Draft = { ...createDraft(), parcelId: '0046R00029000000', propertyConfirmed: true, propertyEvidence: 'live' }
+    const check = { id: 'flood', label: 'FEMA mapped flood zone', status: 'screened_low_friction', reason: 'Whole parcel covered.', sourceUrl: 'https://hazards.fema.gov/layer', sourceDate: null, retrievedAt: '2026-09-26T20:00:00Z', metricScore: { value: 2, max: 2, scope: 'Whole parcel minimal-hazard X zone', rule: 'FEMA minimal-hazard X coverage' } }
+    const fetcher = vi.fn(async () => new Response(JSON.stringify({ status: 'pending', score: null, parcelId: draft.parcelId, proposal: { activities: [], proposedHomes: null, housingForm: 'unknown', groundDisturbance: 'unknown' }, municipality: 'Pittsburgh', checks: [check], nextActions: [], rubricVersion: 'test', retrievedAt: '2026-09-26T20:00:00Z', caveat: '' })))
+    expect((await requestScreening(draft, fetcher)).checks[0].metricScore).toEqual(check.metricScore)
+  })
+
+  it('rejects malformed or unsupported metric scores', async () => {
+    const draft: Draft = { ...createDraft(), parcelId: '0046R00029000000', propertyConfirmed: true, propertyEvidence: 'live' }
+    const base = { status: 'pending', score: null, parcelId: draft.parcelId, proposal: { activities: [], proposedHomes: null, housingForm: 'unknown', groundDisturbance: 'unknown' }, municipality: 'Pittsburgh', nextActions: [], rubricVersion: 'test', retrievedAt: '2026-09-26T20:00:00Z', caveat: '' }
+    const check = { id: 'flood', label: 'Flood', status: 'screened_low_friction', reason: 'Mapped', sourceUrl: 'https://hazards.fema.gov/layer', sourceDate: null, retrievedAt: base.retrievedAt }
+    const invalid = [
+      { ...check, metricScore: { value: 1, max: 2, scope: 'Parcel', rule: 'Rule' } },
+      { ...check, metricScore: { value: 2, max: 100, scope: 'Parcel', rule: 'Rule' } },
+      { ...check, metricScore: { value: 2, max: 2, scope: '', rule: 'Rule' } },
+      { ...check, metricScore: { value: 2, max: 2, scope: 'Parcel', rule: 'Rule', extra: true } },
+      { ...check, status: 'unknown', metricScore: { value: 2, max: 2, scope: 'Parcel', rule: 'Rule' } },
+      { ...check, id: 'slope', metricScore: { value: 2, max: 2, scope: 'Parcel', rule: 'Rule' } },
+      { ...check, id: 'zoning-use', status: 'mapped_flag', metricScore: { value: 0, max: 2, scope: 'Parcel', rule: 'Rule' } },
+    ]
+    for (const item of invalid) {
+      const fetcher = vi.fn(async () => new Response(JSON.stringify({ ...base, checks: [item] })))
+      await expect(requestScreening(draft, fetcher)).rejects.toThrow('screening_invalid_response')
+    }
+  })
+
   it('accepts no and unknown map flags as incomplete source observations', async () => {
     const draft: Draft = { ...createDraft(), parcelId: '0046R00029000000', propertyConfirmed: true, propertyEvidence: 'live' }
     const base = { id: 'mapped-undermining', coverage: 'mapped_intersection_only', sourceUrl: 'https://example.org/layer', sourceDate: null, retrievedAt: '2026-09-26T20:00:00Z', count: 1, summary: 'Review the mapped condition.' }

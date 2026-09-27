@@ -1,5 +1,7 @@
 # UI refinement after consolidation
 
+September 27 update: the user approved the Review/Results redesign and per-metric scores for supported rules, superseding the blanket no-number guidance below. Current rule inventory: [assessment metrics](assessment-metrics.md). Earlier refinement notes remain historical context.
+
 ## For Humans
 
 One application foundation connects the landing page, guided assessment, Property Explorer and Proposal Comparison. Keep the matte ivory, olive and gold palette and illustrative neighborhood. The next work should simplify one page at a time, preserving source honesty and useful map context.
