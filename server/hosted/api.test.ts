@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import search from '../../api/property/search.mjs'
 import parcel from '../../api/property/parcel.mjs'
+import candidates from '../../api/property/candidates.mjs'
 import screening from '../../api/screening/run.mjs'
 import assist from '../../api/assist.mjs'
 import sources from '../../api/sources.mjs'
@@ -17,6 +18,8 @@ describe('hosted API functions', () => {
     expect((await search.fetch(new Request(`${origin}/api/property/search`))).status).toBe(400)
     expect((await parcel.fetch(new Request(`${origin}/api/property/parcel`, { method: 'POST' }))).status).toBe(405)
     expect((await search.fetch(new Request('https://untrusted.test/api/property/search'))).status).toBe(403)
+    expect((await candidates.fetch(new Request(`${origin}/api/property/candidates?use=other`))).status).toBe(400)
+    expect((await candidates.fetch(new Request('https://untrusted.test/api/property/candidates?use=vacant_land'))).status).toBe(403)
   })
 
   it('runs a same-origin preliminary screen and rejects cross-origin posts', async () => {
