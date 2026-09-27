@@ -29,6 +29,16 @@ describe('Pittsburgh assessment candidate search', () => {
     await handleCandidates(new Request('http://localhost/api/property/candidates?use=single_family&zip=15217'), { fetcher })
     const url = new URL(String(fetcher.mock.calls[0][0]))
     expect(JSON.parse(url.searchParams.get('filters')!)).toEqual({ USEDESC: 'SINGLE FAMILY', PROPERTYZIP: '15217' })
+    const body = await (await handleCandidates(new Request('http://localhost/api/property/candidates?use=single_family&zip=15217'), { fetcher })).json()
+    expect(body.candidates[0].matched).toContain('postal ZIP 15217')
+  })
+
+  it('stamps retrieval after source records arrive', async () => {
+    let fetched = false
+    const fetcher = vi.fn(async () => { fetched = true; return success([row]) })
+    const now = () => fetched ? '2026-09-27T12:00:12.000Z' : '2026-09-27T12:00:00.000Z'
+    const body = await (await handleCandidates(request('single_family'), { fetcher, now })).json()
+    expect(body.retrievedAt).toBe('2026-09-27T12:00:12.000Z')
   })
 
   it('returns only 20 records and marks additional results', async () => {
