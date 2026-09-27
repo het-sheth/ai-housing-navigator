@@ -95,9 +95,10 @@ export async function queryEmploymentSource(catalogId, context, { fetcher = fetc
     const declaredLength = response.headers.get('content-length')
     if (declaredLength !== null && (!/^\d+$/.test(declaredLength) || Number(declaredLength) > maximumCompressedBytes)) return reply('incomplete', 'The official compressed file exceeds the bounded source-read limit.')
     const totals = await sumFile(response, selected.code)
+    if (!totals.workplaceBlockCount) return reply('incomplete', 'No matching 2020 workplace block was returned for this code. Confirm the geography and LODES coverage; no zero employment total is inferred.')
     const record = { [selected.key]: selected.code, year: 2023, workplaceJobs: totals.workplaceJobs, workplaceBlockCount: totals.workplaceBlockCount, jobType: 'all_jobs', sourceFileType: 'WAC' }
     const summary = '2023 LODES8 Pennsylvania WAC S000/JT00 workplace all-jobs count, summed from complete 2020 Census block records. This is not a commuting origin-destination flow, resident employment count, parcel finding, or development score.'
-    return reply(totals.workplaceBlockCount ? 'available' : 'empty', summary, [record], '2023')
+    return reply('available', summary, [record], '2023')
   } catch (error) {
     if (error?.message === 'source_limit' || error?.code === 'Z_BUF_ERROR') return reply('incomplete', 'The Pennsylvania WAC archive was truncated or exceeded a source-read limit; no employment total is reported.')
     return reply('error', 'The Pennsylvania WAC archive could not be read and validated as a complete published file.')

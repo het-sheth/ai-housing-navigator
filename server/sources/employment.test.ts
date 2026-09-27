@@ -30,6 +30,13 @@ describe('Census LODES employment context', () => {
     expect(result).toMatchObject({ status: 'available', coverage: { matchMethod: 'exact_tract_geoid_2020_block_prefix' }, records: [{ tract: '42003000100', workplaceJobs: 5, workplaceBlockCount: 2 }] })
   })
 
+  it('does not turn a no-match geography into a zero workplace-jobs total', async () => {
+    const fetcher = source('420050001001001,7,20251203\n')
+    const result = await querySource(28, { countyFips: '42003' }, { fetcher, now })
+    expect(result).toMatchObject({ status: 'incomplete', sourceDate: null, records: [] })
+    expect(result.summary).toMatch(/no matching.*block/i)
+  })
+
   it('rejects a parcel ID, another state, or an unpublished year before fetching', async () => {
     const fetcher = vi.fn()
     for (const context of [{ parcelId: '0046R00029000000' }, { countyFips: '36061' }, { countyFips: '42003', year: 2022 }]) {
