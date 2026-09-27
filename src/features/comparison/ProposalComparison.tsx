@@ -80,6 +80,12 @@ export default function ProposalComparison() {
   const propertyRequest = useRef<AbortController | null>(null)
   const runRequests = useRef<Record<Side, AbortController | null>>({ A: null, B: null })
   const runEpoch = useRef<Record<Side, number>>({ A: 0, B: 0 })
+  const comparisonCache = useRef(new Map<string, Comparison>())
+
+  function remember(next: Comparison): Comparison {
+    comparisonCache.current.set(next.parcelId, next)
+    return next
+  }
 
   function editParcel(value: string) {
     propertyRequest.current?.abort()
@@ -96,11 +102,15 @@ export default function ProposalComparison() {
 
   useEffect(() => {
     if (!validParcelId(initialParcelId)) return
-    try { setComparison(loadComparison(initialParcelId)) } catch (error) { setStorageError(error instanceof Error ? error.message : 'Saved comparison could not be read.') }
+    try {
+      const saved = loadComparison(initialParcelId)
+      setComparison(saved ? remember(saved) : null)
+    } catch (error) { setStorageError(error instanceof Error ? error.message : 'Saved comparison could not be read.') }
   }, [])
 
   useEffect(() => {
     if (!comparison) return
+    remember(comparison)
     try { saveComparison(comparison); setStorageError('') } catch { setStorageError('Device storage is unavailable. Keep this page open to preserve the comparison.') }
   }, [comparison])
 
@@ -109,6 +119,7 @@ export default function ProposalComparison() {
   async function confirmParcel() {
     const parcelId = parcelInput.trim()
     if (!validParcelId(parcelId)) { setParcelError('Enter an exact County parcel ID using letters, numbers, spaces or hyphens.'); return }
+    if (comparison) remember(comparison)
     propertyRequest.current?.abort()
     const controller = new AbortController()
     propertyRequest.current = controller
@@ -121,10 +132,10 @@ export default function ProposalComparison() {
       runRequests.current.A?.abort(); runRequests.current.B?.abort()
       runEpoch.current.A += 1; runEpoch.current.B += 1
       let saved: Comparison | null = null
-      if (comparison?.parcelId !== parcelId) {
+      if (!comparisonCache.current.has(parcelId)) {
         try { saved = loadComparison(parcelId) } catch (error) { setStorageError(error instanceof Error ? error.message : 'Saved comparison could not be read.'); return }
       }
-      setComparison(current => current?.parcelId === parcelId ? current : saved ?? createComparison(parcelId))
+      setComparison(current => remember(current?.parcelId === parcelId ? current : comparisonCache.current.get(parcelId) ?? saved ?? createComparison(parcelId)))
       setDetail(loaded)
       setRunState({ A: 'idle', B: 'idle' })
       setRunError({ A: '', B: '' })
@@ -137,7 +148,7 @@ export default function ProposalComparison() {
   function changeInput(side: Side, input: ProposalInput) {
     runRequests.current[side]?.abort()
     runEpoch.current[side] += 1
-    setComparison(current => current ? updateProposal(current, side, input) : null)
+    setComparison(current => current ? remember(updateProposal(current, side, input)) : null)
     setRunState(current => ({ ...current, [side]: 'idle' }))
     setRunError(current => ({ ...current, [side]: '' }))
   }
@@ -156,7 +167,7 @@ export default function ProposalComparison() {
       const draft = { ...createDraft(), parcelId: comparison.parcelId, propertyConfirmed: true, propertyEvidence: 'live' as const, activities: input.activities, proposedHomes: input.proposedHomes, housingForm: input.housingForm, groundDisturbance: input.groundDisturbance }
       const result = await requestScreening(draft, fetch, controller.signal)
       if (controller.signal.aborted || runEpoch.current[side] !== epoch) return
-      setComparison(current => current && current.parcelId === result.parcelId && JSON.stringify(current.proposals[side].input) === JSON.stringify(input) ? { ...current, proposals: { ...current.proposals, [side]: { input, result } } } : current)
+      setComparison(current => current && current.parcelId === result.parcelId && JSON.stringify(current.proposals[side].input) === JSON.stringify(input) ? remember({ ...current, proposals: { ...current.proposals, [side]: { input, result } } }) : current)
       setRunState(current => ({ ...current, [side]: 'idle' }))
     } catch {
       if (!controller.signal.aborted && runEpoch.current[side] === epoch) { setRunError(current => ({ ...current, [side]: 'Property checks could not finish. Retry when the source is available.' })); setRunState(current => ({ ...current, [side]: 'error' })) }

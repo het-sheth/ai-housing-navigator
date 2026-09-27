@@ -15,8 +15,8 @@ const detail = id => ({
 })
 const screening = body => ({
   status: 'pending', score: null, rubricVersion: 'test', parcelId: body.parcelId, proposal: body.proposal, municipality: 'Pittsburgh',
-  checks: [{ id: 'flood', label: 'Flood', status: body.proposal.proposedHomes === 1 ? 'mapped_flag' : 'unknown', reason: body.proposal.proposedHomes === 1 ? 'Mapped flood finding' : 'Needs review', sourceUrl: 'https://example.org/flood', sourceDate: null, retrievedAt: '2026-09-27T10:00:00Z' }],
-  nextActions: ['Ask the County about flood mapping'], retrievedAt: '2026-09-27T10:00:00Z', caveat: 'Incomplete public-record screen.',
+  checks: [{ id: 'flood', label: 'Flood', status: body.proposal.proposedHomes === 1 ? 'mapped_flag' : 'unknown', reason: body.parcelId === otherParcel ? 'Other parcel finding' : body.proposal.proposedHomes === 1 ? 'Mapped flood finding' : 'Needs review', sourceUrl: 'https://example.org/flood', sourceDate: null, retrievedAt: body.parcelId === otherParcel ? '2026-09-28T10:00:00Z' : '2026-09-27T10:00:00Z' }],
+  nextActions: ['Ask the County about flood mapping'], retrievedAt: body.parcelId === otherParcel ? '2026-09-28T10:00:00Z' : '2026-09-27T10:00:00Z', caveat: 'Incomplete public-record screen.',
 })
 
 try {
@@ -106,6 +106,33 @@ try {
   await expect(page.getByRole('button', { name: 'Load current parcel records' })).toBeVisible()
   await expect(a.getByLabel('What would you do here?')).toHaveValue('Unsaved after quota')
   await expect(b.getByTestId('result-B')).toContainText('Needs review')
+  await page.getByLabel('Parcel ID').fill(otherParcel)
+  await page.getByRole('button', { name: 'Confirm parcel' }).click()
+  await expect(page.getByText(`Saved parcel ${otherParcel}.`)).toBeVisible()
+  await a.getByLabel('What would you do here?').fill('Other parcel A')
+  await b.getByLabel('What would you do here?').fill('Other parcel B')
+  await b.getByLabel('New construction').check()
+  await b.getByLabel('Proposed homes').fill('2')
+  await b.getByTestId('run-B').click()
+  await expect(b.getByTestId('result-B')).toContainText('Other parcel finding')
+  await expect(b.getByTestId('result-B')).toContainText('9/28/2026')
+  await page.getByLabel('Parcel ID').fill(parcelId)
+  await page.getByRole('button', { name: 'Confirm parcel' }).click()
+  await expect(page.getByText(`Saved parcel ${parcelId}.`)).toBeVisible()
+  await expect(a.getByLabel('What would you do here?')).toHaveValue('Unsaved after quota')
+  await expect(b.getByTestId('result-B')).toContainText('Needs review')
+  await expect(b.getByTestId('result-B')).toContainText('9/27/2026')
+  await page.getByLabel('Parcel ID').fill(otherParcel)
+  await page.getByRole('button', { name: 'Confirm parcel' }).click()
+  await expect(page.getByText(`Saved parcel ${otherParcel}.`)).toBeVisible()
+  await expect(a.getByLabel('What would you do here?')).toHaveValue('Other parcel A')
+  await expect(b.getByLabel('What would you do here?')).toHaveValue('Other parcel B')
+  await expect(b.getByTestId('result-B')).toContainText('Other parcel finding')
+  await expect(b.getByTestId('result-B')).toContainText('9/28/2026')
+  await page.getByLabel('Parcel ID').fill(parcelId)
+  await page.getByRole('button', { name: 'Confirm parcel' }).click()
+  await expect(page.getByText(`Saved parcel ${parcelId}.`)).toBeVisible()
+  await expect(a.getByLabel('What would you do here?')).toHaveValue('Unsaved after quota')
   await page.evaluate(() => { Storage.prototype.setItem = window.__comparisonOriginalSetItem })
   await a.getByLabel('What would you do here?').fill('Saved after quota')
   await expect(page.getByRole('alert')).toHaveCount(0)
@@ -119,10 +146,14 @@ try {
   await expect(page.getByTestId('run-B')).toBeDisabled()
   await page.getByRole('button', { name: 'Confirm parcel' }).click()
   await expect(page.getByText(`Saved parcel ${otherParcel}.`)).toBeVisible()
+  await expect(a.getByLabel('What would you do here?')).toHaveValue('Other parcel A')
+  await expect(b.getByLabel('What would you do here?')).toHaveValue('Other parcel B')
+  await expect(b.getByTestId('result-B')).toContainText('Other parcel finding')
+  await expect(b.getByTestId('result-B')).toContainText('9/28/2026')
   assert.equal(assistantRequests, 0)
-  assert.equal(screeningCalls, 4)
+  assert.equal(screeningCalls, 5)
   assert.deepEqual(errors, [])
-  console.log(JSON.stringify({ flow: 'confirmed parcel, A/B screens, failed refresh, edit, reload and parcel switch', screeningCalls, assistantRequests, screenshots, errors }))
+  console.log(JSON.stringify({ flow: 'confirmed parcel, A/B screens, failed refresh, edit, reload and cached parcel return', screeningCalls, assistantRequests, screenshots, errors }))
   await context.close()
 } finally {
   await browser.close()
