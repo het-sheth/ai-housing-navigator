@@ -6,6 +6,7 @@
   "rewrites": [
     { "source": "/design-system", "destination": "/index.html" },
     { "source": "/welcome", "destination": "/index.html" },
-    { "source": "/projects/new", "destination": "/index.html" }
+    { "source": "/projects/new", "destination": "/index.html" },
+    { "source": "/explore", "destination": "/index.html" }
   ]
 }

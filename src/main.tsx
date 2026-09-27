@@ -5,10 +5,12 @@ import './styles.css'
 const App = lazy(() => import('./App'))
 const DesignSystem = lazy(() => import('./design-system/DesignSystem'))
 const GuidedProject = lazy(() => import('./features/projects/GuidedProject'))
+const PropertyExplorer = lazy(() => import('./features/explorer/PropertyExplorer'))
 const Welcome = lazy(() => import('./features/welcome/Welcome'))
 const path = window.location.pathname.replace(/\/$/, '')
 const screen = path === '/design-system' ? <DesignSystem />
   : path === '/projects/new' ? <GuidedProject />
+    : path === '/explore' ? <PropertyExplorer />
     : path === '/welcome' ? <Welcome />
       : <App />
 
