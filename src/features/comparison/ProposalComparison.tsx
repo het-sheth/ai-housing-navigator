@@ -121,8 +121,10 @@ export default function ProposalComparison() {
       runRequests.current.A?.abort(); runRequests.current.B?.abort()
       runEpoch.current.A += 1; runEpoch.current.B += 1
       let saved: Comparison | null = null
-      try { saved = loadComparison(parcelId) } catch (error) { setStorageError(error instanceof Error ? error.message : 'Saved comparison could not be read.'); return }
-      setComparison(saved ?? createComparison(parcelId))
+      if (comparison?.parcelId !== parcelId) {
+        try { saved = loadComparison(parcelId) } catch (error) { setStorageError(error instanceof Error ? error.message : 'Saved comparison could not be read.'); return }
+      }
+      setComparison(current => current?.parcelId === parcelId ? current : saved ?? createComparison(parcelId))
       setDetail(loaded)
       setRunState({ A: 'idle', B: 'idle' })
       setRunError({ A: '', B: '' })

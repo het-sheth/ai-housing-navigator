@@ -27,8 +27,9 @@ try {
   let holdNext = false
   let releaseHeld = null
   await context.route('**/api/assist', route => { assistantRequests += 1; return route.abort() })
-  await context.route('**/api/property/parcel?**', route => {
+  await context.route('**/api/property/parcel?**', async route => {
     const id = new URL(route.request().url()).searchParams.get('pin')
+    await new Promise(resolve => setTimeout(resolve, 60))
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(detail(id)) })
   })
   await context.route('**/api/screening/run', route => {
@@ -94,6 +95,26 @@ try {
   await page.reload()
   await expect(a.getByLabel('What would you do here?')).toHaveValue('Revised plan again')
   await expect(b.getByTestId('result-B')).toContainText('Needs review')
+  await page.evaluate(() => {
+    window.__comparisonOriginalSetItem = Storage.prototype.setItem
+    Storage.prototype.setItem = () => { throw new DOMException('Quota exceeded', 'QuotaExceededError') }
+  })
+  await a.getByLabel('What would you do here?').fill('Unsaved after quota')
+  await expect(page.getByRole('alert')).toContainText('Device storage is unavailable')
+  await page.getByRole('button', { name: 'Load current parcel records' }).click()
+  await expect(page.getByRole('button', { name: 'Checking County records…' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Load current parcel records' })).toBeVisible()
+  await expect(a.getByLabel('What would you do here?')).toHaveValue('Unsaved after quota')
+  await expect(b.getByTestId('result-B')).toContainText('Needs review')
+  await page.evaluate(() => { Storage.prototype.setItem = window.__comparisonOriginalSetItem })
+  await a.getByLabel('What would you do here?').fill('Saved after quota')
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  await page.evaluate(id => { localStorage.setItem(`housing-navigator-comparison-v1:${encodeURIComponent(id)}`, '{broken') }, parcelId)
+  await page.getByRole('button', { name: 'Load current parcel records' }).click()
+  await expect(page.getByRole('button', { name: 'Checking County records…' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Load current parcel records' })).toBeVisible()
+  await expect(a.getByLabel('What would you do here?')).toHaveValue('Saved after quota')
+  await expect(page.getByRole('alert')).toHaveCount(0)
   await page.getByLabel('Parcel ID').fill(otherParcel)
   await expect(page.getByTestId('run-B')).toBeDisabled()
   await page.getByRole('button', { name: 'Confirm parcel' }).click()
