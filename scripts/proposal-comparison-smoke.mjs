@@ -7,6 +7,7 @@ const parcelId = '0046R00029000000'
 const otherParcel = '0046R00029000001'
 const screenshots = '/tmp/housing-proposal-comparison'
 const browser = await chromium.launch({ executablePath: '/usr/bin/chromium', headless: true })
+const observationIds = ['pli-permits', 'mapped-undermining', 'mapped-landslide', 'riparian-stormwater', 'riparian-river', 'historic-district', 'historic-property', 'inclusionary-housing', 'baum-centre-overlay', 'north-side-parking', 'parking-reduction', 'major-transit-buffer', 'height-reduction', 'riverfront-height']
 
 const detail = id => ({
   parcelId: id,
@@ -15,7 +16,11 @@ const detail = id => ({
 })
 const screening = body => ({
   status: 'pending', score: null, rubricVersion: 'test', parcelId: body.parcelId, proposal: body.proposal, municipality: 'Pittsburgh',
-  checks: [{ id: 'flood', label: 'Flood', status: body.proposal.proposedHomes === 1 ? 'mapped_flag' : 'unknown', reason: body.parcelId === otherParcel ? 'Other parcel finding' : body.proposal.proposedHomes === 1 ? 'Mapped flood finding' : 'Needs review', sourceUrl: 'https://example.org/flood', sourceDate: null, retrievedAt: body.parcelId === otherParcel ? '2026-09-28T10:00:00Z' : '2026-09-27T10:00:00Z' }],
+  checks: [
+    { id: 'zoning-use', label: 'Zoning use', status: body.proposal.proposedHomes === 1 && body.proposal.housingForm === 'detached' ? 'screened_low_friction' : 'unsupported', reason: body.proposal.proposedHomes === 1 && body.proposal.housingForm === 'detached' ? 'One detached home under the narrow use rule' : 'Outside the narrow one-home use rule', sourceUrl: 'https://example.org/use-table', sourceDate: null, retrievedAt: body.parcelId === otherParcel ? '2026-09-28T10:00:00Z' : '2026-09-27T10:00:00Z', ...(body.proposal.proposedHomes === 1 && body.proposal.housingForm === 'detached' ? { metricScore: { value: 2, max: 2, scope: 'One detached home', rule: 'Published use table' } } : {}) },
+    { id: 'flood', label: 'Flood', status: 'screened_low_friction', reason: body.parcelId === otherParcel ? 'Other parcel finding' : 'Whole parcel minimal-hazard X', sourceUrl: 'https://example.org/flood', sourceDate: null, retrievedAt: body.parcelId === otherParcel ? '2026-09-28T10:00:00Z' : '2026-09-27T10:00:00Z', metricScore: { value: 2, max: 2, scope: 'Whole parcel X', rule: 'FEMA minimal-hazard map' } },
+  ],
+  sourceObservations: observationIds.map(id => ({ id, status: id === 'pli-permits' ? 'empty' : 'no_intersection', coverage: id === 'pli-permits' ? 'exact_parcel_record_search' : 'mapped_intersection_only', sourceUrl: `https://example.org/${id}`, sourceDate: null, retrievedAt: body.parcelId === otherParcel ? '2026-09-28T10:00:00Z' : '2026-09-27T10:00:00Z', count: 0, summary: 'No returned feature' })),
   nextActions: ['Ask the County about flood mapping'], retrievedAt: body.parcelId === otherParcel ? '2026-09-28T10:00:00Z' : '2026-09-27T10:00:00Z', caveat: 'Incomplete public-record screen.',
 })
 
@@ -63,16 +68,21 @@ try {
   const b = page.getByTestId('proposal-B')
   await a.getByLabel('New construction').check()
   await b.getByLabel('New construction').check()
-  await a.getByLabel('Proposed homes').fill('1')
-  await b.getByLabel('Proposed homes').fill('2')
+  await a.getByLabel('Number of homes proposed').fill('1')
+  await b.getByLabel('Number of homes proposed').fill('2')
+  await a.getByLabel('Building type').selectOption('detached')
+  await b.getByLabel('Building type').selectOption('detached')
   await a.getByTestId('run-A').click()
   await b.getByTestId('run-B').click()
-  await expect(a.getByTestId('result-A')).toContainText('Mapped flood finding')
-  await expect(b.getByTestId('result-B')).toContainText('Needs review')
-  await expect(page.getByTestId('comparison-differences')).toContainText('Returned finding differs')
+  await expect(a.getByTestId('result-A')).toContainText('2 named checks')
+  await expect(b.getByTestId('result-B')).toContainText('2 named checks')
+  await expect(page.getByTestId('comparison-differences')).toContainText('Coverage or input differs')
+  await expect(page.getByTestId('comparison-differences')).toContainText('Whole parcel minimal-hazard X')
+  await expect(page.getByTestId('comparison-differences')).toContainText('2/2 for this rule')
   await expect(page.getByTestId('comparison-differences')).toContainText('Proposed homes')
   await expect(page.getByTestId('comparison-differences')).toContainText('These are your plans and assumptions')
   await expect(page.getByTestId('comparison-differences')).toContainText('Ask the County about flood mapping')
+  await expect(page.getByTestId('comparison-differences')).toContainText('A 14 · B 14')
   await expect(page.locator('body')).not.toContainText(/Development Ease Score: \d/)
   await mkdir(screenshots, { recursive: true })
   for (const width of [1440, 390]) {
@@ -84,7 +94,7 @@ try {
   failNext = true
   await a.getByTestId('run-A').click()
   await expect(a.getByRole('alert')).toContainText('prior result')
-  await expect(a.getByTestId('result-A')).toContainText('Mapped flood finding')
+  await expect(a.getByTestId('result-A')).toContainText('Prior run')
   await a.getByLabel('What would you do here?').fill('Revised plan')
   await expect(a.getByTestId('result-A')).toHaveCount(0)
   await expect(b.getByTestId('result-B')).toBeVisible()
@@ -96,7 +106,7 @@ try {
   await expect(a.getByTestId('result-A')).toHaveCount(0)
   await page.reload()
   await expect(a.getByLabel('What would you do here?')).toHaveValue('Revised plan again')
-  await expect(b.getByTestId('result-B')).toContainText('Needs review')
+  await expect(b.getByTestId('result-B')).toContainText('2 named checks')
   await expect(page.locator('.gp-aside')).toContainText(`Parcel ${parcelId} saved`)
   failPropertyNext = true
   await page.locator('.gp-aside').getByRole('button', { name: 'Load current records' }).click()
@@ -114,29 +124,29 @@ try {
   await expect(page.getByRole('button', { name: 'Checking County records…' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Load current parcel records' })).toBeVisible()
   await expect(a.getByLabel('What would you do here?')).toHaveValue('Unsaved after quota')
-  await expect(b.getByTestId('result-B')).toContainText('Needs review')
+  await expect(b.getByTestId('result-B')).toContainText('2 named checks')
   await page.getByLabel('Parcel ID').fill(otherParcel)
   await page.getByRole('button', { name: 'Confirm parcel' }).click()
   await expect(page.getByText(`Saved parcel ${otherParcel}.`)).toBeVisible()
   await a.getByLabel('What would you do here?').fill('Other parcel A')
   await b.getByLabel('What would you do here?').fill('Other parcel B')
   await b.getByLabel('New construction').check()
-  await b.getByLabel('Proposed homes').fill('2')
+  await b.getByLabel('Number of homes proposed').fill('2')
   await b.getByTestId('run-B').click()
-  await expect(b.getByTestId('result-B')).toContainText('Other parcel finding')
+  await expect(page.getByTestId('comparison-differences')).toContainText('Other parcel finding')
   await expect(b.getByTestId('result-B')).toContainText('9/28/2026')
   await page.getByLabel('Parcel ID').fill(parcelId)
   await page.getByRole('button', { name: 'Confirm parcel' }).click()
   await expect(page.getByText(`Saved parcel ${parcelId}.`)).toBeVisible()
   await expect(a.getByLabel('What would you do here?')).toHaveValue('Unsaved after quota')
-  await expect(b.getByTestId('result-B')).toContainText('Needs review')
+  await expect(page.getByTestId('comparison-differences')).toContainText('Whole parcel minimal-hazard X')
   await expect(b.getByTestId('result-B')).toContainText('9/27/2026')
   await page.getByLabel('Parcel ID').fill(otherParcel)
   await page.getByRole('button', { name: 'Confirm parcel' }).click()
   await expect(page.getByText(`Saved parcel ${otherParcel}.`)).toBeVisible()
   await expect(a.getByLabel('What would you do here?')).toHaveValue('Other parcel A')
   await expect(b.getByLabel('What would you do here?')).toHaveValue('Other parcel B')
-  await expect(b.getByTestId('result-B')).toContainText('Other parcel finding')
+  await expect(page.getByTestId('comparison-differences')).toContainText('Other parcel finding')
   await expect(b.getByTestId('result-B')).toContainText('9/28/2026')
   await page.getByLabel('Parcel ID').fill(parcelId)
   await page.getByRole('button', { name: 'Confirm parcel' }).click()
@@ -157,7 +167,7 @@ try {
   await expect(page.getByText(`Saved parcel ${otherParcel}.`)).toBeVisible()
   await expect(a.getByLabel('What would you do here?')).toHaveValue('Other parcel A')
   await expect(b.getByLabel('What would you do here?')).toHaveValue('Other parcel B')
-  await expect(b.getByTestId('result-B')).toContainText('Other parcel finding')
+  await expect(page.getByTestId('comparison-differences')).toContainText('Other parcel finding')
   await expect(b.getByTestId('result-B')).toContainText('9/28/2026')
   assert.equal(assistantRequests, 0)
   assert.equal(screeningCalls, 5)

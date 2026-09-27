@@ -20,3 +20,5 @@
 .gp-project-actions > .gp-text-button { min-height: 44px; white-space: nowrap; }
 .gp-project-actions .cloud-save-control { flex-wrap: wrap; min-width: 0; max-width: 100%; }
 .gp-project-actions .cloud-save-message { position: static; box-shadow: none; width: auto; max-width: 100%; }
+.gp-review-card dl{display:grid;gap:14px;margin:20px 0}.gp-review-card dl>div{display:grid;grid-template-columns:minmax(110px,.7fr) minmax(0,1fr);gap:14px}.gp-review-card dt{color:var(--gp-muted)}.gp-review-card dd{margin:0;font-weight:500}.gp-review-card h2{font-size:20px}.gp-screening-inputs>.gp-input{max-width:260px;margin-bottom:4px}
+@media(max-width:480px){.gp-review-card dl>div{grid-template-columns:1fr;gap:3px}}

@@ -541,3 +541,23 @@
 .ex-reconciliation p {
   margin:8px 0 0
 }
+.ex-ai-optional { margin:17px 0 24px; padding:15px 17px; border:1px solid #d6dcd2; background:#f9faf7; }
+.ex-ai-optional summary { cursor:pointer; font-size:13px; font-weight:600; }
+.ex-ai-optional .gp-helper { margin:10px 0; font-size:12px; }
+.ex-suggestion { border-top:1px solid #d3dfcf; padding:10px 0; }
+.ex-suggestion label { display:flex; align-items:flex-start; gap:9px; margin:0; cursor:pointer; }
+.ex-suggestion input { width:18px; height:18px; flex:none; margin-top:2px; accent-color:#8a6514; }
+.ex-suggestion span { display:grid; gap:4px; }
+.ex-suggestion small { font-size:11px; font-weight:400; line-height:1.5; }
+.ex-suggestion-actions { display:flex; flex-wrap:wrap; gap:9px; margin-top:14px; }
+.ex-suggestion-actions .ex-secondary { margin:0; }
+.ex-search-filters { margin:24px 0; padding:19px 20px; background:#f3f1e7; border:1px solid #c7c1a7; border-left:4px solid #b28223; }
+.ex-search-filters h2 { margin-bottom:7px; }
+.ex-search-filters .ex-note { margin:6px 0 14px; }
+.ex-search-filters select,.ex-search-filters input { background:#fff!important; }
+.ex-project-notes { margin:24px 0; }
+.ex-confirmed-notes { margin-top:15px; padding-top:13px; border-top:1px solid #d5d1b9; }
+.ex-confirmed-notes p { white-space:pre-wrap; overflow-wrap:anywhere; }
+.ex-search-evidence { padding:12px 15px; margin:8px 0 15px; background:#f1f3ec; border-left:3px solid #8aa184; font-size:12px; line-height:1.5; }
+.ex-search-evidence p { margin:4px 0; }
+.ex-handoff-note { margin:16px 0 4px; padding:11px 13px; background:#fff9e9; border-left:3px solid #b28223; }

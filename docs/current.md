@@ -1,3 +1,13 @@
+# Consolidated feedback branch, September 27, 2026
+
+Active work is `fix/coherent-project-flows` in `/tmp/ai-housing-consolidated`, based on PR #23 merge `1576d10a456d9f50d9f89d92b6227a8f0ce01e21`. The user requested all remaining feedback on a feature branch. Do not merge or deploy this batch without a subsequent instruction. Original dirty checkout and earlier worktrees remain preserved.
+
+See [the feedback ledger](feedback-fixes.md) for scope and [the video runbook and rubric assessment](video-demo-runbook.md) for the tested Mountford example, exact limitations and recording sequence. The branch clarifies Assess inputs and AI availability, separates Explorer filters from unevaluated requirements, formats zero-numbered addresses without altering source records, requires AI suggestion review, and consolidates Compare findings/actions with coverage differences separated from source differences. A found home-count navigation regression was reproduced and fixed.
+
+Production remains PR #23 source `457437f1221f8171acf01e3165d71f8a62ac5e75`, deployment `dpl_45JV8CmKehZ3nEkhWAVxdHCv6EkK`. Do not present local branch features as deployed. No paid AI or provider changes occurred in this batch. New intake prompt wording has synthetic contract checks, not a fresh live-model quality evaluation. General public email remains unavailable; guests are the approved judge-access path.
+
+Earlier entries below are dated history where superseded here.
+
 # Interactive Home refinement, September 27, 2026
 
 The user approved a bounded Home update: remove the repeated disclaimer, process strip and generic footer; preserve the introduction, three entry paths and illustrative-scene caption. Add more visible automatic motion, manual rotation, zoom, pause and reset, with reduced-motion support and usable mobile scrolling. Implementation is on `feat/interactive-home` in `/tmp/ai-housing-consolidated`. Local verification passed all 281 tests, typecheck, lint and build. The isolated browser passed mouse/touch rotation, automatic motion, bounded zoom, pause/reset, reduced-motion manual control, keyboard navigation, mobile scrolling and forced WebGL fallback at desktop and 390/320px. Independent code and visual reviews found no blocker. Record production verification separately in the canonical handoff.

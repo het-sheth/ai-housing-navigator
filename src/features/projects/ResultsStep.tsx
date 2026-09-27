@@ -1,3 +1,4 @@
+import { displayPropertyAddress } from '../property/address-label'
 import { sources } from '../../domain'
 import { ACTIVITIES, type Draft, type DraftSummary } from './contracts'
 import { type ScreeningCheck, type ScreeningResult } from './screening-client'
@@ -49,7 +50,7 @@ export function ResultsStep({ draft, summary, historical, assessment, assessment
 
   return <>
     <section className="gp-result-proposal">
-      <div><span className="gp-kicker">Project checked</span><h2>{draft.propertyQuery || 'Site unresolved'}</h2><p>{draft.parcelId && draft.propertyConfirmed ? `Parcel ${draft.parcelId}` : 'Parcel not confirmed'} · {proposal}</p></div>
+      <div><span className="gp-kicker">Project checked</span><h2>{draft.parcelId ? displayPropertyAddress(draft.propertyQuery, draft.parcelId) : draft.propertyQuery || 'Site unresolved'}</h2><p>{draft.parcelId && draft.propertyConfirmed ? `Parcel ${draft.parcelId}` : 'Parcel not confirmed'} · {proposal}</p>{draft.description.trim() && <p>{draft.description}</p>}</div>
       <div className="gp-property-summary-actions"><button className="gp-text-button" type="button" onClick={onEditProposal}>Edit proposal</button><button className="gp-text-button" type="button" onClick={onChangeParcel}>Change parcel</button></div>
     </section>
     <section className="gp-assessment" data-testid="assessment-panel">
