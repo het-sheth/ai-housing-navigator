@@ -1,3 +1,17 @@
+# Paused at the user's request, September 27, 2026
+
+The user asked to stop at a good point. Current slices are committed, reviewed and published as focused draft PRs. Start no further implementation until the user resumes. No merge, deployment, paid AI call, credential change or worktree deletion was performed.
+
+- [App PR #13](https://github.com/het-sheth/ai-housing-navigator/pull/13): Chrome DevTools CLI guidance. A fresh isolated elevated MCP probe listed 30 tools and returned about:blank. Native Chrome tools are not exposed in this agent session. The supplied procedure is preserved in [wiki PR #7](https://github.com/het-sheth/ai-housing-hackathon-wiki/pull/7).
+- [App PR #14](https://github.com/het-sheth/ai-housing-navigator/pull/14): HUD CHAS at `e2b0041`, exact county counts with 2013-2017 vintage. The FY2026 income-limit workbook returned HTTP 202 access challenges; no limit was inferred. All 200 tests, typecheck, lint and build passed; metric definitions received independent review.
+- [App PR #15](https://github.com/het-sheth/ai-housing-navigator/pull/15): Census LODES at `9d1645c`, complete bounded Pennsylvania 2023 workplace-file aggregation by county or 2020 tract. No matching blocks returns incomplete without a numeric total. All 205 tests, typecheck, lint and build passed; focused independent review passed 16 tests.
+- These three app PRs are siblings based on documentation PR #12 (`95cb190`). They were verified independently, not as a combined latest-source tree. Reconcile overlapping router/registry changes and rerun combined checks before any merge.
+- The earlier 60-source report remains a dated baseline. It has not been rerun across the new HUD and LODES branches. The all-source objective remains incomplete.
+- The original checkout remains deliberately dirty and includes pre-review work. Preserve it and all explorer/comparison work. Resume from the reviewed branches, not by committing the original tree wholesale.
+- Git audit: focused PRs are in place, but worktree reconciliation and cleanup remain. Folder roles are `src/` frontend, `api/` thin hosted routes, `server/` backend and `server/sources/` data-access adapters. There is no persisted dataset layer; backend JavaScript is not covered by the current TypeScript check, screening still combines several responsibilities, and the reviewed baseline has no GitHub Actions workflow.
+
+On resumption, inspect the PR heads, continue explicit source gaps, and plan Git/worktree cleanup without deleting preserved work. Chrome docs worktree: `/tmp/ai-housing-chrome-docs`; HUD: `/tmp/ai-housing-source-hud`; LODES: `/tmp/ai-housing-source-lodes`. Earlier notes below are historical where this checkpoint supersedes them.
+
 # Current publication checkpoint
 
 September 26, 2026, Eastern. Work resumed at the user's direction. The user authorized splitting and pushing focused PRs. Older stopping-point details remain in Git history and the preserved original checkout.
