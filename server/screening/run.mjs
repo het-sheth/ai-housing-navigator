@@ -115,8 +115,8 @@ function underminingReason(status) {
   return reasons[status] ?? 'Mapped undermining status needs source review; site conditions remain unassessed.'
 }
 
-function pending(input, checks, municipality, actions, now, sourceObservations = []) {
-  return json({ status: 'pending', score: null, rubricVersion, parcelId: input.parcelId, proposal: input.proposal, municipality, checks, sourceObservations, nextActions: actions, retrievedAt: now, caveat: 'No overall Development Ease Score is calculated. Narrow metric screens do not establish permission or financial feasibility.' })
+function pending(input, checks, municipality, actions, now, sourceObservations = [], oneHomeAssessment = null) {
+  return json({ status: 'pending', score: null, rubricVersion, parcelId: input.parcelId, proposal: input.proposal, municipality, checks, sourceObservations, ...(oneHomeAssessment ? { oneHomeAssessment } : {}), nextActions: actions, retrievedAt: now, caveat: 'No overall Development Ease Score is calculated. Narrow metric screens do not establish permission or financial feasibility.' })
 }
 
 function featureCode(value) { return typeof value === 'string' ? value.trim().toUpperCase() : '' }
@@ -181,7 +181,8 @@ export async function handleScreening(request, { fetcher = fetch, now = () => ne
     const missingInputs = input.proposal.proposedHomes === null || input.proposal.housingForm === 'unknown'
     checks.push(check('zoning-use', 'Bounded zoning use-table screen', supportedUse ? 'screened_low_friction' : missingInputs ? 'unknown' : 'unsupported', supportedUse ? `Mapped ${zone}; the published City use table lists one detached housing unit in R1D. This is a provisional use-table screen only, not project permission.` : `Mapped ${zone}; this proposal is outside the narrow one-detached-home R1D use-table screen or needs explicit form and unit inputs.`, at, ruleUrl, null, supportedUse ? { value: 2, max: 2, scope: `One detached home on a parcel wholly mapped ${zone}`, rule: 'Published City R1D use table lists one detached housing unit' } : null))
   }
-  checks.push(check('zoning-other', 'Other zoning requirements', 'unknown', 'Overlays, dimensions, nonconformity and current City interpretation were not evaluated.', at, zoningLayer))
+  const oneHomeAssessmentPromise = assessOneHome(input.parcelId, input.proposal, zone ?? null, fetcher, at)
+  checks.push(check('zoning-other', 'Other zoning requirements', 'unknown', 'Dimensional compliance, overlays, nonconformity and current City interpretation were not evaluated.', at, zoningLayer))
 
   const [slopeResult, floodResult] = await Promise.allSettled([
     spatial(slopeLayer, geometry, 'esriSpatialRelIntersects', 'objectid_1,slope25', fetcher),
@@ -214,7 +215,7 @@ export async function handleScreening(request, { fetcher = fetch, now = () => ne
   const mapped = id => sourceObservations.find(item => item.id === id)
   const undermining = mapped('mapped-undermining')
   checks.push(check('undermining', 'Mapped undermining', undermining.status === 'mapped_flag' ? 'mapped_flag' : undermining.status === 'error' ? 'error' : 'unknown', underminingReason(undermining.status), at, undermining.sourceUrl))
-  checks.push(check('process', 'Proposal review path', 'unknown', 'Current permit path for this work combination has not been reviewed.', at))
+  checks.push(check('process', 'Proposal review path', 'unknown', 'The parcel-specific review path and required permits for this work combination have not been confirmed.', at))
   checks.push(check('infrastructure', 'Infrastructure and access', 'unknown', 'Parcel-specific utility capacity and access have not been confirmed.', at))
   if (checks.some(item => item.id === 'slope' && item.status === 'mapped_flag')) actions.push('Review the mapped slope and proposed disturbance with a surveyor and the City.')
   if (checks.some(item => item.id === 'flood' && item.status === 'mapped_flag')) actions.push('Confirm the FEMA panel and applicable flood requirements with the local floodplain administrator.')
@@ -222,9 +223,14 @@ export async function handleScreening(request, { fetcher = fetch, now = () => ne
   if (mapped('mapped-landslide').status === 'mapped_flag') actions.push('Review mapped landslide-prone area and proposed ground work with a qualified professional and the City.')
   if (sourceObservations.some(item => !['mapped-undermining', 'mapped-landslide'].includes(item.id) && item.coverage === 'mapped_intersection_only' && item.status === 'mapped_flag')) actions.push('Confirm mapped City overlays and their current applicability to this proposal.')
   if (mapped('pli-permits').status === 'available') actions.push('Review matching historical permit records with the City for relevance to the proposed work and lawful baseline.')
-  actions.push('Review zoning overlays, dimensions, lawful baseline and applicable City process for this proposal.')
-  actions.push('Confirm utility capacity and access with the relevant providers before relying on development feasibility.')
+  const oneHomeAssessment = await oneHomeAssessmentPromise
+  if (oneHomeAssessment.applicability === 'applicable') actions.push(...oneHomeAssessment.nextActions)
+  else {
+    actions.push('Review zoning overlays, dimensions, lawful baseline and applicable City process for this proposal.')
+    actions.push('Confirm utility capacity and access with the relevant providers before relying on development feasibility.')
+  }
   actions.push('Establish project budget, rents or sales assumptions, and funding path; financial feasibility is unassessed.')
-  return pending(input, checks, 'Pittsburgh', actions, at, sourceObservations)
+  return pending(input, checks, 'Pittsburgh', actions, at, sourceObservations, oneHomeAssessment)
 }
 import { collectSourceObservations } from './observations.mjs'
+import { assessOneHome } from './one-home.mjs'

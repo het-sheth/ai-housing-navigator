@@ -1,5 +1,6 @@
 import { validateDraft, type Draft } from '../projects/contracts'
 import { hasCompleteScreen, isScreeningCheck, type ScreeningResult } from '../projects/screening-client'
+import { isOneHomeAssessment } from '../projects/one-home-assessment'
 import { resultMatchesInput, validParcelId, validProposal, type Comparison, type ProposalInput } from '../comparison/comparison-model'
 import { loadDraft, saveDraft, startNewDraft } from '../projects/draft-store'
 import { loadComparison, saveComparison } from '../comparison/comparison-store'
@@ -19,6 +20,7 @@ function validResult(value: unknown, parcelId: string, input: ProposalInput): va
   if (!value.checks.every(isScreeningCheck)) return false
   if (new Set(value.checks.map(check => check.id)).size !== value.checks.length) return false
   if (value.sourceObservations !== undefined && (!Array.isArray(value.sourceObservations) || !value.sourceObservations.every(item => record(item) && typeof item.id === 'string' && observationStatuses.has(String(item.status)) && observationCoverage.has(String(item.coverage)) && typeof item.sourceUrl === 'string' && item.sourceUrl.startsWith('https://') && nullableText(item.sourceDate) && timestamp(item.retrievedAt) && typeof item.summary === 'string' && (item.count === null || Number.isSafeInteger(item.count) && Number(item.count) >= 0)))) return false
+  if (!isOneHomeAssessment(value.oneHomeAssessment, { municipality: String(value.municipality), proposal: value.proposal as ScreeningResult['proposal'] })) return false
   const result = value as ScreeningResult
   if (!resultMatchesInput(result, parcelId, input)) return false
   return result.status === 'pending' ? result.score === null : hasCompleteScreen(result)

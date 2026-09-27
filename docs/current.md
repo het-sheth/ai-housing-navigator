@@ -1,3 +1,13 @@
+# One-home evidence example, September 27, 2026
+
+Current branch is `feat/official-review-sources` in `/tmp/ai-housing-consolidated`, based on merged PR #24 at `bc8b235`. The user authorized backend depth for one tested example, not a product rebuild. Existing routes and intake remain unchanged. See [scope and plan](one-home-assessment-plan.md), [example instructions](one-home-demo.md) and [metrics](assessment-metrics.md).
+
+PR #24 is already deployed: source `a129f66e8fe4358fa6a773296bcdf149a2e14dcd`, deployment `dpl_FXw7kQapdufD3CN78R8soFgpZnqm`, public origin https://ai-housing-navigator.vercel.app. This supersedes pending-deployment statements below. The new branch evidence is not yet deployed.
+
+The branch adds live exact-parcel County lot-area retrieval and a dated R1D-L/H base-standard reference, City BDA guidance and provider-verification next steps. A live backend check of Tweed parcel `0042J00243000000` returned 3,000 recorded square feet against the R1D-H base minimum of 1,200. This is not design compliance, physical vacancy, utility capacity or a permit determination. Final verification passed: 307 tests across 41 files, typecheck, lint and build. The actual local browser rehearsal at 2026-09-27T21:33:42.621Z passed live parcel/boundary, one-home evidence, desktop/mobile display, export and draft recovery, with zero page errors. Public data was not mocked; AI was blocked and cloud saving was not tested in this slice. Evidence: `/tmp/housing-one-home-rehearsal/evidence.json`. Independent review found no material blocker. Public APIs remain live with no new dataset cache. Existing Supabase snapshots remain separate.
+
+Earlier entries below are historical where superseded.
+
 # Consolidated feedback branch, September 27, 2026
 
 Active work is `fix/coherent-project-flows` in `/tmp/ai-housing-consolidated`, based on PR #23 merge `1576d10a456d9f50d9f89d92b6227a8f0ce01e21`. The user requested all remaining feedback on a feature branch. Do not merge or deploy this batch without a subsequent instruction. Original dirty checkout and earlier worktrees remain preserved.

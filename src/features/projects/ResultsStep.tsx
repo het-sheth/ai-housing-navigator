@@ -4,6 +4,7 @@ import { ACTIVITIES, type Draft, type DraftSummary } from './contracts'
 import { type ScreeningCheck, type ScreeningResult } from './screening-client'
 import { resultActions } from './result-actions'
 import { SourceObservations } from './SourceObservations'
+import type { OneHomeAssessment } from './one-home-assessment'
 
 type Props = {
   draft: Draft
@@ -38,6 +39,20 @@ function CheckCard({ check, districtSource }: { check: ScreeningCheck; districtS
   </article>
 }
 
+function OneHomeEvidence({ value }: { value: OneHomeAssessment }) {
+  if (value.applicability !== 'applicable') return <section className="gp-one-home" aria-label="Development requirements"><h3>Development requirements</h3><p>{value.mappedDistrict ? `This proposal or mapped district ${value.mappedDistrict} is outside this focused review.` : 'The mapped district could not be confirmed for this focused review.'} The general property checks and next actions remain available.</p><a href={value.districtSourceUrl} target="_blank" rel="noreferrer">City zoning map ↗</a></section>
+  const area = value.recordedLotArea
+  const comparison = value.lotAreaComparison
+  const lotText = area.status === 'available'
+    ? `County recorded lot area ${Number(area.sqFt).toLocaleString('en-US')} sq ft; published base minimum ${Number(comparison.baseMinimumSqFt).toLocaleString('en-US')} sq ft. ${comparison.status === 'recorded_meets_base_minimum' ? 'Recorded area meets the base number only.' : 'Recorded area is below the base number.'}`
+    : `County recorded lot area ${area.status === 'error' ? 'could not be retrieved' : 'is missing'}. The base number cannot be compared.`
+  return <section className="gp-one-home" aria-label="Development requirements"><h3>Development requirements</h3><p>One new detached home on this mapped {value.mappedDistrict} parcel. This compares recorded area with published base dimensions; a survey, site plan, exceptions and reviewer determination are still needed.</p><p><strong>{lotText}</strong> {comparison.explanation}</p><p className="gp-one-home-sources">County <a href={area.sourceUrl} target="_blank" rel="noreferrer">recorded area ↗</a> (source date {sourceDate(area.sourceDate)}, retrieved {area.retrievedAt ? new Date(area.retrievedAt).toLocaleDateString('en-US', { timeZone: 'UTC' }) : 'not checked'}); City <a href={value.districtSourceUrl} target="_blank" rel="noreferrer">zoning map ↗</a> (retrieved {value.districtRetrievedAt ? new Date(value.districtRetrievedAt).toLocaleDateString('en-US', { timeZone: 'UTC' }) : 'not checked'}).</p>
+    <details className="gp-details"><summary>Published base dimensions and needed evidence</summary><p>City <a href={value.rule.sourceUrl} target="_blank" rel="noreferrer">R1D table ↗</a>; section amendment effective {sourceDate(value.rule.sectionAmendmentEffectiveDate)}, reviewed {sourceDate(value.rule.reviewedAt)}. <a href={value.rule.exceptionsSourceUrl} target="_blank" rel="noreferrer">Lot exceptions ↗</a> require parcel-specific review, including plat or recording history.</p><table><caption>Base standards, not proposed design measurements</caption><tbody>{value.rule.requirements.map(item => <tr key={item.id}><th scope="row">{item.label}</th><td>{item.value.toLocaleString('en-US')} {item.unit === 'sq_ft' ? 'sq ft' : item.unit}</td><td>{item.qualification}</td></tr>)}</tbody></table><p><strong>Evidence to gather:</strong> {value.missingEvidence.join('; ')}.</p></details>
+    <p className="gp-one-home-sources"><strong>City application:</strong> The newer City <a href={value.processGuidance.sourceUrl} target="_blank" rel="noreferrer">Building &amp; Development Application ↗</a> guidance says this is typically the initial application for a new structure, replacing separate ZDR and building permit applications (source date {sourceDate(value.processGuidance.sourceDate)}, reviewed {sourceDate(value.processGuidance.reviewedAt)}). <a href={value.processGuidance.conflictingSourceUrl} target="_blank" rel="noreferrer">Planning guidance ↗</a> still describes a separate ZDR. Ask PLI to confirm the current path and required reviews.</p>
+    <p className="gp-one-home-sources"><strong>Water service:</strong> Ask the provider to confirm service area and give written availability or capacity evidence for the proposed service. <a href={value.waterGuidance.sourceUrl} target="_blank" rel="noreferrer">Tap review ↗</a> and <a href={value.waterGuidance.serviceAreaUrl} target="_blank" rel="noreferrer">service area ↗</a> guidance (source date {sourceDate(value.waterGuidance.sourceDate)}, reviewed {sourceDate(value.waterGuidance.reviewedAt)}).</p>
+  </section>
+}
+
 export function ResultsStep({ draft, summary, historical, assessment, assessmentStatus, assessmentError, onRun, onChangeParcel, onEditProposal }: Props) {
   const activityDescription = draft.activities.map(id => ACTIVITIES.find(activity => activity.id === id)?.label).filter(Boolean).join(', ')
   const proposal = activityDescription || 'Work activities not selected'
@@ -61,6 +76,7 @@ export function ResultsStep({ draft, summary, historical, assessment, assessment
       {assessmentError && <p className="gp-error-message" role="alert">{assessmentError}</p>}
       {assessment && <>
         <p className="gp-result-run-note" role="status">{assessmentStatus === 'loading' ? 'Previous findings shown while checks rerun.' : assessmentStatus === 'error' ? 'Latest rerun failed. Previous findings and next actions remain available.' : 'Findings and next actions from the last successful run.'} Retrieved <time dateTime={assessment.retrievedAt}>{new Date(assessment.retrievedAt).toLocaleString('en-US', { timeZone: 'UTC' })} UTC</time>.</p>
+        {assessment.oneHomeAssessment && <OneHomeEvidence value={assessment.oneHomeAssessment} />}
         <div className="gp-check-grid">{orderedChecks.map(check => <CheckCard key={check.id} check={check} districtSource={assessment.checks.find(item => item.id === 'zoning-other')?.sourceUrl} />)}</div>
         <details className="gp-details"><summary>Coverage and limits <span>{unfinished} unfinished</span></summary><p>Rubric: {assessment.rubricVersion}. {assessment.caveat}</p><p>A 2 means the named screen found a favorable condition; 0 means it found a mapped constraint. Missing evidence is unscored. These narrow scores are not confidence, permission or feasibility.</p></details>
         <SourceObservations observations={assessment.sourceObservations} />

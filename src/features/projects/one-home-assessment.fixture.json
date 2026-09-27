@@ -1,0 +1,66 @@
+{
+  "oneHomeAssessment": {
+    "applicability": "applicable",
+    "scope": "One new detached home on one wholly mapped Pittsburgh R1D parcel",
+    "mappedDistrict": "R1D-H",
+    "districtSourceUrl": "https://pghbridgis.pittsburghpa.gov/federated/rest/services/Zoning/MapServer/0",
+    "districtRetrievedAt": "2026-09-27T12:00:00.000Z",
+    "rule": {
+      "status": "reviewed_baseline",
+      "version": "pittsburgh-r1d-dimensions-v1-2026-09-27",
+      "sourceUrl": "https://ecode360.com/45474194",
+      "exceptionsSourceUrl": "https://ecode360.com/45479734",
+      "sourceDate": null,
+      "sectionAmendmentEffectiveDate": "2025-05-07",
+      "reviewedAt": "2026-09-27",
+      "requirements": [
+        { "id": "minimum_lot_area", "label": "Base minimum lot area", "value": 1200, "unit": "sq_ft", "qualification": "Published R1D-H base table; exceptions and lawful baseline unresolved" },
+        { "id": "minimum_front_setback", "label": "Base minimum front setback", "value": 15, "unit": "ft", "qualification": "Contextual provisions may apply" },
+        { "id": "minimum_rear_setback", "label": "Base minimum rear setback", "value": 15, "unit": "ft", "qualification": "Contextual provisions may apply" },
+        { "id": "minimum_exterior_side_setback", "label": "Base minimum exterior side setback", "value": 15, "unit": "ft", "qualification": "Corner lot applicability and contextual provisions unresolved" },
+        { "id": "minimum_interior_side_setback", "label": "Base minimum interior side setback", "value": 5, "unit": "ft", "qualification": "Surveyed lot lines and exceptions unresolved" },
+        { "id": "maximum_height", "label": "Base maximum height", "value": 40, "unit": "ft", "qualification": "Also limited to no more than 3 stories; contextual and compatibility provisions may apply" },
+        { "id": "maximum_stories", "label": "Base maximum stories", "value": 3, "unit": "stories", "qualification": "Height and story limits both apply under base table" }
+      ]
+    },
+    "recordedLotArea": {
+      "status": "available",
+      "sqFt": 1200,
+      "sourceUrl": "https://data.wprdc.org/dataset/property-assessments",
+      "sourceDate": "2026-09-01",
+      "retrievedAt": "2026-09-27T12:00:00.000Z"
+    },
+    "lotAreaComparison": {
+      "status": "recorded_meets_base_minimum",
+      "baseMinimumSqFt": 1200,
+      "explanation": "The County recorded lot area meets the published base minimum by number only. Surveyed area, exceptions and zoning compliance are unverified."
+    },
+    "processGuidance": {
+      "status": "curated_guidance",
+      "sourceUrl": "https://www.pittsburghpa.gov/Business-Development/Permits-Licenses-and-Inspections/Permitting/Building-Development-Application",
+      "conflictingSourceUrl": "https://www.pittsburghpa.gov/Business-Development/City-Planning/Zoning/Planning-Applications-and-Processes",
+      "sourceDate": "2026-09-02",
+      "reviewedAt": "2026-09-27",
+      "summary": "The newer City guidance says the Building & Development Application replaces separate ZDR and building permit applications and is typically the initial step for a new structure. An older Planning page still mentions a separate ZDR; confirm the current path and required reviews with PLI."
+    },
+    "waterGuidance": {
+      "status": "curated_guidance",
+      "sourceUrl": "https://www.pgh2o.com/developers-contractors-vendors/permits/water-and-sewer-tap-plan-review",
+      "serviceAreaUrl": "https://www.pgh2o.com/your-water/learn-where-we-provide-our-services",
+      "sourceDate": null,
+      "reviewedAt": "2026-09-27",
+      "summary": "Confirm the water provider and service area. For a new tap or increased flow, ask the provider about an availability letter and required tap-in review; parcel capacity is unverified."
+    },
+    "missingEvidence": [
+      "Surveyed lot area, boundaries, proposed footprint, setbacks, height and story count",
+      "Applicable overlays, contextual rules, lawful baseline and plat or recording history for possible lot-size exceptions",
+      "Current City application path and required reviews for this scope",
+      "Water provider, service area and written availability or capacity determination"
+    ],
+    "nextActions": [
+      "Confirm base dimensions with City zoning staff using a survey and site plan; review plat and recording history for possible Section 925.01(C) lot-size exceptions without assuming eligibility.",
+      "Confirm the current Building & Development Application path and required reviews with PLI.",
+      "Confirm the water provider and request written availability and tap-in guidance if new or increased service is proposed."
+    ]
+  }
+}

@@ -1,47 +1,71 @@
 # Housing Navigator
 
-A guided housing proposal workspace with live public-record lookup and bounded Pittsburgh screening. The user confirms a parcel, describes work and runs source checks to see findings, missing evidence and next actions. Numeric scoring is withheld until every required rubric factor is assessed. Current coverage does not meet that gate.
+Housing Navigator helps an Allegheny County housing project lead check a proposed project against bounded public evidence, see what remains unknown, and leave with prioritized questions for the right reviewers. It is a decision support prototype for the AI for Housing Hackathon's Development Feasibility Navigator track. It does not grant permission, establish financial feasibility, or calculate an approval probability.
 
-Start with [flow.md](flow.md), [architecture](docs/architecture.md), [source coverage](docs/source-coverage.md) and the [current handoff](docs/current.md). The [all-source integration plan](docs/source-integration-plan.md) distinguishes the 60-entry catalog from working source retrieval. [Chrome DevTools MCP notes](docs/browser-debugging.md) describe the CLI registration, native launch limitation and verified isolated stdio workaround.
+**Public app:** https://ai-housing-navigator.vercel.app
 
-## Run
+**Public code:** https://github.com/het-sheth/ai-housing-navigator
 
-Requires Node 22.12+ (tested with Node 25.2.1) and npm.
+**Demo video:** Pending public recording. The hackathon submission requires a 3 to 5 minute video of the working tool with functional and mocked parts identified. Team and member details, affiliations, and attestations belong in the submission form.
+
+The deployed app is the merged [PR #24](https://github.com/het-sheth/ai-housing-navigator/pull/24) build. Its Home page offers three paths:
+
+1. **Assess a property** (`/projects/new`): confirm one County parcel, describe the work, enter relevant proposal assumptions, run named checks, and export a brief with findings and next actions.
+2. **Explore properties** (`/explore`): search up to 20 County assessment candidates by recorded use and optional ZIP. Work activities and other needs are retained as notes; they are not site-fit filters. A candidate becomes an assessment parcel only after confirmation.
+3. **Compare proposals** (`/compare`): compare two proposals for the same confirmed parcel. Shared source facts and proposal-specific results stay distinct.
+
+The historical Lanark example remains at `/prototype`. The home illustration is illustrative, while parcel evidence uses a 2D map and cited records.
+
+## What is live and what is limited
+
+The deployed PR #24 build has public guest access, device drafts, owner-scoped cloud snapshots, exact-parcel County lookup, bounded Pittsburgh screens, and optional AI suggestions for work activities. AI suggestions require a signed-in session, an enabled hosted service, and available usage allowance; the user reviews and applies them. Public-record checks work without AI. Guests can use cloud snapshots, but a guest account cannot be recovered after sign-out or clearing browser data. General public email delivery is not configured; email links are limited to approved team addresses.
+
+Results show sources, dates when known, named check statuses, missing evidence, and next actions. Narrow individual 0/2 or 2/2 scores appear only where a defined zoning-use or FEMA map rule has enough evidence. There is no combined Development Ease Score. Other zoning requirements, site conditions, review process, infrastructure capacity, and financial feasibility remain unscored. A record lookup, map intersection, or AI classification is not a full feasibility assessment. See [assessment metrics](docs/assessment-metrics.md) and the [demo runbook](docs/video-demo-runbook.md).
+
+**Branch work, not deployed:** The current one-home source branch adds Development requirements for one new detached home on a parcel wholly mapped Pittsburgh R1D-L or R1D-H. It compares exact-parcel County recorded lot area to curated base minimums of 3,000 and 1,200 square feet, respectively, and lists published dimensional references and review/utility next steps. The comparison is arithmetic on recorded area, not a surveyed-dimension, exception, utility-capacity, or zoning-compliance determination. This addition uses the existing assessment flow. It must not be presented as a production feature. See [source coverage](docs/source-coverage.md).
+
+## Run locally
+
+Requires Node 22.12+ and npm. Run the public-data API and Vite in separate terminals:
 
 ```sh
 npm ci
+node server/dev.mjs
+```
+
+```sh
 npm run dev -- --port 5173 --strictPort
 ```
 
-Run `npm run api:dev` in a second terminal using the existing local server configuration. Open http://127.0.0.1:5173/ for the animated landing page. Shared navigation connects the guided assessment at `/projects/new`, Property Explorer at `/explore` and same-parcel Proposal Comparison at `/compare`. The historical Lanark example is at `/prototype`; `/welcome` remains a landing-page alias. Drafts and archives remain on the device; walkthrough source checks are transient.
+Open http://127.0.0.1:5173/. Vite proxies `/api` to the local API on port 5175. The public-record paths need no local credentials. Without hosted account and AI configuration, guest cloud saving and AI suggestions are unavailable; device drafts, manual work selection, and public-data checks remain available. `npm run api:dev` is the configured-environment variant; it expects a local environment file that is not part of this repository. Do not put keys in source control. Hosted AI also requires server-side authentication, an atomic usage reservation, and a restricted provider key budget.
+
+Run the project checks after changes:
 
 ```sh
 npm test
 npm run typecheck
 npm run lint
 npm run build
-npm run test:browser
-npm run test:design-system
 ```
 
-The smoke check needs `/usr/bin/chromium` and a running dev server. It writes screenshots, an actual downloaded brief and a print PDF to `/tmp/lanark-*`. It tests a simulated failed request, then tries the real public assessment endpoint. The real endpoint is allowed to be unavailable; that must remain visible.
+Browser smoke scripts are also available in `package.json`. The [architecture](docs/architecture.md) and [current handoff](docs/current.md) describe code boundaries and release evidence.
 
-## Design and research
+## Software, data, and API disclosure
 
-Open http://127.0.0.1:5173/design-system for shared visual tokens, reusable controls, evidence states and the original walkthrough design preview. The implemented guided workspace is at `/projects/new`.
+The application uses React and React DOM, TypeScript, Vite and its React plugin, Leaflet for the parcel map, Three.js for the Home illustration, IBM Plex fonts through Fontsource, and Supabase JavaScript, Auth, and Postgres for account-owned snapshots. Development and validation use npm, ESLint, Vitest, and Playwright. These are third-party open-source packages; exact versions are in `package.json` and `package-lock.json`. Hosting uses Vercel.
 
-See [design system](docs/design-system.md), [guided intake](docs/research/guided-intake-and-rule-scope.md), [live data and deployment](docs/research/live-data-and-deployment.md), and [comparison value test](docs/research/comparison-value-test.md) for the prototype's design and historical research. The accepted [product specification](https://github.com/het-sheth/ai-housing-hackathon-wiki/blob/docs/technical-design-v1/docs/product-spec-v1-2026-09-26.md) and [dated decisions](https://github.com/het-sheth/ai-housing-hackathon-wiki/blob/docs/technical-design-v1/docs/product-decisions-2026-09-26.md) govern the expanded direction. The [technical design](https://github.com/het-sheth/ai-housing-hackathon-wiki/blob/docs/technical-design-v1/docs/technical-design-v1-2026-09-26.md), [source verification](https://github.com/het-sheth/ai-housing-hackathon-wiki/blob/docs/technical-design-v1/docs/source-adapter-verification-2026-09-26.md) and [implementation plan](https://github.com/het-sheth/ai-housing-hackathon-wiki/blob/docs/technical-design-v1/docs/implementation-plan-v1-2026-09-26.md) are proposed engineering guidance on that branch while wiki amendments are in [finance PR #5](https://github.com/het-sheth/ai-housing-hackathon-wiki/pull/5) and [scoring-policy PR #6](https://github.com/het-sheth/ai-housing-hackathon-wiki/pull/6).
+| Public data or reference | Application use and boundary |
+| --- | --- |
+| [Allegheny County property assessments via WPRDC](https://data.wprdc.org/dataset/property-assessments) and its CKAN API | Candidate search and exact-parcel recorded fields, including lot area when available. Recorded use and area do not establish current occupancy or surveyed dimensions. |
+| [Allegheny County parcel GIS](https://gisdata.alleghenycounty.us/arcgis/rest/services/EGIS/Web_Parcels/MapServer/0) and [municipal boundaries](https://services1.arcgis.com/vdNDkVykv9vEWFX4/arcgis/rest/services/AlleghenyCountyMunicipalBoundaries/FeatureServer/0) | Parcel outline and municipality resolution for the geographic scope of City checks. |
+| [Pittsburgh zoning map](https://pghbridgis.pittsburghpa.gov/federated/rest/services/Zoning/MapServer/0), [R1D use table](https://ecode360.com/45476538), [R1D dimensional table](https://ecode360.com/45474194), and [lot exceptions](https://ecode360.com/45479734) | Mapped district and narrow one-detached-home use screen. The dimensional and exception references support the branch-only one-home supplement; they do not settle parcel compliance. |
+| [Pittsburgh mapped 25 percent slopes](https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/PGHWebSlope25/FeatureServer/0), [mapped undermining](https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/PGHWebUndermined/FeatureServer/0), and [FEMA National Flood Hazard Layer](https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28) | Bounded map screens. They do not replace a survey, engineering review, or official flood determination. |
+| [Pittsburgh permit records via WPRDC](https://data.wprdc.org/dataset/pli-permits) and other City map layers | Supplementary observations with disclosed count and coverage limits, not complete permit history or automatic regulatory findings. |
+| [OpenStreetMap](https://www.openstreetmap.org/copyright) tiles | Street context only; map tiles are not assessment evidence. |
+| [City Building & Development Application guidance](https://www.pittsburghpa.gov/Business-Development/Permits-Licenses-and-Inspections/Permitting/Building-Development-Application) and [Pittsburgh Water tap-review guidance](https://www.pgh2o.com/developers-contractors-vendors/permits/water-and-sewer-tap-plan-review) | Branch-only process and utility next-action references, not parcel-specific approval or capacity evidence. |
 
-## Scope and evidence
+The separate source-query registry describes a 60-entry organizer catalog and additional bounded public context routes. Catalog inclusion is not ingestion of every underlying dataset, and those routes do not complete the parcel assessment. The screening path requests source data live and does not keep a source-data cache. These public endpoints currently need no app-held API key or per-request payment, but upstream rates and availability can still affect a run. The [source inventory](docs/source-coverage.md) documents coverage and known source differences.
 
-React, TypeScript, Vite and npm, with shared local/Vercel API handlers. PRs #1 and #2 are merged; the published checkpoint is draft PR #3, and the independently verified recovery changes are [draft PR #5](https://github.com/het-sheth/ai-housing-navigator/pull/5). See the [focused PR stack](docs/pr-stack.md) for source integrations. A prior checkpoint is [deployed on Vercel](https://ai-housing-navigator.vercel.app/projects/new); current local changes are not automatically published. See the handoff for exact revisions.
+**AI tools and use:** The optional runtime intake calls `deepseek/deepseek-v4-flash-0731` through the OpenRouter API to suggest work activities from the user's description. It does not retrieve parcel facts, set check results, or calculate scores. The project used Codex coding assistance, including Sol for code review and Astra for visual inspection. Generated and assisted work was reviewed with tests and live or clearly labeled synthetic checks. A mocked model response in a test verifies the API contract, not model interpretation quality. Jev / TypeSafe AI is not integrated.
 
-Hosted AI is disabled. Optional local DeepSeek intake suggests work activities for user confirmation; it does not supply property facts or feasibility judgments. Jev is not integrated. Supabase Postgres and Auth remain selected but unconnected. Public-record checks are deterministic, preserve source conflicts and unknowns, and never determine permission or financial viability.
-
-The following details describe the historical Lanark prototype, not the live guided parcel workflow.
-
-The comparison always uses a clearly labeled research snapshot retrieved September 26, 2026. Assessment vintage is September 1. A browser-side, exact-parcel, field-whitelisted CKAN assessment refresh appears as a separate observation and is included in export. It never silently substitutes for the snapshot. CORS, offline, timeout, malformed and empty responses remain unavailable evidence.
-
-Parcel geometry is the recorded EPSG:2272 polygon rendered with equal x/y scale and y-axis inversion for north up. No basemap, fabricated footprint or slope overlay. This is not a survey. Full geometry joins were verified in the research, not recomputed by this app.
-
-The guided workflow accepts countywide intake while disclosing jurisdiction-specific check coverage. The latest scoring policy supersedes the older blanket no-score preference: all required evidence must be assessed before a number is exposed. See [disclosures](docs/disclosures.md), the historical [prototype plan](docs/implementation-plan.md), and [current handoff](docs/current.md). Historical research inputs include `../ai-housing-hackathon-wiki/docs/lanark-evidence-2026-09-26.md`, its sanitized evidence manifest and `docs/initial-rule-contract.md`.
+This public repository preserves the project commit history. For the hackathon video and submission, describe the actual recording origin and distinguish live public-source results from synthetic test fixtures, prior staged AI evidence, and any branch-only work.

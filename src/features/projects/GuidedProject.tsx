@@ -15,6 +15,7 @@ import { ReviewStep } from './ReviewStep'
 import { hasConfirmedParcel, loadProperty, searchProperty, type PropertyCandidate, type PropertyDetail, type PropertySearch } from './property-client'
 import { requestScreening, type ScreeningResult } from './screening-client'
 import { resultActions } from './result-actions'
+import { oneHomeBriefLines } from './one-home-brief'
 import './guided-project.css'
 import { AppHeader } from '../../components/AppHeader'
 
@@ -416,6 +417,7 @@ export default function GuidedProject() {
       if (screeningStatus === 'error') lines.push('', 'Latest rerun failed. This brief retains the dated assessment and actions from the previous successful run.')
       if (screeningStatus === 'loading') lines.push('', 'A rerun is in progress. This brief retains the dated assessment and actions from the previous successful run.')
       lines.push('', '## Property screening', 'Status: Individual screening checks, no combined score', `Run: ${screeningResult.retrievedAt}`, `Rubric: ${screeningResult.rubricVersion}`, `Tentative activities: ${draft.tentativeActivities.length ? 'Not evaluated in this screen' : 'None'}`, ...screeningResult.checks.flatMap(check => [`- ${check.label}: ${check.status}. ${check.reason}`, `  Source: ${check.sourceUrl || 'Unavailable'} | source date: ${check.sourceDate || 'Unknown'} | retrieved: ${check.retrievedAt || 'Not checked'}`]), screeningResult.caveat)
+      if (screeningResult.oneHomeAssessment) lines.push(...oneHomeBriefLines(screeningResult.oneHomeAssessment))
       for (const check of screeningResult.checks) {
         if (check.metricScore) lines.push(`Metric: ${check.label} | screen score ${check.metricScore.value}/${check.metricScore.max} | scope: ${check.metricScore.scope} | rule: ${check.metricScore.rule}`)
       }

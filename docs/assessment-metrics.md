@@ -46,3 +46,15 @@ Existing/proposed homes, homes retained, net new homes, housing form, work activ
 ## Decision history
 
 On September 27, 2026, the user explicitly replaced the all-metrics-or-no-number policy with scores for supported individual metrics and approved the Review/Results redesign. The aggregate remains withheld. No model fills missing evidence, no new paid AI behavior is added, and existing privacy and spending boundaries remain unchanged.
+
+## Focused one-home example
+
+The source branch adds an optional evidence supplement to the existing Assess result for one new detached home in wholly mapped Pittsburgh R1D-L or R1D-H. New construction with optional site work is the bounded proposal scope. Other proposal inputs and existing pages remain supported as before.
+
+The supplement compares an exact-parcel County assessment LOTAREA value in square feet to the district's published base minimum. It does not compare surveyed dimensions or the proposed building footprint. A value above the minimum is an arithmetic observation, not compliance or a new score. Missing, malformed, ambiguous or failed assessment records produce an unavailable comparison without discarding other checks.
+
+The versioned reference records derive from [Title 9 section 903.03](https://ecode360.com/45474194), reviewed September 27, 2026. They include base lot size, setbacks, height and story limits for these two districts. The displayed May 7, 2025 date is section amendment history, not a verified effective date for every individual value. Contextual provisions, environmental standards, compatibility requirements, exemptions and lawful baseline remain unresolved. The code reference is curated, not fetched afresh during every screen.
+
+[City Building & Development Application guidance](https://www.pittsburghpa.gov/Business-Development/Permits-Licenses-and-Inspections/Permitting/Building-Development-Application) and [Pittsburgh Water tap-review guidance](https://www.pgh2o.com/developers-contractors-vendors/permits/water-and-sewer-tap-plan-review) provide specific next actions. These are dated guidance references, not live parcel-specific permit or capacity determinations. Provider service territory must be confirmed. Review process and infrastructure remain unscored.
+
+Run `node scripts/one-home-live-smoke.mjs` against a local built application with live public APIs to rehearse Tweed St parcel `0042J00243000000`. The script blocks paid AI, requires actual expected source findings, checks the new comparison, exports the brief and verifies local draft recovery. It never substitutes fixtures when upstream evidence changes. Record each run's origin and timestamp separately from deployment evidence.

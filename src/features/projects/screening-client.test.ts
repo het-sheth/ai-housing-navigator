@@ -1,8 +1,17 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createDraft, type Draft } from './contracts'
 import { hasCompleteScreen, requestScreening, type ScreeningResult } from './screening-client'
+import sample from './one-home-assessment.fixture.json'
 
 describe('screening request', () => {
+  it('accepts a focused result and rejects unsafe links in live responses', async () => {
+    const draft: Draft = { ...createDraft(), parcelId: '0046R00029000000', propertyConfirmed: true, propertyEvidence: 'live', activities: ['new_construction'], proposedHomes: 1, housingForm: 'detached' }
+    const base = { status: 'pending', score: null, parcelId: draft.parcelId, proposal: { activities: draft.activities, proposedHomes: 1, housingForm: 'detached', groundDisturbance: 'unknown' }, municipality: 'Pittsburgh', checks: [], nextActions: [], rubricVersion: 'test', retrievedAt: '2026-09-27T12:00:00Z', caveat: '', ...sample }
+    const fetcher = vi.fn(async () => new Response(JSON.stringify(base)))
+    expect((await requestScreening(draft, fetcher)).oneHomeAssessment?.rule.status).toBe('reviewed_baseline')
+    const unsafe = { ...base, oneHomeAssessment: { ...sample.oneHomeAssessment, waterGuidance: { ...sample.oneHomeAssessment.waterGuidance, sourceUrl: 'javascript:alert(1)' } } }
+    await expect(requestScreening(draft, vi.fn(async () => new Response(JSON.stringify(unsafe))))).rejects.toThrow('screening_invalid_response')
+  })
   it('sends only confirmed proposal fields and preserves the parcel ID as text', async () => {
     const fetcher = vi.fn(async (_path: string | URL | Request, options?: RequestInit) => {
       expect(JSON.parse(String(options?.body))).toEqual({ parcelId: '0046R00029000000', proposal: { activities: ['new_construction'], proposedHomes: 1, housingForm: 'detached', groundDisturbance: 'unknown' } })

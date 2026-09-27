@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { createDraft, summarizeDraft } from './contracts'
 import { ResultsStep } from './ResultsStep'
 import type { ScreeningResult } from './screening-client'
+import sample from './one-home-assessment.fixture.json'
 
 const genericFinance = 'Establish project budget, rents or sales assumptions, and funding path; financial feasibility is unassessed.'
 const zoningGap = 'Review zoning overlays, dimensions, lawful baseline and applicable City process for this proposal.'
@@ -12,6 +13,26 @@ describe('results next actions', () => {
   const summary = summarizeDraft(draft)
   const props = { draft, summary, historical: false, assessmentStatus: 'ready' as const, assessmentError: '', onRun: () => {}, onChangeParcel: () => {}, onEditProposal: () => {} }
   const assessment: ScreeningResult = { status: 'pending', score: null, parcelId: draft.parcelId, proposal: { activities: [], proposedHomes: null, housingForm: 'unknown', groundDisturbance: 'unknown' }, municipality: 'Pittsburgh', checks: [], nextActions: ['Review mapped slope with a surveyor.', zoningGap, 'Confirm utility capacity and access with the relevant providers before relying on development feasibility.', genericFinance], rubricVersion: 'test', retrievedAt: '2026-09-27T12:00:00Z', caveat: 'Incomplete.' }
+
+  it('shows the focused evidence above generic checks without claiming compliance', () => {
+    const focused = { ...assessment, oneHomeAssessment: sample.oneHomeAssessment } as ScreeningResult
+    const html = renderToStaticMarkup(<ResultsStep {...props} assessment={focused} />)
+    expect(html).toContain('R1D-H')
+    expect(html).toContain('1,200')
+    expect(html).toContain('https://ecode360.com/45474194')
+    expect(html).toContain('https://ecode360.com/45479734')
+    expect(html).toContain('Surveyed lot area')
+    expect(html.indexOf('Development requirements')).toBeLessThan(html.indexOf('gp-check-grid'))
+    expect(html).not.toContain('Zoning compliant')
+  })
+
+  it('keeps unsupported one-home context compact', () => {
+    const focused = { ...assessment, oneHomeAssessment: { ...sample.oneHomeAssessment, applicability: 'unsupported', mappedDistrict: 'R2-H', rule: { ...sample.oneHomeAssessment.rule, status: 'out_of_scope', requirements: [] }, recordedLotArea: { ...sample.oneHomeAssessment.recordedLotArea, status: 'missing', sqFt: null, retrievedAt: null }, lotAreaComparison: { ...sample.oneHomeAssessment.lotAreaComparison, status: 'out_of_scope', baseMinimumSqFt: null } } } as ScreeningResult
+    const html = renderToStaticMarkup(<ResultsStep {...props} assessment={focused} />)
+    expect(html).toContain('R2-H')
+    expect(html).toContain('outside this focused review')
+    expect(html).not.toContain('Base minimum front setback')
+  })
 
   it('shows no next actions before property checks run', () => {
     const html = renderToStaticMarkup(<ResultsStep {...props} assessment={null} />)
