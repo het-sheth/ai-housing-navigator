@@ -79,6 +79,6 @@ export default function Welcome() {
       </div>
     </section>
     <section className="welcome-process" aria-label="How it works"><p className="welcome-process-label">FROM QUESTION TO NEXT STEP</p><ol><li><span>01</span><strong>Property</strong><small>Start with an address or parcel.</small></li><li><span>02</span><strong>Proposal</strong><small>Describe what you hope to do.</small></li><li><span>03</span><strong>Next steps</strong><small>See evidence, gaps, and who to ask.</small></li></ol><p className="welcome-process-note">Built for honest early diligence.</p></section>
-    <footer className="welcome-footer"><span>412 / Independent housing project workspace</span><a href="/prototype">Historical Lanark example <span aria-hidden="true">↗</span></a></footer>
+    <footer className="welcome-footer"><span>412 / Independent housing project workspace</span></footer>
   </main>
 }
