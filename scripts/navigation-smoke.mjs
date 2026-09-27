@@ -39,7 +39,8 @@ try {
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `Home must fit ${width}px`)
     await page.screenshot({ path: `/tmp/housing-home-${width}.png`, fullPage: true })
   }
-  await page.getByRole('link', { name: 'Historical Lanark example' }).click()
+  await expect(page.locator('a[href="/prototype"]')).toHaveCount(0)
+  await page.goto(`${origin}/prototype`)
   await expect(page).toHaveURL(`${origin}/prototype`)
   await expect(page.getByLabel('Proposed homes').first()).toBeVisible()
   await page.goto(`${origin}/welcome`)
