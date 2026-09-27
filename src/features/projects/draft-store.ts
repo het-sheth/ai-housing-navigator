@@ -43,26 +43,36 @@ function openDatabase(): Promise<IDBDatabase> {
   })
 }
 
-async function transact<T>(mode: IDBTransactionMode, run: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+async function transact<T>(mode: IDBTransactionMode, run: (store: IDBObjectStore) => IDBRequest<T>, signal?: AbortSignal): Promise<T> {
   const db = await openDatabase()
+  if (signal?.aborted) { db.close(); signal.throwIfAborted() }
   return new Promise<T>((resolve, reject) => {
-    let transaction: IDBTransaction
+    let activeTransaction: IDBTransaction | undefined
+    const abort = () => { try { activeTransaction?.abort() } catch { return } }
     try {
-      transaction = db.transaction(storeName, mode)
+      const transaction = db.transaction(storeName, mode)
+      activeTransaction = transaction
       const request = run(transaction.objectStore(storeName))
       transaction.oncomplete = () => {
+        signal?.removeEventListener('abort', abort)
         db.close()
         resolve(request.result)
       }
       transaction.onabort = () => {
+        signal?.removeEventListener('abort', abort)
         db.close()
-        reject(new Error(`Draft storage did not complete: ${transaction.error?.message ?? request.error?.message ?? 'transaction aborted'}`))
+        reject(signal?.aborted ? signal.reason : new Error(`Draft storage did not complete: ${transaction.error?.message ?? request.error?.message ?? 'transaction aborted'}`))
       }
       transaction.onerror = () => {
+        signal?.removeEventListener('abort', abort)
         db.close()
         reject(new Error(`Draft storage failed: ${transaction.error?.message ?? request.error?.message ?? 'storage error'}`))
       }
+      signal?.addEventListener('abort', abort, { once: true })
+      if (signal?.aborted) abort()
     } catch (error) {
+      signal?.removeEventListener('abort', abort)
+      abort()
       db.close()
       reject(error)
     }
@@ -76,10 +86,11 @@ export function loadDraft(): Promise<Draft | null> {
   })
 }
 
-export async function saveDraft(draft: Draft): Promise<void> {
+export async function saveDraft(draft: Draft, signal?: AbortSignal): Promise<void> {
   const snapshot = validateDraft(draft)
   return enqueue(async () => {
-    await transact('readwrite', store => store.put(snapshot, currentKey))
+    signal?.throwIfAborted()
+    await transact('readwrite', store => store.put(snapshot, currentKey), signal)
   })
 }
 
@@ -89,19 +100,33 @@ export function clearDraft(): Promise<void> {
   })
 }
 
-export function startNewDraft(current: Draft, next: Draft): Promise<void> {
+export function startNewDraft(current: Draft, next: Draft, signal?: AbortSignal): Promise<void> {
   const previous = validateDraft(current)
   const fresh = validateDraft(next)
   return enqueue(async () => {
+    signal?.throwIfAborted()
     const db = await openDatabase()
+    if (signal?.aborted) { db.close(); signal.throwIfAborted() }
     await new Promise<void>((resolve, reject) => {
-      const transaction = db.transaction(storeName, 'readwrite')
-      const store = transaction.objectStore(storeName)
-      store.put(previous, `archive:${previous.id}`)
-      store.put(fresh, currentKey)
-      transaction.oncomplete = () => { db.close(); resolve() }
-      transaction.onabort = () => { db.close(); reject(new Error('Could not preserve the previous draft.')) }
-      transaction.onerror = () => { db.close(); reject(new Error('Could not preserve the previous draft.')) }
+      let activeTransaction: IDBTransaction | undefined
+      const abort = () => { try { activeTransaction?.abort() } catch { return } }
+      try {
+        const transaction = db.transaction(storeName, 'readwrite')
+        activeTransaction = transaction
+        const store = transaction.objectStore(storeName)
+        store.put(previous, `archive:${previous.id}`)
+        store.put(fresh, currentKey)
+        transaction.oncomplete = () => { signal?.removeEventListener('abort', abort); db.close(); resolve() }
+        transaction.onabort = () => { signal?.removeEventListener('abort', abort); db.close(); reject(signal?.aborted ? signal.reason : new Error('Could not preserve the previous draft.')) }
+        transaction.onerror = () => { signal?.removeEventListener('abort', abort); db.close(); reject(new Error('Could not preserve the previous draft.')) }
+        signal?.addEventListener('abort', abort, { once: true })
+        if (signal?.aborted) abort()
+      } catch (error) {
+        signal?.removeEventListener('abort', abort)
+        abort()
+        db.close()
+        reject(error)
+      }
     })
   })
 }

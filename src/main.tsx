@@ -8,12 +8,14 @@ const GuidedProject = lazy(() => import('./features/projects/GuidedProject'))
 const ProposalComparison = lazy(() => import('./features/comparison/ProposalComparison'))
 const PropertyExplorer = lazy(() => import('./features/explorer/PropertyExplorer'))
 const Welcome = lazy(() => import('./features/welcome/Welcome'))
+const AccountPage = lazy(() => import('./features/account/AccountPage'))
 const path = window.location.pathname.replace(/\/$/, '')
 const screen = path === '/design-system' ? <DesignSystem />
   : path === '/projects/new' ? <GuidedProject />
     : path === '/compare' ? <ProposalComparison />
     : path === '/explore' ? <PropertyExplorer />
     : path === '/prototype' ? <App />
+      : path === '/account' ? <AccountPage />
       : <Welcome />
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

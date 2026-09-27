@@ -1,6 +1,6 @@
 # Application architecture
 
-This describes the current walkthrough implementation. It separates observed code paths from a proposed service seam; it does not describe the future explorer as shipped architecture.
+This describes the connected application implementation on `feat/connected-live-app`. Production verification is a separate release step: adding code does not establish that Supabase, email delivery or the AI provider is configured.
 
 See [source coverage](source-coverage.md) for the supplied zoning map's additional layers and the unresolved difference between its zoning endpoint and the application's endpoint.
 
@@ -8,60 +8,50 @@ See [source coverage](source-coverage.md) for the supplied zoning map's addition
 
 ```mermaid
 flowchart LR
-  subgraph PublicSources[Current public sources]
-    W[WPRDC property assessments]
-    C[Allegheny County parcel layer]
-    M[County municipality layer]
-    Z[Pittsburgh zoning layer]
-    S[Pittsburgh slope layer]
-    F[FEMA flood layer]
-    R[Published Pittsburgh use table<br/>cited basis for coded rule]
+  subgraph Browser[React application]
+    HOME[Home and shared navigation]
+    WALK[Assess a property]
+    EXP[Explore properties]
+    COMP[Compare proposals]
+    ACCOUNT[Account, guest access and email magic link]
+    LOCAL[(Device drafts and archives)]
+    MAP[Leaflet site context]
+    HOME --> WALK & EXP & COMP & ACCOUNT
+    WALK & COMP <--> LOCAL
+    WALK & EXP & COMP --> MAP
   end
-
-  subgraph Server[Server handlers]
-    P[Property handler<br/>search and parcel lookup]
-    Q[Screening handler<br/>source fetching + spatial normalization<br/>provisional rules + response]
-    OBS[Supplementary source observations<br/>PLI permits and 13 City map layers]
-    REG[Source registry<br/>60 organizer catalog entries]
-    SQ[Source query router<br/>strict source-specific geography inputs]
-    AD[Property, regional and spatial adapters<br/>bounded records or reference content]
-    AI[Local intake handler<br/>configured model and budget guard]
-    OFF[Hosted assist adapter<br/>returns ai_not_configured]
+  subgraph Hosted[Vercel API routes]
+    CONFIG[Public runtime configuration]
+    PROPERTY[Property search, candidates and parcel lookup]
+    SCREEN[Screening and supplementary observations]
+    SOURCES[Source catalog and bounded source queries]
+    ASSIST[AI intake: origin, payload and bearer validation]
   end
-
-  subgraph UI[React guided workspace]
-    PC[property-client.ts]
-    SC[screening-client.ts]
-    AC[ai-client.ts]
-    GS[Property, proposal, results screens]
-    MAP[Leaflet site map]
-    DB[(Browser IndexedDB<br/>current draft and archives)]
+  subgraph Supabase[Supabase]
+    AUTH[Auth: guest sessions and email magic links]
+    SAVED[(Owned immutable project snapshots)]
+    LIMITS[(Atomic AI usage reservations)]
   end
-
-  W --> P
-  C --> P
-  C --> Q
-  M --> Q
-  Z --> Q
-  S --> Q
-  F --> Q
-  EXTRA[City permits, mapped hazards<br/>historic and zoning overlays] --> OBS --> Q
-  REG -->|GET /api/sources| CATALOG[Catalog API consumers]
-  CATALOG -->|POST /api/sources/query| SQ --> AD
-  R -. manually encoded provisional rule .-> Q
-  P -->|/api/property/search, /api/property/parcel| PC --> GS
-  Q -->|/api/screening/run| SC --> GS
-  GS <--> DB
-  GS -->|/api/assist| AC
-  AC --> OFF
-  AC -. local development only .-> AI
-  GS --> MAP
-  OSM[OpenStreetMap tile service] --> MAP
+  CONFIG --> Browser
+  WALK & EXP & COMP --> PROPERTY
+  WALK & COMP --> SCREEN
+  PUBLIC[County, City, FEMA and other public sources] --> PROPERTY & SCREEN & SOURCES
+  ACCOUNT <--> AUTH
+  WALK & COMP & ACCOUNT <-->|User bearer and owner RLS| SAVED
+  WALK & EXP --> ASSIST
+  ASSIST --> AUTH
+  ASSIST --> LIMITS
+  ASSIST -->|After authorization and budget checks| AI[OpenRouter intake model]
+  OSM[OpenStreetMap tiles] --> MAP
 ```
 
-Local development serves the React app with Vite and the API handlers from `server/dev.mjs`. Vercel API wrappers call the same property and screening handlers. Hosted AI is explicitly disabled. The local intake handler is configured for DeepSeek through OpenRouter with request limits and budget checks; it is separate from property checks and is not invoked by screening.
+The home page is `/`; shared navigation links `/projects/new`, `/explore`, `/compare` and `/account`. `/welcome` aliases home, and `/prototype` retains the historical example. Local development uses Vite and `server/dev.mjs`. Hosted public-source routes delegate to the same handlers and remain available without login.
 
-Project drafts and archives live in browser IndexedDB. Supabase Auth and cloud project storage are not connected. The map loads OpenStreetMap tiles directly in the browser. Its basemap is visual context, separate from parcel geometry and screening evidence; the County boundary comes through the property API and is independently fetched by screening.
+`GET /api/config` exposes only the Supabase URL, publishable key and AI capability flag. The browser Supabase client handles guest and email magic-link sessions. Guest access is explicit and creates a distinct authenticated UUID. Guest cloud access is not recoverable after sign-out, clearing browser data or changing devices. Email delivery currently uses the built-in sender restricted to project-team addresses; public judges use guest access. Exact production callback URLs are configured in Supabase. A logged-in user explicitly saves a walkthrough draft or comparison snapshot to `saved_projects`. Row-level policies restrict access to its owner. Restoring validates the payload and preserves existing device work. Walkthrough screening results remain session-local and are not part of the draft snapshot; comparison snapshots retain dated results.
+
+Hosted `/api/assist` verifies the Supabase bearer token, reserves a request through a server-only Postgres RPC and checks the existing OpenRouter key budget before requesting intake suggestions. AI only suggests activities from the user's words, which the user reviews. It does not search for suitable properties or determine feasibility. Missing configuration fails closed. Shared usage reservations prevent independent serverless instances from bypassing the app limits. The provider key and `SUPABASE_SECRET_KEY` stay on the server. Only service_role can execute the reservation function; it receives the verified user UUID.
+
+The map loads OpenStreetMap tiles directly in the browser. Basemap context, County parcel geometry and screening evidence retain separate provenance and dates. Property display and screening still make independent source requests.
 
 ## Source coverage and limits
 
@@ -84,7 +74,7 @@ Screening only fetches City checks and FEMA data after exact parcel and Pittsbur
 
 `POST /api/sources/query` accepts a catalog ID and validated source-specific context. It routes to property, regional/financial or spatial/reference adapters and returns bounded records, actual geography and match method, provenance, retrieval time and a source vintage when established. Input requirements, unavailable access, incomplete reads and provider errors are explicit. Catalog-wide dispatch does not mean every provider is fully connected: bulk import gaps and access requirements remain visible. These query results do not feed the screening rubric automatically.
 
-The separate `feat/property-explorer` and `feat/proposal-comparison` worktrees contain incomplete UI work. Neither new page is wired into this application or hosted, and neither is verified as a product flow. Candidate lookup today is a bounded WPRDC record query, not a citywide discovery index. A stable shared snapshot of parcel observations is also absent; property display and screening make separate source requests.
+Explorer and comparison are integrated pages. Explorer searches bounded County assessment records using confirmed assessment-use and optional ZIP criteria. Work activities record intent but do not establish site fit or narrow records by feasibility. Multiple manual activities can be selected without a prose description. A search candidate remains unconfirmed until an exact parcel lookup supplies an assessment record or mapped boundary. Comparison runs independent dated screens for two proposals on that parcel. A stable shared snapshot of parcel observations is still absent.
 
 ## Code boundaries
 
@@ -98,6 +88,9 @@ The separate `feat/property-explorer` and `feat/proposal-comparison` worktrees c
 | Source retrieval | `server/sources/query.mjs`, `api/sources/query.mjs` | `POST /api/sources/query` validates source ID and geographic input, then bounds and validates the adapter response. |
 | Provider adapters | `server/sources/wprdc.mjs`, `core.mjs`, `regional.mjs`, `spatial-reference.mjs`, `nces.mjs`, `zip-range.mjs` | Separate public records, aggregate/financial metrics, geographic observations and document references. |
 | Browser contracts | `src/features/projects/property-client.ts`, `src/features/projects/screening-client.ts` | Same-origin requests; screening validates returned parcel, proposal and result shape. |
+| Account and cloud persistence | `src/features/account/`, `supabase/migrations/` | Magic-link sessions, owner-scoped immutable snapshots and validated restore. |
+| Hosted AI authorization | `api/assist.mjs`, `server/account/`, `server/ai/` | Verified bearer, atomic usage reservation and provider budget checks. |
+| Public configuration | `api/config.mjs`, `server/account/config.mjs` | Publishable configuration only; missing credentials leave features unavailable. |
 | Local persistence | `src/features/projects/draft-store.ts` | Device-local draft inputs and archives; walkthrough screening results are transient. |
 
 ## Proposed seam, not yet implemented

@@ -8,6 +8,10 @@ export type PropertyDetail = {
   boundary: PropertyObservation & { geometry: ParcelGeometry | null; sourceCrs: string; displayCrs: string; modifiedOn: string | null }
 }
 
+export function hasConfirmedParcel(detail: PropertyDetail, parcelId: string): boolean {
+  return detail.parcelId === parcelId && (detail.assessment.status === 'available' && detail.assessment.record?.parcelId === parcelId || detail.boundary.status === 'available' && Boolean(detail.boundary.geometry))
+}
+
 async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(path, { signal })
   if (!response.ok) throw new Error('source_unavailable')

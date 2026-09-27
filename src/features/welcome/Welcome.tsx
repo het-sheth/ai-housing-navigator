@@ -57,7 +57,7 @@ export default function Welcome() {
         <h1 id="welcome-title">A place to start.<br/><em>A path to build.</em></h1>
         <p className="welcome-intro">Turn your housing idea into sourced findings, clear unknowns, and a useful next step.</p>
         <div className="welcome-actions"><a className="welcome-primary" href="/projects/new">Assess a property <span aria-hidden="true">↗</span></a><a className="welcome-secondary" href="/explore">Explore properties <span aria-hidden="true">↗</span></a></div>
-        <div className="welcome-smallprint"><span className="welcome-smallprint-icon" aria-hidden="true">i</span><p>Public records, clear unknowns, and useful next steps. Checks have limited coverage and do not determine permission. Saved projects stay on this device.</p></div>
+        <div className="welcome-smallprint"><span className="welcome-smallprint-icon" aria-hidden="true">i</span><p>Public records, clear unknowns, and useful next steps. Checks have limited coverage and do not determine permission. Drafts stay on this device. Account saving is optional when available.</p></div>
       </div>
       <div className="welcome-visual">
         <div className="welcome-scene-frame">
