@@ -1,3 +1,13 @@
+# PR #25 live release, September 27, 2026
+
+PR #25 is merged at `134b6cdd47747d71dfc1ba3281e4bffea6fda310`. Tested source `8e5ab74cf429d2f7ed55894a0e4448a2e960cbf3` is deployed to https://ai-housing-navigator.vercel.app as `dpl_EqhPTz2RqEGHxtxwx5NXqrbJBPdR`, immutable URL https://ai-housing-navigator-7yvfug7qt-hets-projects-aab6adc0.vercel.app. This supersedes pre-deployment statements below. No database migration, caching layer or paid AI call was added.
+
+Actual production rehearsal at 2026-09-27T21:43:11.108Z passed the existing Assess flow with live Tweed parcel/boundary, R1D-H, 3,000 recorded sq ft versus the 1,200 base minimum, zoning-use/flood scores, 14 observations, mobile layout, export and local resume, zero page errors. Evidence: `/tmp/housing-one-home-production/evidence.json`, brief and screenshots beside it. Supabase configuration and AI enabled flags passed a public config shape check without logging keys. AI and cloud saving were not retested live in this slice. Production Compare regression passed synthetic source responses with five screening calls and zero AI requests or page errors.
+
+Before deployment, all 307 tests/41 files, typecheck, lint and build passed. Independent review found no material blocker; existing Three.js chunk-size warning remains. For clean testing, close all Incognito windows and open a fresh one; normal device drafts are intentionally preserved across deployments. README and the example distinguish recorded observations, curated requirements and unverified capacity, design compliance and permit determinations.
+
+Old stacked PRs #4 through #18 were closed after verifying every exact head already existed in main through PR #19. No branches or worktrees were deleted. Preserve the original dirty checkout and local wiki changes. The current documentation branch only updates release metadata through a PR.
+
 # One-home evidence example, September 27, 2026
 
 Current branch is `feat/official-review-sources` in `/tmp/ai-housing-consolidated`, based on merged PR #24 at `bc8b235`. The user authorized backend depth for one tested example, not a product rebuild. Existing routes and intake remain unchanged. See [scope and plan](one-home-assessment-plan.md), [example instructions](one-home-demo.md) and [metrics](assessment-metrics.md).
