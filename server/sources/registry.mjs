@@ -236,10 +236,10 @@ const sources = [
     "granularity": "Block group, tract, place, county and more",
     "catalogUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
+    "runtimeStatus": "access_required",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "access_required",
     "queryRequirements": []
   },
   {
@@ -249,11 +249,13 @@ const sources = [
     "granularity": "Block to nation",
     "catalogUrl": "https://www.census.gov/programs-surveys/decennial-census/data.html",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://tigerweb.geo.census.gov/arcgis/rest/services/Census2020/Tracts_Blocks/MapServer/0",
+    "note": "Only bounded 2020 Census tract population and housing-unit counts are queried through TIGERweb; other Decennial tables are not integrated.",
+    "queryMode": "live_tract",
+    "queryRequirements": [
+      "tract"
+    ]
   },
   {
     "catalogId": 19,
@@ -277,8 +279,8 @@ const sources = [
     "storedInApplication": false,
     "runtimeStatus": "catalog_reference",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The HUD API requires a token; public CHAS bulk tables need measure and special-geography parsing before a bounded local value can be reported.",
+    "queryMode": "public_bulk_not_parsed",
     "queryRequirements": []
   },
   {
@@ -288,11 +290,13 @@ const sources = [
     "granularity": "Block group / tract",
     "catalogUrl": "https://hudgis-hud.opendata.arcgis.com/datasets/c1c32742599a42c9a45c95be50ed2ab6_12/about",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
+    "runtimeStatus": "source_query",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_tract",
+    "queryRequirements": [
+      "tract"
+    ]
   },
   {
     "catalogId": 22,
@@ -301,11 +305,14 @@ const sources = [
     "granularity": "Metro / county; ZIP for SAFMR",
     "catalogUrl": "https://www.huduser.gov/portal/datasets/fmr.html",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Fair_Market_Rents/FeatureServer/0",
+    "note": "Only key-free FY2024 FMR area values at a supplied coordinate are queried. These are historical HUD program values, not current market rents or site revenue.",
+    "queryMode": "live_point",
+    "queryRequirements": [
+      "latitude",
+      "longitude"
+    ]
   },
   {
     "catalogId": 23,
@@ -316,8 +323,8 @@ const sources = [
     "storedInApplication": false,
     "runtimeStatus": "catalog_reference",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The HUD API requires a token; public annual income limit files have not been parsed with area, year and household-size selection.",
+    "queryMode": "public_bulk_not_parsed",
     "queryRequirements": []
   },
   {
@@ -329,8 +336,8 @@ const sources = [
     "storedInApplication": false,
     "runtimeStatus": "catalog_reference",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "catalog_reference",
     "queryRequirements": []
   },
   {
@@ -340,10 +347,10 @@ const sources = [
     "granularity": "Subsidized property",
     "catalogUrl": "https://preservationdatabase.org/",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
+    "runtimeStatus": "access_required",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "access_required",
     "queryRequirements": []
   },
   {
@@ -355,8 +362,8 @@ const sources = [
     "storedInApplication": false,
     "runtimeStatus": "catalog_reference",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "catalog_reference",
     "queryRequirements": []
   },
   {
@@ -366,11 +373,13 @@ const sources = [
     "granularity": "Mortgage application / loan",
     "catalogUrl": "https://ffiec.cfpb.gov/data-publication/",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://ffiec.cfpb.gov/v2/data-browser-api/view/aggregations",
+    "note": "Only countywide originated-loan count and amount aggregates are queried. No applications, borrowers or parcel financing are returned.",
+    "queryMode": "live_county_aggregate",
+    "queryRequirements": [
+      "countyFips"
+    ]
   },
   {
     "catalogId": 28,
@@ -381,8 +390,8 @@ const sources = [
     "storedInApplication": false,
     "runtimeStatus": "catalog_reference",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "catalog_reference",
     "queryRequirements": []
   },
   {
@@ -392,11 +401,14 @@ const sources = [
     "granularity": "County / industry",
     "catalogUrl": "https://www.bls.gov/cew/downloadable-data-files.htm",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
+    "runtimeStatus": "source_query",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_regional",
+    "queryRequirements": [
+      "countyFips",
+      "year"
+    ]
   },
   {
     "catalogId": 30,
@@ -405,10 +417,10 @@ const sources = [
     "granularity": "National industry / commodity index",
     "catalogUrl": "https://www.bls.gov/ppi/data.htm",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
+    "runtimeStatus": "source_query",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_regional",
     "queryRequirements": []
   },
   {
@@ -569,8 +581,8 @@ const sources = [
     "storedInApplication": false,
     "runtimeStatus": "catalog_reference",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "catalog_reference",
     "queryRequirements": []
   },
   {
@@ -593,10 +605,10 @@ const sources = [
     "granularity": "Weather station / gridded products",
     "catalogUrl": "https://www.ncei.noaa.gov/cdo-web/",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
+    "runtimeStatus": "access_required",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "access_required",
     "queryRequirements": []
   },
   {
@@ -608,8 +620,8 @@ const sources = [
     "storedInApplication": false,
     "runtimeStatus": "catalog_reference",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "catalog_reference",
     "queryRequirements": []
   },
   {
@@ -619,11 +631,13 @@ const sources = [
     "granularity": "Neighborhood, ZIP, city, county, metro, state",
     "catalogUrl": "https://www.zillow.com/research/data/",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://files.zillowstatic.com/research/public_csvs/zhvi/County_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv",
+    "note": "Bounded official county ZHVI time series extract; a county aggregate is not a nearby listing comparable or a parcel appraisal.",
+    "queryMode": "live_regional",
+    "queryRequirements": [
+      "countyFips"
+    ]
   },
   {
     "catalogId": 47,
@@ -634,8 +648,8 @@ const sources = [
     "storedInApplication": false,
     "runtimeStatus": "catalog_reference",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "catalog_reference",
     "queryRequirements": []
   },
   {
@@ -647,8 +661,8 @@ const sources = [
     "storedInApplication": false,
     "runtimeStatus": "catalog_reference",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "catalog_reference",
     "queryRequirements": []
   },
   {
@@ -658,11 +672,13 @@ const sources = [
     "granularity": "ZIP, county, metro, state, nation",
     "catalogUrl": "https://www.realtor.com/research/data/",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_County.csv",
+    "note": "Current-month county MLS market aggregate from a bounded official file, not parcel comparables or financial feasibility.",
+    "queryMode": "live_regional",
+    "queryRequirements": [
+      "countyFips"
+    ]
   },
   {
     "catalogId": 50,
@@ -671,10 +687,10 @@ const sources = [
     "granularity": "National weekly rate",
     "catalogUrl": "https://www.freddiemac.com/pmms",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
+    "runtimeStatus": "source_query",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_regional",
     "queryRequirements": []
   },
   {
@@ -684,11 +700,13 @@ const sources = [
     "granularity": "ZIP, county, metro, state and nation depending on series",
     "catalogUrl": "https://www.fhfa.gov/data/hpi",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
+    "runtimeStatus": "source_query",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_regional",
+    "queryRequirements": [
+      "stateFips or countyFips"
+    ]
   },
   {
     "catalogId": 52,
@@ -697,11 +715,13 @@ const sources = [
     "granularity": "Census tract",
     "catalogUrl": "https://www.opportunityatlas.org/",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://opportunityinsights.org/wp-content/uploads/2024/08/tract_outcomes_late_simple.csv",
+    "note": "A bounded validated archive range returns one historical modeled outcome for an Allegheny 2010 tract identifier; supplied tract vintage must be confirmed.",
+    "queryMode": "live_2010_tract_context",
+    "queryRequirements": [
+      "tract"
+    ]
   },
   {
     "catalogId": 53,
@@ -792,8 +812,8 @@ const sources = [
     "storedInApplication": false,
     "runtimeStatus": "catalog_reference",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "catalog_reference",
     "queryRequirements": []
   },
   {
@@ -805,8 +825,8 @@ const sources = [
     "storedInApplication": false,
     "runtimeStatus": "catalog_reference",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "catalog_reference",
     "queryRequirements": []
   }
 ]

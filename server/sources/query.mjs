@@ -56,6 +56,9 @@ export function validEnvelope(value, catalogId) {
 export async function querySource(catalogId, context, options = {}) {
   const direct = await queryWprdcSource(catalogId, context, options) ?? await queryCoreSource(catalogId, context, options)
   if (direct) return direct
+  const { queryRegionalSource } = await import('./regional.mjs')
+  const regional = await queryRegionalSource(catalogId, context, options)
+  if (regional) return regional
   return null
 }
 
