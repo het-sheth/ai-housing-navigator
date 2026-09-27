@@ -1,8 +1,14 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react'
 import * as THREE from 'three'
+
+export type SceneView = { yaw: number; pitch: number; zoom: number }
 
 type Props = {
   paused: boolean
+  view: SceneView
+  resetVersion: number
+  onViewChange: (view: Partial<SceneView>) => void
+  onInteraction: () => void
   onReady: () => void
   onFailure: () => void
 }
@@ -79,17 +85,26 @@ function disposeNeighborhood(neighborhood: THREE.Group | undefined) {
   })
 }
 
-export default function NeighborhoodScene({ paused, onReady, onFailure }: Props) {
+export default function NeighborhoodScene({ paused, view, resetVersion, onViewChange, onInteraction, onReady, onFailure }: Props) {
   const host = useRef<HTMLDivElement>(null)
   const pausedRef = useRef(paused)
+  const viewRef = useRef(view)
+  const viewChangeRef = useRef(onViewChange)
+  const interactionRef = useRef(onInteraction)
   const readyRef = useRef(onReady)
   const failureRef = useRef(onFailure)
-  const scheduleRef = useRef<() => void>(() => {})
+  const drawRef = useRef<() => void>(() => {})
+  const resetOrbitRef = useRef<() => void>(() => {})
+  const dragRef = useRef<{ pointerId: number; x: number } | null>(null)
 
   useEffect(() => {
     pausedRef.current = paused
-    if (!paused) scheduleRef.current()
+    drawRef.current()
   }, [paused])
+  useEffect(() => { viewRef.current = view; drawRef.current() }, [view])
+  useEffect(() => { resetOrbitRef.current() }, [resetVersion])
+  useEffect(() => { viewChangeRef.current = onViewChange }, [onViewChange])
+  useEffect(() => { interactionRef.current = onInteraction }, [onInteraction])
   useEffect(() => { readyRef.current = onReady }, [onReady])
   useEffect(() => { failureRef.current = onFailure }, [onFailure])
 
@@ -128,6 +143,22 @@ export default function NeighborhoodScene({ paused, onReady, onFailure }: Props)
       neighborhood = makeNeighborhood()
       scene.add(neighborhood)
 
+      let autoYaw = 0
+      let lastTime = performance.now()
+      const draw = (time: number) => {
+        if (!renderer) return
+        if (!pausedRef.current && !document.hidden) autoYaw += Math.min(Math.max(time - lastTime, 0), 100) * 0.000055
+        lastTime = time
+        const orbitYaw = THREE.MathUtils.degToRad(viewRef.current.yaw) + autoYaw
+        element.dataset.cameraYaw = String(Math.round(((THREE.MathUtils.radToDeg(orbitYaw) % 360) + 360) % 360))
+        const orbitPitch = THREE.MathUtils.degToRad(viewRef.current.pitch)
+        const radius = 16
+        camera.position.set(Math.sin(orbitYaw) * Math.cos(orbitPitch) * radius, Math.sin(orbitPitch) * radius + 0.85, Math.cos(orbitYaw) * Math.cos(orbitPitch) * radius + 0.3)
+        camera.lookAt(0, 0.85, 0.3)
+        const zoom = viewRef.current.zoom
+        if (camera.zoom !== zoom) { camera.zoom = zoom; camera.updateProjectionMatrix() }
+        renderer.render(scene, camera)
+      }
       const resize = () => {
         if (!renderer) return
         const width = Math.max(1, element.clientWidth)
@@ -140,28 +171,25 @@ export default function NeighborhoodScene({ paused, onReady, onFailure }: Props)
         camera.bottom = -span
         camera.updateProjectionMatrix()
         renderer.setSize(width, height)
-        renderer.render(scene, camera)
+        draw(performance.now())
       }
       observer = new ResizeObserver(resize)
       observer.observe(element)
       resize()
       readyRef.current()
 
-      const started = performance.now()
       const schedule = () => {
         if (!frame && !pausedRef.current && !document.hidden) frame = requestAnimationFrame(render)
       }
       const render = (time: number) => {
         frame = 0
-        if (neighborhood && renderer) {
-          if (!pausedRef.current && !document.hidden) neighborhood.rotation.y = Math.sin((time - started) * 0.00018) * 0.055
-          renderer.render(scene, camera)
-        }
+        draw(time)
         schedule()
       }
-      scheduleRef.current = schedule
+      drawRef.current = () => { lastTime = performance.now(); draw(lastTime); schedule() }
+      resetOrbitRef.current = () => { autoYaw = 0; lastTime = performance.now(); draw(lastTime) }
       schedule()
-      const visibility = () => { if (!document.hidden) schedule() }
+      const visibility = () => { drawRef.current() }
       document.addEventListener('visibilitychange', visibility)
       const canvas = renderer.domElement
       const lost = (event: Event) => {
@@ -172,7 +200,8 @@ export default function NeighborhoodScene({ paused, onReady, onFailure }: Props)
       canvas.addEventListener('webglcontextlost', lost)
       return () => {
         cancelAnimationFrame(frame)
-        scheduleRef.current = () => {}
+        drawRef.current = () => {}
+        resetOrbitRef.current = () => {}
         document.removeEventListener('visibilitychange', visibility)
         observer?.disconnect()
         canvas.removeEventListener('webglcontextlost', lost)
@@ -186,6 +215,8 @@ export default function NeighborhoodScene({ paused, onReady, onFailure }: Props)
       console.warn('Illustration renderer unavailable', error)
       observer?.disconnect()
       cancelAnimationFrame(frame)
+      drawRef.current = () => {}
+      resetOrbitRef.current = () => {}
       disposeNeighborhood(neighborhood)
       sun?.shadow.map?.dispose()
       renderer?.dispose()
@@ -195,5 +226,27 @@ export default function NeighborhoodScene({ paused, onReady, onFailure }: Props)
     }
   }, [])
 
-  return <div className="welcome-canvas" ref={host}/>
+  const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return
+    dragRef.current = { pointerId: event.pointerId, x: event.clientX }
+    event.currentTarget.setPointerCapture(event.pointerId)
+    interactionRef.current()
+  }
+  const moveDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+    const distance = event.clientX - drag.x
+    if (Math.abs(distance) < 2) return
+    drag.x = event.clientX
+    const yaw = ((viewRef.current.yaw + distance * 0.5) % 360 + 360) % 360
+    viewRef.current = { ...viewRef.current, yaw }
+    viewChangeRef.current({ yaw })
+  }
+  const endDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragRef.current?.pointerId !== event.pointerId) return
+    dragRef.current = null
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
+  }
+
+  return <div className="welcome-canvas" data-testid="scene-drag-surface" ref={host} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} onLostPointerCapture={() => { dragRef.current = null }}/>
 }

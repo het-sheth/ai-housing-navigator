@@ -1,3 +1,11 @@
+# Interactive Home refinement, September 27, 2026
+
+The user approved a bounded Home update: remove the repeated disclaimer, process strip and generic footer; preserve the introduction, three entry paths and illustrative-scene caption. Add more visible automatic motion, manual rotation, zoom, pause and reset, with reduced-motion support and usable mobile scrolling. Implementation is on `feat/interactive-home` in `/tmp/ai-housing-consolidated`. Local verification passed all 281 tests, typecheck, lint and build. The isolated browser passed mouse/touch rotation, automatic motion, bounded zoom, pause/reset, reduced-motion manual control, keyboard navigation, mobile scrolling and forced WebGL fallback at desktop and 390/320px. Independent code and visual reviews found no blocker. Record production verification separately in the canonical handoff.
+
+PR #22 is merged at `e336d31beb4a4c46c67ba6d7b8ff98c26912ed8f`. Source `fa2bd08152b74f18b0812a5b2dca7a46b5c59522` deployed as `dpl_EFh6HsdPsgxQJYTc5TpUw9KfLjt2`. Actual production Mountford search, confirmation, boundary, Review Run and seven-check Results passed, with one scoped FEMA score, zero page errors and zero paid AI requests. All 281 tests, typecheck, lint and build passed. Home release evidence will be recorded in the canonical project wiki handoff.
+
+The following sections preserve earlier checkpoints. Their pending steps and branch names are superseded by the current entry and canonical handoff.
+
 # Review and Results redesign, September 27, 2026
 
 The user approved replacing the confusing final walkthrough steps with Check your project and What the checks found. Review runs checks directly. Results show individual check evidence, inline source links/dates, limited per-metric scores and explicit unscored gaps. No combined score is shown. See [the metric inventory and scoring rules](assessment-metrics.md).

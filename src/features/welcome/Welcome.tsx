@@ -1,8 +1,12 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
 import { AppHeader } from '../../components/AppHeader'
+import type { SceneView } from './NeighborhoodScene'
 import './welcome.css'
 
 const NeighborhoodScene = lazy(() => import('./NeighborhoodScene'))
+const initialView: SceneView = { yaw: 38, pitch: 32, zoom: 1 }
+const wrapYaw = (value: number) => ((value % 360) + 360) % 360
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 
 function NeighborhoodFallback() {
   return <svg className="welcome-fallback" data-testid="scene-fallback" viewBox="0 0 640 520" role="img" aria-label="Illustration of houses on a neighborhood block">
@@ -31,6 +35,8 @@ export default function Welcome() {
   const [webglFailed, setWebglFailed] = useState(false)
   const [sceneReady, setSceneReady] = useState(false)
   const [sceneAttempt, setSceneAttempt] = useState(0)
+  const [view, setView] = useState<SceneView>(initialView)
+  const [resetVersion, setResetVersion] = useState(0)
 
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -41,6 +47,12 @@ export default function Welcome() {
   }, [])
 
   const animationPaused = reducedMotion || paused
+  const controlsReady = sceneReady && !webglFailed
+  const updateView = (change: Partial<SceneView>) => {
+    setPaused(true)
+    setView(current => ({ yaw: wrapYaw(change.yaw ?? current.yaw), pitch: clamp(change.pitch ?? current.pitch, 18, 70), zoom: clamp(change.zoom ?? current.zoom, 0.75, 1.5) }))
+  }
+  const resetView = () => { setPaused(true); setView(initialView); setResetVersion(value => value + 1) }
   const handleSceneFailure = () => {
     setSceneReady(false)
     if (sceneAttempt === 0) setSceneAttempt(1)
@@ -57,13 +69,23 @@ export default function Welcome() {
         <h1 id="welcome-title">A place to start.<br/><em>A path to build.</em></h1>
         <p className="welcome-intro">Turn your housing idea into sourced findings, clear unknowns, and a useful next step.</p>
         <div className="welcome-actions"><a className="welcome-primary" href="/projects/new">Assess a property <span aria-hidden="true">↗</span></a><a className="welcome-secondary" href="/explore">Explore properties <span aria-hidden="true">↗</span></a></div>
-        <div className="welcome-smallprint"><span className="welcome-smallprint-icon" aria-hidden="true">i</span><p>Public records, clear unknowns, and useful next steps. Checks have limited coverage and do not determine permission. Drafts stay on this device. Account saving is optional when available.</p></div>
       </div>
       <div className="welcome-visual">
         <div className="welcome-scene-frame">
           <div className="welcome-scene-index"><span>FIG. 01</span><span>THE POSSIBLE BLOCK</span></div>
           <div className="welcome-scene-content" data-testid="neighborhood-scene" data-render-state={webglFailed ? 'fallback' : sceneReady ? 'ready' : 'loading'} aria-label="Illustrative miniature neighborhood">
-            {webglFailed ? <NeighborhoodFallback/> : <Suspense fallback={<NeighborhoodFallback/>}><NeighborhoodScene key={sceneAttempt} paused={animationPaused} onReady={() => setSceneReady(true)} onFailure={handleSceneFailure}/></Suspense>}
+            {webglFailed ? <NeighborhoodFallback/> : <Suspense fallback={<NeighborhoodFallback/>}><NeighborhoodScene key={sceneAttempt} paused={animationPaused} view={view} resetVersion={resetVersion} onViewChange={updateView} onInteraction={() => setPaused(true)} onReady={() => setSceneReady(true)} onFailure={handleSceneFailure}/></Suspense>}
+          </div>
+          <div className="welcome-scene-toolbar" aria-label="Neighborhood view controls">
+            <p className="welcome-scene-help">{webglFailed ? '3D controls unavailable. Static illustration shown.' : 'Drag sideways to rotate. Use buttons for precise view changes.'}</p>
+            <div className="welcome-scene-buttons">
+              <button type="button" aria-label="Rotate left" disabled={!controlsReady} onClick={() => updateView({ yaw: view.yaw - 15 })}>↶</button>
+              <button type="button" aria-label="Rotate right" disabled={!controlsReady} onClick={() => updateView({ yaw: view.yaw + 15 })}>↷</button>
+              <button type="button" aria-label="Zoom in" disabled={!controlsReady || view.zoom >= 1.5} onClick={() => updateView({ zoom: view.zoom + 0.15 })}>+</button>
+              <button type="button" aria-label="Zoom out" disabled={!controlsReady || view.zoom <= 0.75} onClick={() => updateView({ zoom: view.zoom - 0.15 })}>−</button>
+              <button type="button" className="welcome-reset" disabled={!controlsReady} onClick={resetView}>Reset view</button>
+            </div>
+            <output data-testid="scene-control-state" aria-live="off" data-yaw={Math.round(view.yaw)} data-pitch={Math.round(view.pitch)} data-zoom={Number(view.zoom.toFixed(2))}>{webglFailed ? 'Static view' : `Rotation ${Math.round(view.yaw)}° · Zoom ${Math.round(view.zoom * 100)}%`}</output>
           </div>
           <div className="welcome-visual-bottom"><span className="welcome-visual-caption"><span className="welcome-caption-dot"/>Illustrative neighborhood, not a model of your property.</span>{webglFailed ? <span className="welcome-static-label">Static illustration</span> : <button type="button" className="welcome-pause" aria-pressed={animationPaused} onClick={() => setPaused(value => !value)} disabled={reducedMotion}>{reducedMotion ? 'Motion reduced' : animationPaused ? 'Resume animation' : 'Pause animation'} <span aria-hidden="true">{animationPaused ? '▶' : 'Ⅱ'}</span></button>}</div>
         </div>
@@ -78,7 +100,5 @@ export default function Welcome() {
         <a className="welcome-path" href="/compare"><span className="welcome-path-number">03 / I HAVE TWO IDEAS</span><h3>One property.<br/>Two possibilities.</h3><p>Compare two proposals on the same confirmed parcel. See which findings, unknowns, and next actions differ.</p><span className="welcome-path-action">Compare proposals <span aria-hidden="true">↗</span></span></a>
       </div>
     </section>
-    <section className="welcome-process" aria-label="How it works"><p className="welcome-process-label">FROM QUESTION TO NEXT STEP</p><ol><li><span>01</span><strong>Property</strong><small>Start with an address or parcel.</small></li><li><span>02</span><strong>Proposal</strong><small>Describe what you hope to do.</small></li><li><span>03</span><strong>Next steps</strong><small>See evidence, gaps, and who to ask.</small></li></ol><p className="welcome-process-note">Built for honest early diligence.</p></section>
-    <footer className="welcome-footer"><span>412 / Independent housing project workspace</span></footer>
   </main>
 }
