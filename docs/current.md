@@ -1,5 +1,53 @@
 # Current app handoff
 
+## Publish and stop checkpoint
+
+Published walkthrough: https://ai-housing-navigator.vercel.app/projects/new . Deployment `dpl_EYscUyX6Rgo9hPrru49SWkFh5nLx` built application commit `12ee746` and is READY in production. Vercel project: `hets-projects-aab6adc0/ai-housing-navigator`. Both `feat/clear-project-results` and `feat/property-explorer` are pushed. Walkthrough draft [PR #3](https://github.com/het-sheth/ai-housing-navigator/pull/3) is open; no new PR was merged and main was not pushed.
+
+Hosted verification passed: isolated Chromium completed Mountford search, explicit confirmation, real parcel boundary and assessment, then a synthetic proposal's live screening response with HTTP 200, `pending`, `score: null` and seven checks without numeric points. Desktop and 390px mobile showed real tiles and boundary with no overflow or page errors. Edits cleared prior results; a simulated source error preserved inputs. Zero AI calls. Screenshots: `/tmp/housing-hosted-verify/screenshots/assessment-{1440,390}.png`. Read-only deployed API checks returned the expected 405 for GET assist and 400 for missing property query. All 117 tests, typecheck, lint and build passed before deployment; the existing Three.js chunk warning remains.
+
+Deployment is via CLI. Automatic GitHub-to-Vercel linking failed during setup, so future pushes are not confirmed to auto-deploy. Do not mistake the successful manual deployment for a working Git integration. Deploy again explicitly from a reviewed checkpoint when authorized. No credentials were inspected, transferred or printed. Hosted `/api/assist` is an explicit disabled endpoint and cannot make a provider call. The local API was restored to `npm run api:dev`; real corrected-prompt inference is still unverified.
+
+The session stops at this published checkpoint. Next session starts with the user's rejected Review/Next actions screens and the planned explorer/comparison, not another discovery pass. The deployment does not imply the design is accepted or the full product is finished.
+
+The user explicitly authorized pushing the feature work and deploying the website to Vercel, then stopping. This supersedes earlier no-deployment instructions for this checkpoint only. Do not push main directly or merge the new PR. Preserve and push both `feat/clear-project-results` and `feat/property-explorer`.
+
+Latest UI feedback: the user dislikes the walkthrough after Key questions. Review and Next actions are not accepted UI. Record that feedback rather than redesigning while closing the session; revisit those screens first when work resumes. Preserve the original right-hand map layout unless the user changes that preference.
+
+Deployment needs thin Vercel adapters for the existing public property/screening handlers. Hosted AI stays explicitly disabled, without transferring credentials or making paid requests. Drafts stay device-local and the hosted origin has separate browser storage from localhost. No authentication, database provisioning, 3D explorer or new comparison pages are part of this deployment.
+
+## Active walkthrough and separate explorer, September 26, 2026
+
+AI startup incident after the walkthrough checkpoint: the user saw the generic suggestion error. The property-test API had been started with `node server/dev.mjs`, which does not load the configured environment file; a missing key returns `ai_unavailable` before inference. That startup was unsuitable for the user-facing AI workflow. Use `npm run api:dev` so the server loads configured keys itself. Never inspect or print credential files. A successful read-only GET health check confirms the listener only, not model response quality. No paid retry is authorized, and the corrected prompt remains unverified with a fresh real request. The UI currently combines several AI failure causes into the same generic message, so the exact failed browser request was not individually traced.
+
+Fresh drafts contain empty property/description fields, no selected work activities and null home counts. Housing form, ground disturbance and financial readiness default to Unknown. Nonempty answers can come from restored device drafts; placeholders are illustrative text, not submitted data. No personal browser storage was inspected or cleared. The explorer and new proposal-comparison pages remain scoped on their separate branch, not implemented routes.
+
+This section supersedes the older stop and publication instructions below. PR #2 merged as `9fe6517f04763b6b2a75643551cb1dbb21973e50`. Current walkthrough work is on `feat/clear-project-results`; it is not in main. All earlier tracked and untracked work is preserved in this walkthrough checkpoint. Setup commit `5eaec18` ignores isolated worktrees. The walkthrough is committed locally as `ebd6275`; no new remote PR, merge or deployment accompanies it.
+
+The user requested finishing the first walkthrough while separating the proposed AI-driven candidate-property search and proposal comparison. The separate branch is `feat/property-explorer`, checked out at `/tmp/ai-housing-property-explorer`. It starts from the PR #2 baseline plus the worktree-ignore commit, without walkthrough/backend commit `ebd6275`. Its scope document is `docs/property-explorer-scope.md`, committed there as `2c5937e`; that worktree is clean. Baseline verification passed 96 tests, typecheck, lint and build. Integrate the finished walkthrough checkpoint before implementing shared services there. The checkout is temporary; its scope is preserved on the feature branch. Dependencies were linked for verification and that link was removed afterward. No citywide search or 3D parcel explorer has been implemented. A mentioned screen reference was not attached.
+
+The current walkthrough preserves the original layout and right-hand map. It adds explicit housing-form and ground-disturbance inputs, a user-triggered property assessment, sourced findings and prioritized actions. Existing drafts migrate these new answers to unknown. Assessment results are transient and invalidated on edits, project switches and source refresh; the Markdown brief includes their provenance when present. Saved projects are not deleted.
+
+`POST /api/screening/run` now fetches the exact County boundary, full-parcel municipality, Pittsburgh zoning, City slope and FEMA flood observations. Its published City use-table mapping is narrow and provisional. Parcel identifiers remain strings. Unknowns and independent source failures remain visible; there is no example fallback or AI evaluation. See [rubric and coverage](score-design-proposal.md) and [completion plan](walkthrough-completion-plan.md).
+
+Latest score policy: do not show any score, range or numeric contribution until every required rubric factor is assessed. Present integrations always leave required zoning, undermining, process and infrastructure factors unassessed, so the response is `pending` with `score: null` and named findings/actions. Previously reported 27-90 and 32-95 intervals are superseded, not current output. Financial feasibility remains unassessed.
+
+Local workspace URL: `http://127.0.0.1:5173/projects/new`; development API: `http://127.0.0.1:5175`. Keep configured DeepSeek and the existing budget guard unchanged. No paid AI calls, credentials, deployment, provisioning, push to main or new PR merge are authorized by this checkpoint.
+
+Manual walkthrough verification:
+
+1. Open `http://127.0.0.1:5173/projects/new`. If a draft resumes, open Projects and Start new project to archive it.
+2. Continue to Your property. Search `2003 Mountford Ave`, select parcel `0046R00029000000`, then confirm it. Verify the boundary and open Sources and record dates.
+3. Enter a synthetic proposal, select New construction, choose Detached and an explicit ground-disturbance answer. Enter one proposed home. Leave genuinely unknown financial answers unknown. The AI suggestion button is optional and was not used in verification.
+4. Review the answers, click Confirm & prepare brief, then Run property checks. Expect Assessment incomplete, source-backed findings and prioritized actions, with no numeric score.
+5. Open source details, export the brief, then edit an answer. The previous assessment must clear. Reload preserves the draft but requires explicitly reloading observations and rerunning assessment.
+
+Checkpoint verification: independent review found no remaining important issues in proposal matching, incomplete-score withholding, draft migration, stale requests and export provenance. `npm test` passed 112 tests; typecheck, lint and build passed. The existing Three.js chunk-size warning remains. Guided, map, live property and new screening browser scripts passed; live map tiles were visible at 320, 390 and 1440px with no horizontal overflow. Browser suites blocked AI and recorded zero AI calls. The latest local API was restarted and verified to return `pending`, `score: null`, exact proposal echo and no per-check numeric fields.
+
+Reproducible browser commands: `npm run test:guided`, `node scripts/guided-map-smoke.mjs`, `node scripts/guided-map-smoke.mjs --live-tiles`, `node scripts/live-property-smoke.mjs`, and `node scripts/screening-smoke.mjs`. Screenshots: `/tmp/housing-guided-screening/assessment-{1440,390}.png`, `/tmp/housing-guided-live-property/confirmed-live-parcel-{1440,390,320}.png`, and `/tmp/housing-guided-map/live-tiles-320.png`. The screening run used a synthetic one-detached-home proposal on a real Mountford parcel; those intentions are test inputs, not County facts. It verified unknown disturbance, edit invalidation and error preservation. Older direct API runs verified explicit yes/no disturbance inputs. The source effective dates of new spatial layers remain unknown.
+
+Two browser-test repairs preserve the original assertions: wait for initial autosave before injecting a corrupt synthetic draft, and validate retrieval time against the request window instead of a hardcoded calendar date. Historical-label assertions now match the explicit Historical Lanark outline label. The corrected AI prompt still lacks another approved real inference test. Authentication, cloud storage, full score coverage and the explorer remain unfinished.
+
 Publication checkpoint: [PR #2](https://github.com/het-sheth/ai-housing-navigator/pull/2) contains the complete guided-workspace and live-property work, including the previously uncommitted source and tests. The user authorized merging this verified checkpoint into `main` and stopping. Resume from `main` after checking the PR merge state; retain the feature branch as history. No deployment accompanied publication.
 
 ## Active live-property work, September 26, 2026

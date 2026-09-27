@@ -22,6 +22,8 @@ export const ACTIVITIES = [
 export type RoleId = typeof ROLES[number]['id']
 export type ActivityId = typeof ACTIVITIES[number]['id']
 export type FinancialAnswer = 'yes' | 'no' | 'unknown'
+export type HousingForm = 'detached' | 'attached' | 'unknown'
+export type GroundDisturbance = 'yes' | 'no' | 'unknown'
 export type Draft = {
   schemaVersion: 1
   id: string
@@ -36,6 +38,8 @@ export type Draft = {
   description: string
   activities: ActivityId[]
   tentativeActivities: ActivityId[]
+  housingForm: HousingForm
+  groundDisturbance: GroundDisturbance
   existingHomes: number | null
   proposedHomes: number | null
   homesRetained: number | null
@@ -52,14 +56,14 @@ export function createDraft(): Draft {
   return {
     schemaVersion: 1, id: crypto.randomUUID(), revision: 0, step: 0, role: '', decision: '',
     propertyQuery: '', parcelId: null, propertyConfirmed: false, propertyEvidence: null, description: '',
-    activities: [], tentativeActivities: [], existingHomes: null, proposedHomes: null,
+    activities: [], tentativeActivities: [], housingForm: 'unknown', groundDisturbance: 'unknown', existingHomes: null, proposedHomes: null,
     homesRetained: null, affordabilityGoal: '', essentialUses: '',
     financial: { budget: 'unknown', value: 'unknown', funding: 'unknown' },
     confirmedAt: null, updatedAt: new Date().toISOString(),
   }
 }
 
-const draftKeys = ['schemaVersion', 'id', 'revision', 'step', 'role', 'decision', 'propertyQuery', 'parcelId', 'propertyConfirmed', 'propertyEvidence', 'description', 'activities', 'tentativeActivities', 'existingHomes', 'proposedHomes', 'homesRetained', 'affordabilityGoal', 'essentialUses', 'financial', 'confirmedAt', 'updatedAt']
+const draftKeys = ['schemaVersion', 'id', 'revision', 'step', 'role', 'decision', 'propertyQuery', 'parcelId', 'propertyConfirmed', 'propertyEvidence', 'description', 'activities', 'tentativeActivities', 'housingForm', 'groundDisturbance', 'existingHomes', 'proposedHomes', 'homesRetained', 'affordabilityGoal', 'essentialUses', 'financial', 'confirmedAt', 'updatedAt']
 
 function object(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -82,7 +86,12 @@ function homeCount(value: unknown): value is number | null {
 }
 
 export function validateDraft(input: unknown): Draft {
-  if (object(input) && !Object.hasOwn(input, 'propertyEvidence')) input = { ...input, propertyEvidence: input.parcelId === '0023C00208000000' && input.propertyConfirmed ? 'historical' : null }
+  if (object(input)) input = {
+    ...input,
+    ...(!Object.hasOwn(input, 'propertyEvidence') ? { propertyEvidence: input.parcelId === '0023C00208000000' && input.propertyConfirmed ? 'historical' : null } : {}),
+    ...(!Object.hasOwn(input, 'housingForm') ? { housingForm: 'unknown' } : {}),
+    ...(!Object.hasOwn(input, 'groundDisturbance') ? { groundDisturbance: 'unknown' } : {}),
+  }
   if (!object(input) || Object.keys(input).length !== draftKeys.length || draftKeys.some(key => !Object.hasOwn(input, key))) throw new Error('Draft fields are missing or unrecognized. The saved draft has not been changed.')
   if (input.schemaVersion !== 1) throw new Error('This draft version is not supported. The saved draft has not been changed.')
   if (!text(input.id, 100) || !input.id.trim() || !Number.isSafeInteger(input.revision) || (input.revision as number) < 0 || !Number.isInteger(input.step) || (input.step as number) < 0 || (input.step as number) > 5) throw new Error('Draft identity, revision or step is invalid.')
@@ -93,6 +102,7 @@ export function validateDraft(input: unknown): Draft {
   if (![null, 'historical', 'live'].includes(input.propertyEvidence as string | null)) throw new Error('Property evidence type is invalid.')
   if (input.propertyEvidence === 'historical' && (input.parcelId !== '0023C00208000000' || !input.propertyConfirmed) || input.propertyEvidence === 'live' && (!input.parcelId || !input.propertyConfirmed)) throw new Error('Property evidence requires its confirmed parcel.')
   if (!activityList(input.activities) || !activityList(input.tentativeActivities) || input.activities.some(item => (input.tentativeActivities as ActivityId[]).includes(item))) throw new Error('Work activities must be distinct, recognized selections with tentative ideas separate.')
+  if (!['detached', 'attached', 'unknown'].includes(input.housingForm as string) || !['yes', 'no', 'unknown'].includes(input.groundDisturbance as string)) throw new Error('Housing form and ground disturbance must be selected options or unknown.')
   if (!homeCount(input.existingHomes) || !homeCount(input.proposedHomes) || !homeCount(input.homesRetained)) throw new Error('Home counts must be unknown or nonnegative whole numbers.')
   if (input.homesRetained !== null && (input.existingHomes !== null && input.homesRetained > input.existingHomes || input.proposedHomes !== null && input.homesRetained > input.proposedHomes)) throw new Error('Homes retained cannot exceed existing or proposed homes.')
   if (!object(input.financial) || Object.keys(input.financial).length !== 3 || !['budget', 'value', 'funding'].every(key => Object.hasOwn(input.financial as object, key) && ['yes', 'no', 'unknown'].includes((input.financial as Record<string, string>)[key]))) throw new Error('Financial readiness answers must be yes, no or unknown.')

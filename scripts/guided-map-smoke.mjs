@@ -135,7 +135,7 @@ try {
     const overviewTiles = await tileUrls(map)
     const property = page.getByLabel('Street address or parcel ID')
     await property.fill('0042 Example Avenue')
-    await expect(page.getByText(/property unresolved until you search and confirm/i)).toBeVisible()
+    await expect(page.getByText(/search and confirm a parcel to see its boundary/i)).toBeVisible()
     await expect(page.locator('.gp-site.is-selected')).toHaveCount(0)
     assert.deepEqual(await tileUrls(map), overviewTiles, 'An unknown address must not geocode or move the map')
     assert.equal(network.state.tileRequests > 0, true)
