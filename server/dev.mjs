@@ -3,6 +3,7 @@ import { Readable } from 'node:stream'
 import { handleAssist } from './ai/intake.mjs'
 import { handleProperty } from './property/live.mjs'
 import { handleScreening } from './screening/run.mjs'
+import { handleSources } from './sources/registry.mjs'
 
 const host = '127.0.0.1'
 const port = 5175
@@ -20,6 +21,8 @@ createServer(async (incoming, outgoing) => {
       ? await handleProperty(request)
       : pathname === '/api/screening/run'
         ? await handleScreening(request)
+        : pathname === '/api/sources'
+          ? handleSources(request)
         : await handleAssist(request, { key: process.env.OPENROUTER_API_KEY, log: fields => process.stdout.write(`${JSON.stringify(fields)}\n`) })
     outgoing.writeHead(response.status, Object.fromEntries(response.headers))
     outgoing.end(Buffer.from(await response.arrayBuffer()))

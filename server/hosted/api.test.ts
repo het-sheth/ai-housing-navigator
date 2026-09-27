@@ -3,6 +3,7 @@ import search from '../../api/property/search.mjs'
 import parcel from '../../api/property/parcel.mjs'
 import screening from '../../api/screening/run.mjs'
 import assist from '../../api/assist.mjs'
+import sources from '../../api/sources.mjs'
 
 const origin = 'https://housing-preview.vercel.app'
 const input = { parcelId: '0046R00029000000', proposal: { activities: [], proposedHomes: null, housingForm: 'unknown', groundDisturbance: 'unknown' } }
@@ -33,5 +34,11 @@ describe('hosted API functions', () => {
     const response = await assist.fetch(new Request(`${origin}/api/assist`, { method: 'POST', headers: { origin } }))
     expect(response.status).toBe(503)
     expect(await response.json()).toEqual({ error: 'ai_not_configured' })
+  })
+
+  it('exposes the public source catalog through the hosted adapter', async () => {
+    const response = await sources.fetch(new Request(`${origin}/api/sources`))
+    expect(response.status).toBe(200)
+    expect((await response.json()).catalogCount).toBe(60)
   })
 })
