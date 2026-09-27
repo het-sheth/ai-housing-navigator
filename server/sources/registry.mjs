@@ -140,10 +140,10 @@ const sources = [
     "granularity": "Legal text / section",
     "catalogUrl": "https://pittsburghpa.gov/dcp/zoning-code",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
+    "runtimeStatus": "document_index",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "Official code reference; automated retrieval returned HTTP 403 in a live probe. No legal rule interpretation follows from link availability.",
+    "queryMode": "document_index",
     "queryRequirements": []
   },
   {
@@ -153,10 +153,10 @@ const sources = [
     "granularity": "Case / parcel / decision",
     "catalogUrl": "https://pittsburghpa.gov/dcp/zba",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
+    "runtimeStatus": "document_index",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "document_index",
     "queryRequirements": []
   },
   {
@@ -166,10 +166,10 @@ const sources = [
     "granularity": "Municipal code / section",
     "catalogUrl": "https://www.generalcode.com/library/pa",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
+    "runtimeStatus": "document_index",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "document_index",
     "queryRequirements": []
   },
   {
@@ -223,10 +223,10 @@ const sources = [
     "granularity": "Subregion / indicator",
     "catalogUrl": "https://www.alleghenycounty.us/Services/Housing/Housing-Needs-Assessment",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
+    "runtimeStatus": "unavailable_reference",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The catalog report link returned HTTP 404; no completed report was substituted.",
+    "queryMode": "unavailable_reference",
     "queryRequirements": []
   },
   {
@@ -264,11 +264,13 @@ const sources = [
     "granularity": "Blocks, tracts, roads, places and more",
     "catalogUrl": "https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://tigerweb.geo.census.gov/arcgis/rest/services/Census2020/Tracts_Blocks/MapServer/0",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_tract",
+    "queryRequirements": [
+      "tract"
+    ]
   },
   {
     "catalogId": 20,
@@ -443,11 +445,14 @@ const sources = [
     "granularity": "Road segment, bridge, traffic count",
     "catalogUrl": "https://gis.penndot.gov/paprojects/",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://gis.penndot.gov/arcgis/rest/services/opendata/roadwaytraffic/MapServer/0",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_point",
+    "queryRequirements": [
+      "latitude",
+      "longitude"
+    ]
   },
   {
     "catalogId": 33,
@@ -456,10 +461,10 @@ const sources = [
     "granularity": "Building, road, amenity, address and other features",
     "catalogUrl": "https://www.openstreetmap.org/",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "runtimeStatus": "document_index",
+    "runtimeUrl": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "note": "Browser basemap only; tile imagery is not screening evidence.",
+    "queryMode": "document_index",
     "queryRequirements": []
   },
   {
@@ -469,10 +474,10 @@ const sources = [
     "granularity": "Address point",
     "catalogUrl": "https://openaddresses.io/",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
+    "runtimeStatus": "document_index",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "document_index",
     "queryRequirements": []
   },
   {
@@ -482,10 +487,10 @@ const sources = [
     "granularity": "Varies; parcel/vector/raster",
     "catalogUrl": "https://www.pasda.psu.edu/",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
+    "runtimeStatus": "document_index",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "document_index",
     "queryRequirements": []
   },
   {
@@ -495,11 +500,14 @@ const sources = [
     "granularity": "Raster elevation / point cloud",
     "catalogUrl": "https://www.usgs.gov/3d-elevation-program",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://epqs.nationalmap.gov/v1/json",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_point",
+    "queryRequirements": [
+      "latitude",
+      "longitude"
+    ]
   },
   {
     "catalogId": 37,
@@ -508,10 +516,10 @@ const sources = [
     "granularity": "High-resolution raster tiles",
     "catalogUrl": "https://www.pasda.psu.edu/uci/SearchResults.aspx?Keyword=Allegheny%20County%20Imagery",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
+    "runtimeStatus": "document_index",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "document_index",
     "queryRequirements": []
   },
   {
@@ -536,11 +544,14 @@ const sources = [
     "granularity": "Facility, permit, mine and environmental feature",
     "catalogUrl": "https://www.dep.pa.gov/DataandTools/Pages/eMapPA.aspx",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://gis.dep.pa.gov/depgisprd/rest/services/emappa/eMapPA_External/FeatureServer/36",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_point",
+    "queryRequirements": [
+      "latitude",
+      "longitude"
+    ]
   },
   {
     "catalogId": 40,
@@ -592,11 +603,14 @@ const sources = [
     "granularity": "30-meter raster and derivatives",
     "catalogUrl": "https://www.mrlc.gov/data",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://di-nlcd.img.arcgis.com/arcgis/rest/services/USA_NLCD_Annual_LandCover/ImageServer",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_point",
+    "queryRequirements": [
+      "latitude",
+      "longitude"
+    ]
   },
   {
     "catalogId": 44,
