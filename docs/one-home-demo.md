@@ -24,8 +24,12 @@ The existing individual zoning-use and flood screens may each show 2/2 when thei
 
 The test writes its actual origin, timestamp, live findings, screenshots, exported brief and draft-recovery evidence to `/tmp/housing-one-home-rehearsal`. It blocks AI and does not test cloud saving. Treat a failed live-source assertion as evidence to investigate, not a reason to substitute mock data.
 
-The new branch is not production until separately merged, deployed and verified. Do not narrate branch-only evidence while recording the public deployment.
+PR #25 is merged and deployed. The public origin https://ai-housing-navigator.vercel.app was verified using this example on September 27, 2026. See the production evidence below.
 
 ## Verified branch rehearsal
 
 On September 27 at 21:33:42 UTC, the local branch at `http://127.0.0.1:5202` passed the complete browser rehearsal with live public APIs: exact parcel and boundary, R1D-H, 3,000 recorded square feet against the 1,200 base minimum, existing zoning-use and flood scores, 14 supplementary observations, export and local resume. Desktop and 390px mobile screenshots were captured; there were zero page errors. AI was blocked and cloud saving was not exercised. Full verification passed 307 tests, typecheck, lint and build. The existing Three.js chunk warning remains.
+
+## Verified production rehearsal
+
+On September 27 at 21:43:11 UTC, `https://ai-housing-navigator.vercel.app` passed the same real-source rehearsal, including the new evidence, desktop/mobile, export and local resume, with zero page errors. Source commit `8e5ab74`, deployment `dpl_EqhPTz2RqEGHxtxwx5NXqrbJBPdR`. Evidence is `/tmp/housing-one-home-production/evidence.json`; exported brief and screenshots are beside it. AI was blocked and cloud saving was not retested. A separate production Compare regression used synthetic property/screening responses and passed with zero AI requests or page errors.
