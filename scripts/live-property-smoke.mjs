@@ -53,6 +53,12 @@ async function isolate(context, mode = 'live') {
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ parcelId: '0000000000000003', assessment: { status: 'error', sourceDate: null, retrievedAt, sourceUrl: 'https://data.wprdc.org/dataset/property-assessments', record: null }, boundary: { status: 'available', sourceDate: null, retrievedAt, sourceUrl: 'https://example.invalid/synthetic-boundary', sourceCrs: 'EPSG:4326', displayCrs: 'EPSG:4326', geometry: { type: 'Polygon', coordinates: [[[-80.01, 40.45], [-80.0101, 40.4501], [-80.0102, 40.45], [-80.01, 40.45]]] } } }) })
         return
       }
+      if (mode === 'confirm-race') {
+        const parcelId = url.searchParams.get('pin')
+        const retrievedAt = new Date().toISOString()
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ parcelId, assessment: { status: 'available', sourceDate: '2026-09-01', retrievedAt, sourceUrl: 'https://data.wprdc.org/dataset/property-assessments', record: { parcelId, address: 'CANDIDATE 1 RD', city: 'PITTSBURGH', municipality: '25th Ward - PITTSBURGH', zip: '15214', classification: 'RESIDENTIAL', useDescription: 'Residential', lotAreaSqFt: 1600, yearBuilt: null } }, boundary: { status: 'unavailable', sourceDate: null, retrievedAt, sourceUrl: 'https://gisdata.alleghenycounty.us/arcgis/rest/services/EGIS/Web_Parcels/MapServer/0', geometry: null } }) })
+        return
+      }
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ parcelId: url.searchParams.get('pin'), assessment: { status: 'unavailable', sourceDate: null, retrievedAt: new Date().toISOString(), sourceUrl: 'https://data.wprdc.org/dataset/property-assessments', record: null }, boundary: { status: 'unavailable', sourceDate: null, retrievedAt: new Date().toISOString(), sourceUrl: 'https://gisdata.alleghenycounty.us/arcgis/rest/services/EGIS/Web_Parcels/MapServer/0', geometry: null } }) })
       return
     }
