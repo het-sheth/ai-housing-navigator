@@ -106,11 +106,12 @@ function pending(input, checks, municipality, actions, now) {
 
 function featureCode(value) { return typeof value === 'string' ? value.trim().toUpperCase() : '' }
 
-export async function handleScreening(request, { fetcher = fetch, now = () => new Date().toISOString() } = {}) {
+export async function handleScreening(request, { fetcher = fetch, now = () => new Date().toISOString(), trustedOrigin = 'http://127.0.0.1:5173' } = {}) {
   if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405)
   const url = new URL(request.url)
   if (url.pathname !== '/api/screening/run') return json({ error: 'not_found' }, 404)
-  if (!['127.0.0.1', 'localhost'].includes(url.hostname) || request.headers.get('origin') !== 'http://127.0.0.1:5173') return json({ error: 'origin_denied' }, 403)
+  const correctRequestHost = trustedOrigin === 'http://127.0.0.1:5173' ? ['127.0.0.1', 'localhost'].includes(url.hostname) : url.origin === trustedOrigin
+  if (!correctRequestHost || request.headers.get('origin') !== trustedOrigin) return json({ error: 'origin_denied' }, 403)
   if (request.headers.get('content-type')?.split(';')[0] !== 'application/json') return json({ error: 'json_required' }, 415)
   let input
   try { input = await body(request) } catch { return json({ error: 'invalid_or_large_body' }, 413) }

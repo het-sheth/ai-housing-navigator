@@ -167,7 +167,7 @@ export default function GuidedProject() {
     } catch (error) {
       if (controller.signal.aborted) return
       const code = error instanceof Error ? error.message : 'ai_unavailable'
-      setAiError(code === 'budget_unverified' ? 'AI is unavailable because its spending limit could not be verified. Your description and manual choices are still here.' : code === 'local_rate_limit' ? 'Please wait a minute before trying AI again. Your manual choices are available.' : 'AI could not suggest work right now. Your description and manual choices are still here; you can try again.')
+      setAiError(code === 'ai_not_configured' ? 'AI suggestions are not available on this hosted site. Your description and manual activity choices remain available.' : code === 'budget_unverified' ? 'AI is unavailable because its spending limit could not be verified. Your description and manual choices are still here.' : code === 'local_rate_limit' ? 'Please wait a minute before trying AI again. Your manual choices are available.' : 'AI could not suggest work right now. Your description and manual choices are still here; you can try again.')
       setAiStatus('error')
     } finally {
       if (aiAbort.current === controller) aiAbort.current = null

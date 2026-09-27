@@ -3,6 +3,8 @@ scripts/
 test-results/
 playwright-report/
 .git/
+.worktrees/
+node_modules/
 .env
 .env.*
 !.env.example

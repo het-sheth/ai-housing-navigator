@@ -1,8 +1,14 @@
 # Resume: AI intake checkpoint and sequential product fixes
 
+## Latest instruction: publish checkpoint and stop
+
+Push both feature branches and deploy the walkthrough checkpoint to Vercel, with live public-record API adapters and explicitly unavailable hosted AI. No paid inference or credential transfer. The user rejects the Review and Next actions UI after Key questions; these need redesign next session and are not accepted. Finish deployment verification, record URLs in current.md, then stop. No new PR merge or main push.
+
 ## Latest instruction: finish walkthrough, isolate explorer
 
-The active walkthrough branch is `feat/clear-project-results`, based on merged PR #2 (`9fe6517`). Existing tracked and untracked changes are preserved in the reviewed walkthrough checkpoint. No new remote PR or merge was performed. Read the first section of [current.md](current.md), [completion plan](walkthrough-completion-plan.md), and [rubric](score-design-proposal.md) before continuing. Do not restart discovery.
+Startup correction: run the API with `npm run api:dev`, never bare `node server/dev.mjs` for the user-facing workflow. The latter was used during property verification and bypassed loading the configured AI key, causing a likely pre-inference `ai_unavailable` failure. See current.md for the incident and inference-verification limits. No paid retry occurred.
+
+The active walkthrough branch is `feat/clear-project-results`, with local checkpoint `ebd6275` based on merged PR #2 (`9fe6517`). Existing tracked and untracked changes are preserved in the reviewed walkthrough checkpoint. No new remote PR or merge was performed. Read the first section of [current.md](current.md), [completion plan](walkthrough-completion-plan.md), and [rubric](score-design-proposal.md) before continuing. Do not restart discovery.
 
 A separate worktree at `/tmp/ai-housing-property-explorer` uses `feat/property-explorer` for the proposed AI-confirmed candidate-property search, map explorer and one-parcel proposal comparison. Only planning/baseline setup belongs there until the walkthrough checkpoint is finished. Its base does not include the current uncommitted backend/UI changes. No screen attachment was received. The scope is committed as `2c5937e` and the explorer worktree is clean; its baseline passed 96 tests and all required checks.
 
