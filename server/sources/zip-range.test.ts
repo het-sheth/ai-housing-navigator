@@ -109,4 +109,17 @@ describe('bounded ZIP range reader', () => {
     }
     await expect(readZipEntries('https://example.org/public.zip', ['stops.txt'], { fetcher })).rejects.toThrow()
   })
+
+  it('rejects a range that omits the pinned archive ETag', async () => {
+    const bytes = archive({ 'stops.txt': 'stop_id\n100\n' })
+    const ordinary = source(bytes)
+    const fetcher = async (url: string, options: RequestInit) => {
+      const response = await ordinary(url, options)
+      if (options.method === 'HEAD') return response
+      const headers = new Headers(response.headers)
+      headers.delete('etag')
+      return new Response(response.body, { status: response.status, headers })
+    }
+    await expect(readZipEntries('https://example.org/public.zip', ['stops.txt'], { fetcher })).rejects.toThrow()
+  })
 })

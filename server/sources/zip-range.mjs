@@ -18,7 +18,7 @@ async function exactRange(url, start, end, archiveSize, version, fetcher) {
   const headers = { Range: `bytes=${start}-${end}` }
   if (version.etag || version.lastModified) headers['If-Range'] = version.etag ?? version.lastModified
   const response = await fetcher(url, { headers, signal: AbortSignal.timeout(12000) })
-  if (response.status !== 206 || response.headers.get('content-range') !== `bytes ${start}-${end}/${archiveSize}` || version.etag && response.headers.get('etag') && response.headers.get('etag') !== version.etag || version.lastModified && response.headers.get('last-modified') && response.headers.get('last-modified') !== version.lastModified || !response.body) throw Error('zip_range_not_honored')
+  if (response.status !== 206 || response.headers.get('content-range') !== `bytes ${start}-${end}/${archiveSize}` || version.etag && response.headers.get('etag') !== version.etag || version.lastModified && response.headers.get('last-modified') !== version.lastModified || !response.body) throw Error('zip_range_not_honored')
   const reader = response.body.getReader()
   const chunks = []
   let size = 0
