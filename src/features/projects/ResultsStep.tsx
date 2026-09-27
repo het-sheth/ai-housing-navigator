@@ -1,0 +1,35 @@
+import { sources } from '../../domain'
+import { ACTIVITIES, type Draft, type DraftSummary, type DraftTask } from './contracts'
+import { hasCompleteScreen, type ScreeningCheck, type ScreeningResult } from './screening-client'
+
+function Task({ task, number }: { task: DraftTask; number: number }) {
+  return <article className="gp-task" key={task.id}><span className="gp-task-number">{String(number).padStart(2, '0')}</span><div><span className="gp-kicker">{task.party}</span><h2>{task.title}</h2><p>{task.request}</p></div></article>
+}
+
+function sourceDate(value: string | null) {
+  if (!value) return 'Unknown'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('en-US', { timeZone: 'UTC', year: 'numeric', month: 'long', day: 'numeric' })
+}
+
+function CheckSource({ check }: { check: ScreeningCheck }) {
+  return <p>Source date: {sourceDate(check.sourceDate)}. Retrieved: {check.retrievedAt ? new Date(check.retrievedAt).toLocaleString('en-US', { timeZone: 'UTC' }) + ' UTC' : 'Not checked'}. {check.sourceUrl && <a href={check.sourceUrl} target="_blank" rel="noreferrer">View source ↗</a>}</p>
+}
+
+export function ResultsStep({ draft, summary, historical, assessment, assessmentStatus, assessmentError, onRun }: { draft: Draft; summary: DraftSummary; historical: boolean; assessment: ScreeningResult | null; assessmentStatus: 'idle' | 'loading' | 'ready' | 'error'; assessmentError: string; onRun: () => void }) {
+  const activityDescription = draft.activities.map(id => ACTIVITIES.find(activity => activity.id === id)?.label).filter(Boolean).join(', ')
+  const proposal = draft.description.trim() || activityDescription || 'Proposal details have not been described yet.'
+  const first = summary.tasks[0]
+  const sourceActions = assessment?.nextActions ?? []
+  const canRun = Boolean(draft.parcelId && draft.propertyConfirmed && draft.propertyEvidence === 'live')
+  const incomplete = !assessment || !hasCompleteScreen(assessment) || draft.tentativeActivities.length > 0
+  const findings = assessment?.checks.filter(check => ['mapped_flag', 'screened_low_friction'].includes(check.status)).sort((a, b) => (a.status === 'mapped_flag' ? 0 : 1) - (b.status === 'mapped_flag' ? 0 : 1)) ?? []
+  const unfinished = assessment?.checks.filter(check => !['mapped_flag', 'screened_low_friction'].includes(check.status)) ?? []
+  return <>
+    <section className="gp-result-proposal"><span className="gp-kicker">Your proposal</span><h2>{proposal}</h2><p>{draft.propertyQuery || 'Site unresolved'}{draft.parcelId && draft.propertyConfirmed ? ` · Parcel ${draft.parcelId}` : ''}</p></section>
+    <section className="gp-assessment" data-testid="assessment-panel"><div className="gp-assessment-heading"><div><span className="gp-kicker">Development ease</span><h2>{assessment && !incomplete && assessment.score ? `${assessment.score.lower}–${assessment.score.upper} / 100` : 'Assessment incomplete'}</h2></div><button className="gp-secondary" type="button" data-testid="run-assessment-button" disabled={!canRun || assessmentStatus === 'loading'} onClick={onRun}>{assessmentStatus === 'loading' ? 'Checking sources…' : assessment ? 'Run checks again' : 'Run property checks'}</button></div><p>{!canRun ? 'Confirm a parcel from live search before running property checks.' : assessmentStatus === 'loading' ? 'Checking public parcel, zoning and hazard sources.' : assessment ? incomplete ? 'No Development Ease Score yet. Some required checks are unknown, unsupported or unavailable.' : 'Preliminary mapped screen only. Review each source and unresolved requirement before using it.' : 'Run checks when you are ready. Your proposal stays editable.'}</p>{draft.tentativeActivities.length > 0 && <p>Tentative activities are not part of these property checks. Confirm the intended scope and run them again.</p>}{assessmentError && <p className="gp-error-message" role="alert">{assessmentError}</p>}{assessment && <><div className="gp-assessment-findings">{findings.map(check => <article key={check.id}><span className="gp-kicker">{check.status === 'mapped_flag' ? 'Mapped flag' : 'Mapped screen'}</span><h3>{check.label}</h3><p>{check.reason}</p></article>)}</div><details className="gp-details"><summary>Unknown and unfinished checks <span>{unfinished.length}</span></summary>{unfinished.map(check => <article key={check.id} className="gp-check-detail"><strong>{check.label}</strong><p>{check.reason}</p></article>)}</details><details className="gp-details"><summary>Screening source details</summary><p>Checked {new Date(assessment.retrievedAt).toLocaleString('en-US', { timeZone: 'UTC' })} UTC. Rubric: {assessment.rubricVersion}. Source dates are unknown where a check does not name one.</p>{assessment.checks.map(check => <article key={check.id} className="gp-check-detail"><strong>{check.label}</strong><CheckSource check={check} /></article>)}<p>{assessment.caveat}</p></details></>}</section>
+    <div className="gp-action-list" data-testid="next-action-list"><span className="gp-kicker">First action</span>{sourceActions.length ? <article className="gp-task"><span className="gp-task-number">01</span><div><h2>{sourceActions[0]}</h2></div></article> : first && <Task task={first} number={1} />}{sourceActions.length > 1 ? <details className="gp-details gp-more-actions"><summary>Other actions <span>{sourceActions.length - 1}</span></summary>{sourceActions.slice(1).map((action, index) => <article className="gp-task" key={action}><span className="gp-task-number">{String(index + 2).padStart(2, '0')}</span><div><h2>{action}</h2></div></article>)}</details> : summary.tasks.length > 1 && <details className="gp-details gp-more-actions"><summary>Other actions <span>{summary.tasks.length - 1}</span></summary>{summary.tasks.slice(1).map((task, index) => <Task task={task} number={index + 2} />)}</details>}</div>
+    <details className="gp-details gp-result-details"><summary>Project numbers and check coverage</summary><div className="gp-result-outcomes"><span><strong>{draft.homesRetained ?? 'Unknown'}</strong>Homes retained</span><span><strong>{summary.netNew ?? 'Unknown'}</strong>Net new homes</span><span><strong>Unassessed</strong>Financial feasibility</span></div><p>These numbers come from your answers. {assessment ? 'The bounded property checks above do not determine permission or financial feasibility.' : 'Property checks have not run.'}</p><p>County assessment and boundary observations, where loaded, describe records rather than permission or current condition.</p></details>
+    {historical && <details className="gp-details"><summary>Historical Lanark evidence</summary><p>The County assessment dated September 1, 2026 classifies vacant land. City permit research retrieved September 26, 2026 describes dwelling work. Present condition and lawful use remain unresolved.</p>{sources.filter(source => ['assessment', 'pli'].includes(source.id)).map(source => <p key={source.id}><a href={source.url} target="_blank" rel="noreferrer">{source.title} ↗</a></p>)}</details>}
+  </>
+}

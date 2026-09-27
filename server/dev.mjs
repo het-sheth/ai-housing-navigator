@@ -2,6 +2,7 @@ import { createServer } from 'node:http'
 import { Readable } from 'node:stream'
 import { handleAssist } from './ai/intake.mjs'
 import { handleProperty } from './property/live.mjs'
+import { handleScreening } from './screening/run.mjs'
 
 const host = '127.0.0.1'
 const port = 5175
@@ -14,9 +15,12 @@ createServer(async (incoming, outgoing) => {
       body: incoming.method === 'POST' ? Readable.toWeb(incoming) : undefined,
       duplex: incoming.method === 'POST' ? 'half' : undefined,
     })
-    const response = new URL(request.url).pathname.startsWith('/api/property/')
+    const pathname = new URL(request.url).pathname
+    const response = pathname.startsWith('/api/property/')
       ? await handleProperty(request)
-      : await handleAssist(request, { key: process.env.OPENROUTER_API_KEY, log: fields => process.stdout.write(`${JSON.stringify(fields)}\n`) })
+      : pathname === '/api/screening/run'
+        ? await handleScreening(request)
+        : await handleAssist(request, { key: process.env.OPENROUTER_API_KEY, log: fields => process.stdout.write(`${JSON.stringify(fields)}\n`) })
     outgoing.writeHead(response.status, Object.fromEntries(response.headers))
     outgoing.end(Buffer.from(await response.arrayBuffer()))
   } catch {

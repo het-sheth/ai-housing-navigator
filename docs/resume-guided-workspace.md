@@ -1,5 +1,15 @@
 # Resume: AI intake checkpoint and sequential product fixes
 
+## Latest instruction: finish walkthrough, isolate explorer
+
+The active walkthrough branch is `feat/clear-project-results`, based on merged PR #2 (`9fe6517`). Existing tracked and untracked changes are preserved in the reviewed walkthrough checkpoint. No new remote PR or merge was performed. Read the first section of [current.md](current.md), [completion plan](walkthrough-completion-plan.md), and [rubric](score-design-proposal.md) before continuing. Do not restart discovery.
+
+A separate worktree at `/tmp/ai-housing-property-explorer` uses `feat/property-explorer` for the proposed AI-confirmed candidate-property search, map explorer and one-parcel proposal comparison. Only planning/baseline setup belongs there until the walkthrough checkpoint is finished. Its base does not include the current uncommitted backend/UI changes. No screen attachment was received. The scope is committed as `2c5937e` and the explorer worktree is clean; its baseline passed 96 tests and all required checks.
+
+The user now requires withholding every numeric score until all required rubric factors are assessed. Current integrations always return an incomplete assessment, with live evidence and actions. Do not restore the earlier partial score intervals. The walkthrough adds explicit housing-form/ground-disturbance answers and an explicit Run property checks action; no existing record supplies these proposal assumptions. Keep the original form and right-hand map, archive/restore, source provenance, and string PINs.
+
+Walkthrough verification passed 112 tests, typecheck, lint, build and all five browser commands listed in current.md. The local API serves the latest pending-only incomplete assessment contract. Source findings are live; Lanark comparison is historical; complete scoring, citywide search, cloud persistence and paid AI revalidation remain unfinished. Use Sol for implementation/review and Luna for bounded support, reusing existing agents. Never inspect credential files or make a paid AI request. No deployment, provisioning, main push or new merge. Finish with actual browser verification, all four required checks, and exact branch/publication status. Older dated sections below are historical and may conflict with the latest instruction.
+
 ## Latest instruction: live property slice in original workspace
 
 Publication: [PR #2](https://github.com/het-sheth/ai-housing-navigator/pull/2) contains the complete checkpoint for `main`, including all previously uncommitted application work. The user authorized the merge and requested stopping here. Verify the PR merge state and resume from `main`; the feature branch remains preserved.

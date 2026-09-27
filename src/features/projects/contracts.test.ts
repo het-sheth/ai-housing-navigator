@@ -35,9 +35,13 @@ describe('guided draft contracts', () => {
   it('migrates an existing device draft without erasing its saved parcel', () => {
     const legacy = { ...createDraft() } as Record<string, unknown>
     delete legacy.propertyEvidence
+    delete legacy.housingForm
+    delete legacy.groundDisturbance
     const restored = validateDraft({ ...legacy, parcelId: '0023C00208000000', propertyConfirmed: true })
     expect(restored.parcelId).toBe('0023C00208000000')
     expect(restored.propertyEvidence).toBe('historical')
+    expect(restored.housingForm).toBe('unknown')
+    expect(restored.groundDisturbance).toBe('unknown')
   })
 
   it.each([-1, 1.5, Infinity, NaN, '2'])('rejects invalid home count %s rather than coerce it', count => {

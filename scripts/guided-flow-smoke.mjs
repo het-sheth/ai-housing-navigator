@@ -66,6 +66,7 @@ try {
   })
   await page.reload()
   await expect(workspace).toBeVisible()
+  await expect(page.getByTestId('draft-save-status')).toContainText(/saved on this device/i)
 
   // Invalid persisted data must remain recoverable until the user explicitly clears it.
   const invalid = { schemaVersion: 999, id: 'synthetic-invalid-draft' }
@@ -97,7 +98,7 @@ try {
   await page.getByRole('button', { name: 'Continue' }).click()
   await page.getByLabel('Street address or parcel ID').fill('0042 Example Avenue')
   await expect.poll(async () => (await storedValue(page))?.propertyQuery).toBe('0042 Example Avenue')
-  await expect(page.getByText(/property unresolved until you search and confirm/i)).toBeVisible()
+  await expect(page.getByText(/search and confirm a parcel to see its boundary/i)).toBeVisible()
   await page.getByRole('button', { name: 'Continue' }).click()
   await expect(page.getByTestId('site-context-map')).toBeVisible()
   await expect(page.locator('.gp-site.is-selected')).toHaveCount(0)
@@ -136,7 +137,11 @@ try {
   assert.match(actionTitles[0], /Confirm the property and municipality/i)
   assert.match(actionTitles[1], /financial assumptions/i)
   assert.ok(actionTitles.some(title => /proposed work/i.test(title)))
-  await expect(page.locator('.gp-result-outcomes').getByText('Unassessed', { exact: true })).toBeVisible()
+  const coverage = page.locator('.gp-result-details')
+  await expect(coverage).toBeVisible()
+  await expect(coverage).not.toHaveAttribute('open', '')
+  await coverage.locator('summary').click()
+  await expect(coverage.locator('.gp-result-outcomes').getByText('Unassessed', { exact: true })).toBeVisible()
 
   // Editing confirmed inputs returns the project to an unconfirmed review state.
   await page.getByRole('button', { name: /back/i }).click()
