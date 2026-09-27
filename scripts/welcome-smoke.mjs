@@ -14,7 +14,7 @@ try {
   await page.getByTestId('welcome-screen').waitFor({ timeout: 10000 })
   await page.evaluate(() => document.fonts.ready)
 
-  const start = page.getByRole('link', { name: 'Start a project', exact: true }).first()
+  const start = page.locator('.welcome-actions').getByRole('link', { name: 'Assess a property', exact: true })
   assert.equal(await start.getAttribute('href'), '/projects/new')
   const scene = page.getByTestId('neighborhood-scene')
   await scene.waitFor()
@@ -45,7 +45,7 @@ try {
   assert.equal(await reducedMotionPause.isDisabled(), true, 'Reduced motion should disable manual animation control')
   assert.equal(await reducedMotionPause.getAttribute('aria-pressed'), 'true', 'Reduced motion should keep the scene paused')
 
-  await page.getByRole('link', { name: 'Start a project', exact: true }).first().focus()
+  await page.locator('.welcome-actions').getByRole('link', { name: 'Assess a property', exact: true }).focus()
   await page.keyboard.press('Enter')
   await page.getByTestId('guided-workspace').waitFor()
   assert.deepEqual(errors, [], 'Introduction and project transition should not throw browser errors')

@@ -1,0 +1,856 @@
+const sources = [
+  {
+    "catalogId": 1,
+    "name": "Allegheny County Property Assessments",
+    "geography": "Allegheny County",
+    "granularity": "Parcel",
+    "catalogUrl": "https://data.wprdc.org/dataset/property-assessments",
+    "storedInApplication": false,
+    "runtimeStatus": "runtime",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
+  },
+  {
+    "catalogId": 2,
+    "name": "Allegheny County Property Sale Transactions",
+    "geography": "Allegheny County",
+    "granularity": "Transaction / parcel",
+    "catalogUrl": "https://data.wprdc.org/dataset/real-estate-sales",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "The organizer catalog URL is stale. The verified WPRDC property sales resource supports exact parcel lookup; individual sales are not nearby comparables.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ],
+    "organizerUrl": "https://data.wprdc.org/dataset/allegheny-county-property-sale-transactions"
+  },
+  {
+    "catalogId": 3,
+    "name": "Allegheny County Parcel Boundaries",
+    "geography": "Allegheny County",
+    "granularity": "Parcel polygon",
+    "catalogUrl": "https://data.wprdc.org/dataset/allegheny-county-parcel-boundaries",
+    "storedInApplication": false,
+    "runtimeStatus": "runtime",
+    "runtimeUrl": "https://gisdata.alleghenycounty.us/arcgis/rest/services/EGIS/Web_Parcels/MapServer/0",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
+  },
+  {
+    "catalogId": 4,
+    "name": "Allegheny County GIS Open Data Portal",
+    "geography": "Allegheny County",
+    "granularity": "Varies: parcel to county",
+    "catalogUrl": "https://openac-alcogis.opendata.arcgis.com/",
+    "storedInApplication": false,
+    "runtimeStatus": "partial",
+    "runtimeUrl": "https://services1.arcgis.com/vdNDkVykv9vEWFX4/arcgis/rest/services/AlleghenyCountyMunicipalBoundaries/FeatureServer/0",
+    "note": "Only the County municipality layer is queried; the portal is not integrated as a whole.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
+  },
+  {
+    "catalogId": 5,
+    "name": "PLI Permits",
+    "geography": "City of Pittsburgh",
+    "granularity": "Permit / address",
+    "catalogUrl": "https://data.wprdc.org/dataset/pli-permits",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
+  },
+  {
+    "catalogId": 6,
+    "name": "Historical PLI Permits",
+    "geography": "City of Pittsburgh",
+    "granularity": "Permit / address",
+    "catalogUrl": "https://data.wprdc.org/dataset/city-of-pittsburgh-building-permit-summary",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/package_show",
+    "note": "The separate historical permit summary archive is queried only as a table index. No parcel records or complete cross-table parcel history are claimed.",
+    "queryMode": "live_archive_index",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 7,
+    "name": "PLI / DOMI / Environmental Services Violations",
+    "geography": "City of Pittsburgh",
+    "granularity": "Violation / address",
+    "catalogUrl": "https://data.wprdc.org/dataset/pittsburgh-pli-violations-report",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
+  },
+  {
+    "catalogId": 8,
+    "name": "Condemned and Dead-End Properties",
+    "geography": "City of Pittsburgh",
+    "granularity": "Property / address",
+    "catalogUrl": "https://data.wprdc.org/dataset/condemned-properties",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
+  },
+  {
+    "catalogId": 9,
+    "name": "Pittsburgh Zoning Districts",
+    "geography": "City of Pittsburgh",
+    "granularity": "Zoning polygon",
+    "catalogUrl": "https://data.wprdc.org/dataset/pittsburgh-zoning",
+    "storedInApplication": false,
+    "runtimeStatus": "runtime",
+    "runtimeUrl": "https://pghbridgis.pittsburghpa.gov/federated/rest/services/Zoning/MapServer/0",
+    "note": "The runtime district endpoint differs from the supplied City viewer; equivalence and update cadence are unverified.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
+  },
+  {
+    "catalogId": 10,
+    "name": "Pittsburgh Zoning Code",
+    "geography": "City of Pittsburgh",
+    "granularity": "Legal text / section",
+    "catalogUrl": "https://pittsburghpa.gov/dcp/zoning-code",
+    "storedInApplication": false,
+    "runtimeStatus": "document_index",
+    "runtimeUrl": null,
+    "note": "Official code reference; automated retrieval returned HTTP 403 in a live probe. No legal rule interpretation follows from link availability.",
+    "queryMode": "document_index",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 11,
+    "name": "Pittsburgh Zoning Board of Adjustment Decisions",
+    "geography": "City of Pittsburgh",
+    "granularity": "Case / parcel / decision",
+    "catalogUrl": "https://pittsburghpa.gov/dcp/zba",
+    "storedInApplication": false,
+    "runtimeStatus": "document_index",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "document_index",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 12,
+    "name": "Pennsylvania Municipal Codes",
+    "geography": "Pennsylvania municipalities",
+    "granularity": "Municipal code / section",
+    "catalogUrl": "https://www.generalcode.com/library/pa",
+    "storedInApplication": false,
+    "runtimeStatus": "document_index",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "document_index",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 13,
+    "name": "Pittsburgh Development / Permit Records via OneStopPGH",
+    "geography": "City of Pittsburgh",
+    "granularity": "Application / permit / address",
+    "catalogUrl": "https://onestoppgh.pittsburghpa.gov/",
+    "storedInApplication": false,
+    "runtimeStatus": "catalog_reference",
+    "runtimeUrl": null,
+    "note": "Interactive OneStopPGH public portal; no stable machine-readable exact parcel API verified.",
+    "queryMode": "unverified_record_access",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 14,
+    "name": "City-Owned Properties",
+    "geography": "City of Pittsburgh",
+    "granularity": "Parcel / property",
+    "catalogUrl": "https://data.wprdc.org/dataset/city-owned-properties",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
+  },
+  {
+    "catalogId": 15,
+    "name": "City of Pittsburgh Property Tax Abatements",
+    "geography": "City of Pittsburgh",
+    "granularity": "Property / abatement",
+    "catalogUrl": "https://data.wprdc.org/dataset/city-property-tax-abatements",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "The organizer catalog URL is stale. The verified WPRDC abatement resource supports exact parcel lookup; a past award does not establish current eligibility.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ],
+    "organizerUrl": "https://data.wprdc.org/dataset/city-of-pittsburgh-property-tax-abatements"
+  },
+  {
+    "catalogId": 16,
+    "name": "Allegheny County Housing Needs Assessment",
+    "geography": "Allegheny County; 13 subregions",
+    "granularity": "Subregion / indicator",
+    "catalogUrl": "https://www.alleghenycounty.us/Services/Housing/Housing-Needs-Assessment",
+    "storedInApplication": false,
+    "runtimeStatus": "unavailable_reference",
+    "runtimeUrl": null,
+    "note": "The catalog report link returned HTTP 404; no completed report was substituted.",
+    "queryMode": "unavailable_reference",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 17,
+    "name": "American Community Survey 5-Year",
+    "geography": "United States",
+    "granularity": "Block group, tract, place, county and more",
+    "catalogUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+    "storedInApplication": false,
+    "runtimeStatus": "access_required",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "access_required",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 18,
+    "name": "Decennial Census",
+    "geography": "United States",
+    "granularity": "Block to nation",
+    "catalogUrl": "https://www.census.gov/programs-surveys/decennial-census/data.html",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://tigerweb.geo.census.gov/arcgis/rest/services/Census2020/Tracts_Blocks/MapServer/0",
+    "note": "Only bounded 2020 Census tract population and housing-unit counts are queried through TIGERweb; other Decennial tables are not integrated.",
+    "queryMode": "live_tract",
+    "queryRequirements": [
+      "tract"
+    ]
+  },
+  {
+    "catalogId": 19,
+    "name": "TIGER/Line Shapefiles",
+    "geography": "United States",
+    "granularity": "Blocks, tracts, roads, places and more",
+    "catalogUrl": "https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://tigerweb.geo.census.gov/arcgis/rest/services/Census2020/Tracts_Blocks/MapServer/0",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_tract",
+    "queryRequirements": [
+      "tract"
+    ]
+  },
+  {
+    "catalogId": 20,
+    "name": "Comprehensive Housing Affordability Strategy (CHAS)",
+    "geography": "United States",
+    "granularity": "Custom geography; tract for selected tables",
+    "catalogUrl": "https://www.huduser.gov/portal/datasets/cp.html",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://services.arcgis.com/VTyQ9soqVukalItT/ArcGIS/rest/services/ACS_5YR_CHAS_Estimate_Data_by_County/FeatureServer/4",
+    "note": "Only two documented county counts from HUD's historical 2013-2017 CHAS ArcGIS layer are queried. HUD has newer 2018-2022 CHAS data, but its public bulk tables are not parsed here.",
+    "queryMode": "live_county_aggregate",
+    "queryRequirements": ["countyFips"]
+  },
+  {
+    "catalogId": 21,
+    "name": "Location Affordability Index",
+    "geography": "United States",
+    "granularity": "Block group / tract",
+    "catalogUrl": "https://hudgis-hud.opendata.arcgis.com/datasets/c1c32742599a42c9a45c95be50ed2ab6_12/about",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_tract",
+    "queryRequirements": [
+      "tract"
+    ]
+  },
+  {
+    "catalogId": 22,
+    "name": "Fair Market Rents and Small Area FMRs",
+    "geography": "United States",
+    "granularity": "Metro / county; ZIP for SAFMR",
+    "catalogUrl": "https://www.huduser.gov/portal/datasets/fmr.html",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Fair_Market_Rents/FeatureServer/0",
+    "note": "Only key-free FY2024 FMR area values at a supplied coordinate are queried. These are historical HUD program values, not current market rents or site revenue.",
+    "queryMode": "live_point",
+    "queryRequirements": [
+      "latitude",
+      "longitude"
+    ]
+  },
+  {
+    "catalogId": 23,
+    "name": "HUD Income Limits",
+    "geography": "United States",
+    "granularity": "Metro / county / family size",
+    "catalogUrl": "https://www.huduser.gov/portal/datasets/il.html",
+    "storedInApplication": false,
+    "runtimeStatus": "catalog_reference",
+    "runtimeUrl": null,
+    "note": "The HUD API requires a token. The public FY2026 Section 8 workbook returned an HTTP 202 WAF challenge on a bounded HEAD and ranged GET on 2026-09-27; no income limit is inferred. Other years and access routes have not been ruled out.",
+    "queryMode": "public_bulk_not_parsed",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 24,
+    "name": "Low-Income Housing Tax Credit Database",
+    "geography": "United States",
+    "granularity": "Project / building",
+    "catalogUrl": "https://www.huduser.gov/portal/datasets/lihtc.html",
+    "storedInApplication": false,
+    "runtimeStatus": "catalog_reference",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "catalog_reference",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 25,
+    "name": "National Housing Preservation Database",
+    "geography": "United States",
+    "granularity": "Subsidized property",
+    "catalogUrl": "https://preservationdatabase.org/",
+    "storedInApplication": false,
+    "runtimeStatus": "access_required",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "access_required",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 26,
+    "name": "USPS Vacancy Data",
+    "geography": "United States",
+    "granularity": "Census tract",
+    "catalogUrl": "https://www.huduser.gov/portal/datasets/usps.html",
+    "storedInApplication": false,
+    "runtimeStatus": "catalog_reference",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "catalog_reference",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 27,
+    "name": "Home Mortgage Disclosure Act Data",
+    "geography": "United States",
+    "granularity": "Mortgage application / loan",
+    "catalogUrl": "https://ffiec.cfpb.gov/data-publication/",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://ffiec.cfpb.gov/v2/data-browser-api/view/aggregations",
+    "note": "Only countywide originated-loan count and amount aggregates are queried. No applications, borrowers or parcel financing are returned.",
+    "queryMode": "live_county_aggregate",
+    "queryRequirements": [
+      "countyFips"
+    ]
+  },
+  {
+    "catalogId": 28,
+    "name": "LEHD Origin-Destination Employment Statistics (LODES)",
+    "geography": "Pennsylvania",
+    "granularity": "County or 2020 Census tract workplace job aggregate",
+    "catalogUrl": "https://lehd.ces.census.gov/data/",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://lehd.ces.census.gov/data/lodes/LODES8/pa/wac/pa_wac_S000_JT00_2023.csv.gz",
+    "note": "The 2023 Pennsylvania WAC all-jobs file is summed by exact county or tract. This is workplace employment context, not origin-destination commuting or parcel evidence.",
+    "queryMode": "live_2023_pa_workplace_jobs",
+    "queryRequirements": ["countyFips or tract"]
+  },
+  {
+    "catalogId": 29,
+    "name": "Quarterly Census of Employment and Wages",
+    "geography": "United States",
+    "granularity": "County / industry",
+    "catalogUrl": "https://www.bls.gov/cew/downloadable-data-files.htm",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_regional",
+    "queryRequirements": [
+      "countyFips",
+      "year"
+    ]
+  },
+  {
+    "catalogId": 30,
+    "name": "Producer Price Index",
+    "geography": "United States",
+    "granularity": "National industry / commodity index",
+    "catalogUrl": "https://www.bls.gov/ppi/data.htm",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_regional",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 31,
+    "name": "Pittsburgh Regional Transit GTFS",
+    "geography": "Allegheny County region",
+    "granularity": "Stop, route, trip, schedule",
+    "catalogUrl": "https://data.wprdc.org/dataset/port-authority-of-allegheny-county-transit-data",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://www.rideprt.org/developerresources/GTFS.zip",
+    "note": "Bounded official GTFS route and stop records, with optional 500-meter straight-line stop proximity. This is not schedule service or an accessibility score.",
+    "queryMode": "live_gtfs_feed_or_point",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 32,
+    "name": "PennDOT Open Data",
+    "geography": "Pennsylvania",
+    "granularity": "Road segment, bridge, traffic count",
+    "catalogUrl": "https://gis.penndot.gov/paprojects/",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://gis.penndot.gov/arcgis/rest/services/opendata/roadwaytraffic/MapServer/0",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_point",
+    "queryRequirements": [
+      "latitude",
+      "longitude"
+    ]
+  },
+  {
+    "catalogId": 33,
+    "name": "OpenStreetMap",
+    "geography": "Global",
+    "granularity": "Building, road, amenity, address and other features",
+    "catalogUrl": "https://www.openstreetmap.org/",
+    "storedInApplication": false,
+    "runtimeStatus": "document_index",
+    "runtimeUrl": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "note": "Browser basemap only; tile imagery is not screening evidence.",
+    "queryMode": "document_index",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 34,
+    "name": "OpenAddresses",
+    "geography": "Global",
+    "granularity": "Address point",
+    "catalogUrl": "https://openaddresses.io/",
+    "storedInApplication": false,
+    "runtimeStatus": "document_index",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "document_index",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 35,
+    "name": "Pennsylvania Spatial Data Access (PASDA)",
+    "geography": "Pennsylvania",
+    "granularity": "Varies; parcel/vector/raster",
+    "catalogUrl": "https://www.pasda.psu.edu/",
+    "storedInApplication": false,
+    "runtimeStatus": "document_index",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "document_index",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 36,
+    "name": "USGS 3D Elevation Program",
+    "geography": "United States",
+    "granularity": "Raster elevation / point cloud",
+    "catalogUrl": "https://www.usgs.gov/3d-elevation-program",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://epqs.nationalmap.gov/v1/json",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_point",
+    "queryRequirements": [
+      "latitude",
+      "longitude"
+    ]
+  },
+  {
+    "catalogId": 37,
+    "name": "Allegheny County Orthoimagery",
+    "geography": "Allegheny County",
+    "granularity": "High-resolution raster tiles",
+    "catalogUrl": "https://www.pasda.psu.edu/uci/SearchResults.aspx?Keyword=Allegheny%20County%20Imagery",
+    "storedInApplication": false,
+    "runtimeStatus": "document_index",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "document_index",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 38,
+    "name": "FEMA National Flood Hazard Layer",
+    "geography": "United States",
+    "granularity": "Flood zone polygon / line",
+    "catalogUrl": "https://www.fema.gov/flood-maps/national-flood-hazard-layer",
+    "storedInApplication": false,
+    "runtimeStatus": "runtime",
+    "runtimeUrl": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
+  },
+  {
+    "catalogId": 39,
+    "name": "PA DEP eMapPA",
+    "geography": "Pennsylvania",
+    "granularity": "Facility, permit, mine and environmental feature",
+    "catalogUrl": "https://www.dep.pa.gov/DataandTools/Pages/eMapPA.aspx",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://gis.dep.pa.gov/depgisprd/rest/services/emappa/eMapPA_External/FeatureServer/36",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_point",
+    "queryRequirements": [
+      "latitude",
+      "longitude"
+    ]
+  },
+  {
+    "catalogId": 40,
+    "name": "Pittsburgh Steep Slopes (25% or greater)",
+    "geography": "City of Pittsburgh",
+    "granularity": "Slope polygon",
+    "catalogUrl": "https://data.wprdc.org/dataset/25-or-greater-slope",
+    "storedInApplication": false,
+    "runtimeStatus": "runtime",
+    "runtimeUrl": "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/PGHWebSlope25/FeatureServer/0",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
+  },
+  {
+    "catalogId": 41,
+    "name": "Pittsburgh Undermined Areas",
+    "geography": "Pittsburgh / Allegheny County",
+    "granularity": "Mine influence polygon",
+    "catalogUrl": "https://data.wprdc.org/dataset/undermined-areas",
+    "storedInApplication": false,
+    "runtimeStatus": "related_live_layer",
+    "runtimeUrl": "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/PGHWebUndermined/FeatureServer/0",
+    "note": "A related City undermining map layer is queried. Equivalence to the catalog WPRDC download is unverified.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
+  },
+  {
+    "catalogId": 42,
+    "name": "EPA EJScreen",
+    "geography": "United States",
+    "granularity": "Block group / tract indicators",
+    "catalogUrl": "https://www.epa.gov/ejscreen/download-ejscreen-data",
+    "storedInApplication": false,
+    "runtimeStatus": "catalog_reference",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "catalog_reference",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 43,
+    "name": "National Land Cover Database",
+    "geography": "United States",
+    "granularity": "30-meter raster and derivatives",
+    "catalogUrl": "https://www.mrlc.gov/data",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://di-nlcd.img.arcgis.com/arcgis/rest/services/USA_NLCD_Annual_LandCover/ImageServer",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_point",
+    "queryRequirements": [
+      "latitude",
+      "longitude"
+    ]
+  },
+  {
+    "catalogId": 44,
+    "name": "NOAA Climate Data Online",
+    "geography": "United States",
+    "granularity": "Weather station / gridded products",
+    "catalogUrl": "https://www.ncei.noaa.gov/cdo-web/",
+    "storedInApplication": false,
+    "runtimeStatus": "access_required",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "access_required",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 45,
+    "name": "ResStock Public Data",
+    "geography": "United States",
+    "granularity": "Modeled residential building stock / scenarios",
+    "catalogUrl": "https://resstock.nrel.gov/",
+    "storedInApplication": false,
+    "runtimeStatus": "catalog_reference",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "catalog_reference",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 46,
+    "name": "Zillow Research Housing Data",
+    "geography": "United States",
+    "granularity": "Neighborhood, ZIP, city, county, metro, state",
+    "catalogUrl": "https://www.zillow.com/research/data/",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://files.zillowstatic.com/research/public_csvs/zhvi/County_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv",
+    "note": "Bounded official county ZHVI time series extract; a county aggregate is not a nearby listing comparable or a parcel appraisal.",
+    "queryMode": "live_regional",
+    "queryRequirements": [
+      "countyFips"
+    ]
+  },
+  {
+    "catalogId": 47,
+    "name": "Redfin Housing Market Data Center",
+    "geography": "United States",
+    "granularity": "ZIP, city, county, metro, state depending on product",
+    "catalogUrl": "https://www.redfin.com/news/data-center/",
+    "storedInApplication": false,
+    "runtimeStatus": "catalog_reference",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "catalog_reference",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 48,
+    "name": "Redfin Migration Patterns",
+    "geography": "United States",
+    "granularity": "Metro / origin-destination trends",
+    "catalogUrl": "https://www.redfin.com/news/data-center/migration-patterns/",
+    "storedInApplication": false,
+    "runtimeStatus": "catalog_reference",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "catalog_reference",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 49,
+    "name": "Realtor.com Residential Real Estate Data Library",
+    "geography": "United States",
+    "granularity": "ZIP, county, metro, state, nation",
+    "catalogUrl": "https://www.realtor.com/research/data/",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_County.csv",
+    "note": "Current-month county MLS market aggregate from a bounded official file, not parcel comparables or financial feasibility.",
+    "queryMode": "live_regional",
+    "queryRequirements": [
+      "countyFips"
+    ]
+  },
+  {
+    "catalogId": 50,
+    "name": "Primary Mortgage Market Survey",
+    "geography": "United States",
+    "granularity": "National weekly rate",
+    "catalogUrl": "https://www.freddiemac.com/pmms",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_regional",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 51,
+    "name": "FHFA House Price Index",
+    "geography": "United States",
+    "granularity": "ZIP, county, metro, state and nation depending on series",
+    "catalogUrl": "https://www.fhfa.gov/data/hpi",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_regional",
+    "queryRequirements": [
+      "stateFips or countyFips"
+    ]
+  },
+  {
+    "catalogId": 52,
+    "name": "Opportunity Atlas",
+    "geography": "United States",
+    "granularity": "Census tract",
+    "catalogUrl": "https://www.opportunityatlas.org/",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://opportunityinsights.org/wp-content/uploads/2024/08/tract_outcomes_late_simple.csv",
+    "note": "A bounded validated archive range returns one historical modeled outcome for an Allegheny 2010 tract identifier; supplied tract vintage must be confirmed.",
+    "queryMode": "live_2010_tract_context",
+    "queryRequirements": [
+      "tract"
+    ]
+  },
+  {
+    "catalogId": 53,
+    "name": "Allegheny County 311 / Pittsburgh 311 Requests",
+    "geography": "City of Pittsburgh",
+    "granularity": "Request / location",
+    "catalogUrl": "https://data.wprdc.org/dataset/311-data",
+    "storedInApplication": false,
+    "runtimeStatus": "aggregate_only",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "Only the overall 311 dataset count is queried. Sampled source rows lacked reliable tract codes, so no tract absence or parcel join is claimed.",
+    "queryMode": "aggregate_only",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 54,
+    "name": "NCES School Locations and Characteristics",
+    "geography": "United States",
+    "granularity": "School / district",
+    "catalogUrl": "https://nces.ed.gov/programs/edge/Geographic/SchoolLocations",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://nces.ed.gov/opengis/rest/services/K12_School_Locations/EDGE_GEOCODE_PUBLICSCH_2324/MapServer/0",
+    "note": "Bounded 2023-24 public school location count and up to 19 school identities by county, state or point. No attendance assignment is inferred.",
+    "queryMode": "live_school_location_context",
+    "queryRequirements": [
+      "countyFips or stateFips or latitude+longitude"
+    ]
+  },
+  {
+    "catalogId": 55,
+    "name": "Allegheny County Real Estate Tax Delinquency",
+    "geography": "Allegheny County",
+    "granularity": "Parcel",
+    "catalogUrl": "https://data.wprdc.org/dataset/delinquent-real-estate-taxes",
+    "storedInApplication": false,
+    "runtimeStatus": "aggregate_only",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "Only an overall public dataset record count is queried. Individual personal financial records are not retrieved or returned.",
+    "queryMode": "aggregate_only",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 56,
+    "name": "City of Pittsburgh and School District Property Tax Delinquency",
+    "geography": "City of Pittsburgh, Pittsburgh Public Schools",
+    "granularity": "Parcel",
+    "catalogUrl": "https://data.wprdc.org/dataset/city-of-pittsburgh-property-tax-delinquency",
+    "storedInApplication": false,
+    "runtimeStatus": "aggregate_only",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "Only an overall public dataset record count is queried. Individual personal financial records are not retrieved or returned.",
+    "queryMode": "aggregate_only",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 57,
+    "name": "Mortgage Foreclosures",
+    "geography": "Allegheny County",
+    "granularity": "Parcel",
+    "catalogUrl": "https://data.wprdc.org/dataset/allegheny-county-mortgage-foreclosure-records",
+    "storedInApplication": false,
+    "runtimeStatus": "aggregate_only",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "Only an overall public dataset record count is queried. Individual personal financial records are not retrieved or returned.",
+    "queryMode": "aggregate_only",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 58,
+    "name": "City-owned property",
+    "geography": "City of Pittsburgh",
+    "granularity": "Parcel",
+    "catalogUrl": "https://data.wprdc.org/dataset/city-owned-properties",
+    "storedInApplication": false,
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
+  },
+  {
+    "catalogId": 59,
+    "name": "Mercatus Commuter Market Access Dataset for Congested Auto Travel (McMADCAT)",
+    "geography": "50 states and Washington, DC",
+    "granularity": "Census tract; five-minute travel-time bands",
+    "catalogUrl": "https://www.mercatus.org/commuter-market-access-dataset",
+    "storedInApplication": false,
+    "runtimeStatus": "catalog_reference",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "catalog_reference",
+    "queryRequirements": []
+  },
+  {
+    "catalogId": 60,
+    "name": "Access Across America",
+    "geography": "United States; metro summaries focus on major metropolitan areas",
+    "granularity": "Census block access measures; metro summaries",
+    "catalogUrl": "https://access.umn.edu/ao-research/aaa",
+    "storedInApplication": false,
+    "runtimeStatus": "catalog_reference",
+    "runtimeUrl": null,
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "catalog_reference",
+    "queryRequirements": []
+  }
+]
+
+const headers = { 'content-type': 'application/json', 'cache-control': 'no-store' }
+
+export function handleSources(request) {
+  if (request.method !== 'GET') return new Response(JSON.stringify({ error: 'method_not_allowed' }), { status: 405, headers })
+  if (new URL(request.url).pathname !== '/api/sources') return new Response(JSON.stringify({ error: 'not_found' }), { status: 404, headers })
+  return new Response(JSON.stringify({ catalogCount: sources.length, sources, note: 'Organizer catalog metadata is listed for discovery. No underlying catalog dataset is stored in this application. Runtime status names only the bounded adapters currently connected.' }), { headers })
+}
