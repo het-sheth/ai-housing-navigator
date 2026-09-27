@@ -47,16 +47,19 @@ export function localWalkthroughCopy(draft: Draft): Draft {
   return validateDraft({ ...draft, id: crypto.randomUUID() })
 }
 
-export async function restoreCloudSnapshot(kind: SnapshotKind, data: unknown): Promise<string> {
+export async function restoreCloudSnapshot(kind: SnapshotKind, data: unknown, signal?: AbortSignal): Promise<string> {
+  signal?.throwIfAborted()
   if (kind === 'walkthrough') {
     const restored = localWalkthroughCopy(validateCloudSnapshot('walkthrough', data))
     const current = await loadDraft()
-    if (current) await startNewDraft(localWalkthroughCopy(current), restored)
-    else await saveDraft(restored)
+    signal?.throwIfAborted()
+    if (current) await startNewDraft(localWalkthroughCopy(current), restored, signal)
+    else await saveDraft(restored, signal)
     return '/projects/new'
   }
   const restored = validateCloudSnapshot('comparison', data)
   const current = loadComparison(restored.parcelId)
+  signal?.throwIfAborted()
   if (current && JSON.stringify(current) !== JSON.stringify(restored)) {
     const key = `${backupPrefix}${encodeURIComponent(restored.parcelId)}:${crypto.randomUUID()}`
     localStorage.setItem(key, JSON.stringify(current))

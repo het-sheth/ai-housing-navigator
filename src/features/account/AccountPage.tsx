@@ -36,6 +36,7 @@ export default function AccountPage() {
   const [actionId, setActionId] = useState('')
   const epoch = useRef(0)
   const activeUserId = useRef<string | null>(null)
+  const restoreController = useRef<AbortController | null>(null)
   const backups = (() => { try { return listDeviceComparisonBackups() } catch { return [] } })()
 
   useEffect(() => {
@@ -59,7 +60,7 @@ export default function AccountPage() {
         activeUserId.current = transition.userId
         epoch.current = transition.epoch
         setSession(nextSession)
-        if (transition.changed) { setSnapshots([]); setListOwner(''); setHasMore(false); setNextOffset(0); setActionId(''); setMoreLoading(false); setError('') }
+        if (transition.changed) { restoreController.current?.abort(); setSnapshots([]); setListOwner(''); setHasMore(false); setNextOffset(0); setActionId(''); setMoreLoading(false); setError('') }
       })
       unsubscribe = () => listener.subscription.unsubscribe()
       const initialEpoch = epoch.current
@@ -78,7 +79,7 @@ export default function AccountPage() {
         if (returning) window.history.replaceState(window.history.state, '', '/account')
       }
     })
-    return () => { active = false; epoch.current += 1; unsubscribe() }
+    return () => { active = false; epoch.current += 1; restoreController.current?.abort(); unsubscribe() }
   }, [])
 
   useEffect(() => {
@@ -140,6 +141,7 @@ export default function AccountPage() {
     const transition = accountTransition({ userId: activeUserId.current, epoch: epoch.current }, null)
     activeUserId.current = transition.userId
     epoch.current = transition.epoch
+    restoreController.current?.abort()
     setSession(null)
     setSnapshots([])
     setListOwner('')
@@ -153,17 +155,20 @@ export default function AccountPage() {
   async function reopen(snapshot: CloudSnapshot) {
     if (!session || !client) return
     const requestEpoch = epoch.current
+    const controller = new AbortController()
+    restoreController.current?.abort()
+    restoreController.current = controller
     setActionId(snapshot.id)
     setError('')
     try {
       const identity = await captureCloudIdentity(session.user.id, client)
       const full = await getCloudSnapshot(identity, await getPublicConfig(), snapshot.id)
       if (epoch.current !== requestEpoch) return
-      const path = await restoreCloudSnapshot(full.kind, full.data)
+      const path = await restoreCloudSnapshot(full.kind, full.data, controller.signal)
       if (epoch.current === requestEpoch) window.location.assign(path)
     } catch (cause) {
       if (epoch.current === requestEpoch) setError(cause instanceof Error ? cause.message : 'This snapshot could not be opened. Your device work is unchanged.')
-    } finally { if (epoch.current === requestEpoch) setActionId('') }
+    } finally { if (restoreController.current === controller) restoreController.current = null; if (epoch.current === requestEpoch) setActionId('') }
   }
 
   async function remove(snapshot: CloudSnapshot) {
