@@ -48,6 +48,24 @@ function validInput(value) {
     typeof value.originalText === 'string' && value.originalText.trim().length > 0 && value.originalText.length <= 4000
 }
 
+async function readValidatedInput(request, trustedOrigin) {
+  if (request.method !== 'POST') return { failure: error(405, 'method_not_allowed') }
+  const url = new URL(request.url)
+  const allowedOrigin = trustedOrigin === null
+    ? ['127.0.0.1', 'localhost'].includes(url.hostname) && request.headers.get('origin') === 'http://127.0.0.1:5173'
+    : url.origin === trustedOrigin && request.headers.get('origin') === trustedOrigin
+  if (!allowedOrigin) return { failure: error(403, 'origin_denied') }
+  if (request.headers.get('content-type')?.split(';')[0] !== 'application/json') return { failure: error(415, 'json_required') }
+  let input
+  try { input = await boundedBody(request) } catch { return { failure: error(413, 'invalid_or_large_body') } }
+  if (!validInput(input)) return { failure: error(422, 'invalid_request') }
+  return { input }
+}
+
+export async function validateAssistRequest(request, trustedOrigin = null) {
+  return (await readValidatedInput(request, trustedOrigin)).failure ?? null
+}
+
 function validOutput(value, input) {
   if (!exactKeys(value, ['schemaVersion', 'operation', 'draftId', 'draftRevision', 'suggestions', 'question']) || value.schemaVersion !== 1 || value.operation !== 'intake' || value.draftId !== input.draftId || value.draftRevision !== input.draftRevision) return false
   if (!Array.isArray(value.suggestions) || value.suggestions.length > 10 || !(value.question === null || typeof value.question === 'string' && value.question.length > 0 && value.question.length <= 300)) return false
@@ -86,14 +104,9 @@ const responseSchema = {
 export function createAssistHandler(now = () => Date.now()) {
   const inFlight = new Set()
   const recent = []
-  return async function handleAssist(request, { fetcher = fetch, key = '', log = () => {} } = {}) {
-  if (request.method !== 'POST') return error(405, 'method_not_allowed')
-  const url = new URL(request.url)
-  if (!['127.0.0.1', 'localhost'].includes(url.hostname) || request.headers.get('origin') !== 'http://127.0.0.1:5173') return error(403, 'origin_denied')
-  if (request.headers.get('content-type')?.split(';')[0] !== 'application/json') return error(415, 'json_required')
-  let input
-  try { input = await boundedBody(request) } catch { return error(413, 'invalid_or_large_body') }
-  if (!validInput(input)) return error(422, 'invalid_request')
+  return async function handleAssist(request, { fetcher = fetch, key = '', log = () => {}, trustedOrigin = null } = {}) {
+  const { input, failure } = await readValidatedInput(request, trustedOrigin)
+  if (failure) return failure
   if (!key) return error(503, 'ai_unavailable')
   const minuteAgo = now() - 60000
   while (recent.length && recent[0] < minuteAgo) recent.shift()

@@ -123,6 +123,8 @@
 }
 .ex-activity-grid label {
   display:flex;
+  flex-direction:row;
+  min-height:44px;
   align-items:center;
   gap:9px;
   margin:0;
@@ -132,8 +134,14 @@
   font-weight:400;
   cursor:pointer
 }
-.ex-activity-grid input {
-  accent-color:#8a6514
+.ex-activity-grid input[type='checkbox'] {
+  accent-color:#8a6514;
+  width:18px;
+  height:18px;
+  min-height:18px;
+  flex:0 0 18px;
+  padding:0;
+  margin:0
 }
 .ex-note {
   font-size:12px;

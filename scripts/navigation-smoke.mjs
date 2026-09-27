@@ -27,7 +27,13 @@ try {
       await expect(page.getByRole('heading', { name: heading })).toBeVisible()
       await expect(nav.getByRole('link', { name, exact: true })).toHaveAttribute('aria-current', 'page')
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `${path} must fit ${width}px`)
+      const brand = await page.locator('.site-brand').boundingBox()
+      const account = await page.locator('.site-account-link').boundingBox()
+      assert.ok(brand && account && brand.width >= 130 && brand.x + brand.width <= account.x, `Header controls collide on ${path} at ${width}px`)
     }
+    await page.getByRole('link', { name: 'Account', exact: true }).click()
+    await expect(page).toHaveURL(`${origin}/account`)
+    await expect(page.getByRole('heading', { name: 'Keep a copy you can reopen' })).toBeVisible()
     await nav.getByRole('link', { name: 'Home', exact: true }).click()
     await expect(page.getByTestId('welcome-screen')).toBeVisible()
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `Home must fit ${width}px`)
@@ -39,7 +45,7 @@ try {
   await page.goto(`${origin}/welcome`)
   await expect(page.getByTestId('welcome-screen')).toBeVisible()
   assert.deepEqual(errors, [])
-  console.log('Navigation passed: home, all three pages, active links, 1440/390/320px, legacy routes, zero page errors.')
+  console.log('Navigation passed: home, all four pages, active links, 1440/390/320px, legacy routes, zero page errors.')
   await context.close()
 } finally {
   await browser.close()

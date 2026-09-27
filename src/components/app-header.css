@@ -1,6 +1,6 @@
 .site-header {
   display: grid;
-  grid-template-columns: 170px minmax(0, 1fr) 170px;
+  grid-template-columns: 170px minmax(0, 1fr) auto;
   align-items: center;
   justify-content: space-between;
   gap: 14px 28px;
@@ -19,7 +19,9 @@
 .site-header .site-nav a:hover { background: #e9e5d9; color: #151713; }
 .site-header .site-nav a[aria-current='page'] { color: #151713; background: #ece4ce; border-bottom-color: #ad7911; }
 .site-header a:focus-visible, .site-header button:focus-visible { outline: 3px solid #9d7013; outline-offset: 3px; }
-.site-header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 14px; font-size: 12px; }
+.site-header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; font-size: 12px; }
+.site-account-link { display: inline-flex; align-items: center; min-height: 44px; padding: 9px 12px; color: #4e534a; font-weight: 600; text-decoration: none; border: 1px solid #b4ae9d; }
+.site-account-link:hover, .site-account-link[aria-current='page'] { color: #151713; background: #ece4ce; border-color: #ad7911; }
 .site-header .gp-local { color: #606656; }
 @media (max-width: 1100px) {
   .site-header { grid-template-columns: 1fr auto; }

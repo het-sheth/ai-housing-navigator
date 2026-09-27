@@ -12,6 +12,6 @@ export function AppHeader({ current, actions }: { current: string; actions?: Rea
   return <header className="site-header">
     <a className="site-brand" href="/" aria-label="Housing Navigator home"><span className="site-brand-mark">412<span aria-hidden="true">✦</span></span><span>Housing<br/>Navigator</span></a>
     <nav className="site-nav" aria-label="Main navigation">{pages.map(page => <a key={page.href} href={page.href} aria-current={current === page.href ? 'page' : undefined}>{page.label}</a>)}</nav>
-    {actions && <div className="site-header-actions">{actions}</div>}
+    <div className="site-header-actions">{actions}<a className="site-account-link" href="/account" aria-current={current === '/account' ? 'page' : undefined}>Account</a></div>
   </header>
 }

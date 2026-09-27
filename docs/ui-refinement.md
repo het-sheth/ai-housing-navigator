@@ -17,3 +17,9 @@ Prioritized page work, not claims of completion:
 5. Parcel confirmation: reject a matching-ID response when both County detail sources are unavailable. The comparison already applies this guard; the walkthrough remains a known follow-up.
 
 Verify every proposed change in the rendered page. Test desktop and narrow mobile layouts, keyboard paths, primary-action visibility, text hierarchy and preserved work on navigation. Use plain language and put source detail behind clearly labeled disclosure controls, without hiding a material conflict or error. No numeric score while required factors remain unassessed. No paid AI or deployment is authorized by this list.
+
+## Connected account checkpoint, September 27
+
+The account and cloud-save additions initially crowded the shared header. The corrected layout keeps Account in the common header and moves cloud save and export into a project toolbar. An isolated DevTools recheck found no overlap at 390px or 1440px; navigation regression also measures brand/control bounding boxes at 320px, 390px and 1440px.
+
+Next refinement: put manual Explorer activities before optional prose/AI, or collapse that optional section when AI is unavailable. Associate the disabled AI button with its explanation using aria-describedby. Current manual search works without prose, but the layout still puts those choices low on mobile. These are remaining UX work, not completed changes.

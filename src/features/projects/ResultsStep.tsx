@@ -2,6 +2,7 @@ import { sources } from '../../domain'
 import { ACTIVITIES, type Draft, type DraftSummary } from './contracts'
 import { hasCompleteScreen, type ScreeningCheck, type ScreeningResult } from './screening-client'
 import { resultActions } from './result-actions'
+import { SourceObservations } from './SourceObservations'
 
 type Props = {
   draft: Draft
@@ -53,6 +54,7 @@ export function ResultsStep({ draft, summary, historical, assessment, assessment
         <div className="gp-assessment-findings">{findings.map(check => <article key={check.id}><span className="gp-kicker">{check.status === 'mapped_flag' ? 'Mapped flag' : 'Mapped screen'}</span><h3>{check.label}</h3><p>{check.reason}</p></article>)}</div>
         <details className="gp-details"><summary>Unknown and unfinished checks <span>{unfinished.length}</span></summary>{unfinished.map(check => <article key={check.id} className="gp-check-detail"><strong>{check.label}</strong><p>{check.reason}</p></article>)}</details>
         <details className="gp-details"><summary>Screening source details</summary><p>Checked {new Date(assessment.retrievedAt).toLocaleString('en-US', { timeZone: 'UTC' })} UTC. Rubric: {assessment.rubricVersion}. Source dates are unknown where a check does not name one.</p>{assessment.checks.map(check => <article key={check.id} className="gp-check-detail"><strong>{check.label}</strong><CheckSource check={check} /></article>)}<p>{assessment.caveat}</p></details>
+        <SourceObservations observations={assessment.sourceObservations} />
       </>}
     </section>
     {assessment && <>

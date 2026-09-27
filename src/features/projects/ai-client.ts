@@ -1,4 +1,5 @@
 import { ACTIVITIES, type ActivityId, type Draft } from './contracts'
+import { getAccessToken } from '../account/session'
 
 export type IntakeSuggestion = { activityId: ActivityId; intent: 'confirmed_candidate' | 'tentative' | 'negated'; quote: string; reason: string }
 export type IntakeResponse = { schemaVersion: 1; operation: 'intake'; draftId: string; draftRevision: number; suggestions: IntakeSuggestion[]; question: string | null }
@@ -21,9 +22,11 @@ function validResponse(value: unknown, text: string, draftId: string, revision: 
 }
 
 export async function requestSuggestions(text: string, draftId: string, revision: number, fetcher: typeof fetch = fetch, signal?: AbortSignal): Promise<IntakeResponse> {
+  const token = await getAccessToken()
+  if (!token) throw new Error('authentication_required')
   const response = await fetcher('/api/assist', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
     body: JSON.stringify({ schemaVersion: 1, operation: 'intake', requestId: crypto.randomUUID(), draftId, draftRevision: revision, originalText: text }),
     signal,
   })

@@ -48,7 +48,6 @@ async function run(browser, width) {
   await page.getByLabel('What would you like to do?').fill('Build homes on a vacant lot')
   await page.getByLabel('New construction').check()
   await page.getByRole('button', { name: 'Confirm criteria and find records' }).click()
-  await page.getByRole('button', { name: 'Find candidate records' }).click()
   await page.getByRole('radio', { name: /SYNTHETIC TEST PARCEL/ }).check()
   await page.getByRole('button', { name: `Inspect parcel ${parcelId}` }).click()
   await expect(page.getByText(`Selected parcel / ${parcelId}`)).toBeVisible()

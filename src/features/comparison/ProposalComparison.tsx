@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ACTIVITIES, createDraft } from '../projects/contracts'
-import { loadProperty, type PropertyDetail } from '../projects/property-client'
+import { hasConfirmedParcel, loadProperty, type PropertyDetail } from '../projects/property-client'
 import { requestScreening, type ScreeningCheck, type ScreeningResult } from '../projects/screening-client'
 import { SiteContextMap } from '../projects/SiteContextMap'
 import { compareChecks, compareInputs, createComparison, updateProposal, validParcelId, visibleScore, type Comparison, type ProposalInput } from './comparison-model'
@@ -8,6 +8,8 @@ import { loadComparison, saveComparison } from './comparison-store'
 import '../projects/guided-project.css'
 import './proposal-comparison.css'
 import { AppHeader } from '../../components/AppHeader'
+import { SourceObservations } from '../projects/SourceObservations'
+import { CloudSaveButton } from '../account/CloudSaveButton'
 
 type Side = 'A' | 'B'
 type RunState = 'idle' | 'loading' | 'error'
@@ -40,6 +42,7 @@ function ProposalCard({ side, input, result, state, error, canRun, onInput, onRu
       <p>Checked {dateLabel(result.retrievedAt)}. Jurisdiction: {result.municipality}. Rubric: {result.rubricVersion}.</p>
       {score === null && <p>No Development Ease Score is available. Required factors remain unknown, unsupported or unavailable.</p>}
       <ul className="pc-checks">{result.checks.map(check => <CheckLine check={check} key={check.id} />)}</ul>
+      <SourceObservations observations={result.sourceObservations} />
       <div className="pc-actions"><h4>Next actions from this run</h4>{result.nextActions.length ? <ol>{result.nextActions.map((action, index) => <li key={`${index}-${action}`}>{action}</li>)}</ol> : <p>No source actions returned. Review every check before relying on this screen.</p>}</div><p className="gp-helper">{result.caveat}</p>
     </div> : <p className="pc-unrun">Checks have not run for proposal {side}. No source finding or next action is available yet.</p>}
   </section>
@@ -129,7 +132,7 @@ export default function ProposalComparison() {
     try {
       const loaded = await loadProperty(parcelId, controller.signal)
       if (controller.signal.aborted) return
-      if (loaded.parcelId !== parcelId || loaded.assessment.status !== 'available' && loaded.boundary.status !== 'available') throw new Error('County sources did not confirm this exact parcel. Check the ID and try again.')
+      if (!hasConfirmedParcel(loaded, parcelId)) throw new Error('County sources did not confirm this exact parcel. Check the ID and try again.')
       runRequests.current.A?.abort(); runRequests.current.B?.abort()
       runEpoch.current.A += 1; runEpoch.current.B += 1
       let saved: Comparison | null = null
@@ -177,7 +180,7 @@ export default function ProposalComparison() {
 
   return <div className="gp-app pc-app">
     <AppHeader current="/compare" />
-    <main className="gp-layout pc-layout"><section className="gp-workspace pc-workspace"><span className="gp-eyebrow">One confirmed parcel · two independent proposals</span><h1>Compare what the evidence says.</h1><p className="gp-intro">Keep the same parcel while you test two ideas. The screens show checked source findings, unfinished factors and the next evidence to gather.</p>
+    <main className="gp-layout pc-layout"><section className="gp-workspace pc-workspace">{comparison && <div className="gp-project-actions"><CloudSaveButton kind="comparison" title={`Proposal comparison: ${comparison.parcelId}`} data={comparison} /></div>}<span className="gp-eyebrow">One confirmed parcel · two independent proposals</span><h1>Compare what the evidence says.</h1><p className="gp-intro">Keep the same parcel while you test two ideas. The screens show checked source findings, unfinished factors and the next evidence to gather.</p>
       <section className="pc-parcel" aria-labelledby="pc-parcel-title"><span className="gp-kicker">Shared site</span><h2 id="pc-parcel-title">Confirm the parcel</h2><p>Enter the exact Allegheny County parcel ID. A candidate from Explore is only a suggestion until County records confirm it here.</p><div className="pc-parcel-entry"><label className="gp-label" htmlFor="pc-parcel-id">Parcel ID</label><input className="gp-input" id="pc-parcel-id" value={parcelInput} maxLength={64} onChange={event => editParcel(event.target.value)} /><button className="gp-secondary" type="button" disabled={parcelLoading} onClick={() => void confirmParcel()}>{parcelLoading ? 'Checking County records…' : comparison?.parcelId === parcelInput.trim() ? 'Load current parcel records' : 'Confirm parcel'}</button></div>{parcelError && <p className="gp-error-message" role="alert">{parcelError}</p>}{storageError && <p className="gp-error-message" role="alert">{storageError}</p>}{comparison && <p className="pc-confirmed">Saved parcel {comparison.parcelId}. {detail?.parcelId === comparison.parcelId ? 'County observations loaded for this visit.' : 'Load current parcel records to see the map boundary and run new checks.'} Earlier results retain their own dates.</p>}{detail && <details className="gp-details"><summary>Parcel source and record dates</summary><p>County parcel {detail.parcelId}. Assessment: {detail.assessment.status}, source date {detail.assessment.sourceDate || 'unknown'}, retrieved {dateLabel(detail.assessment.retrievedAt)}. <a href={detail.assessment.sourceUrl} target="_blank" rel="noreferrer">Assessment source ↗</a></p><p>Boundary: {detail.boundary.status}, effective date {detail.boundary.sourceDate || 'unknown'}, retrieved {dateLabel(detail.boundary.retrievedAt)}. <a href={detail.boundary.sourceUrl} target="_blank" rel="noreferrer">Boundary source ↗</a></p></details>}</section>
       {comparison ? <><div className="pc-proposals">{(['A', 'B'] as const).map(side => <ProposalCard key={side} side={side} input={comparison.proposals[side].input} result={comparison.proposals[side].result} state={runState[side]} error={runError[side]} canRun={detail?.parcelId === comparison.parcelId && parcelInput.trim() === comparison.parcelId && !parcelLoading} onInput={input => changeInput(side, input)} onRun={() => void run(side)} />)}</div><ComparisonSummary comparison={comparison} /></> : <p className="pc-unrun">Confirm a parcel to open proposals A and B. Your comparison stays on this device.</p>}
       <p className="gp-note">This is a bounded public-record screen. It does not establish parcel control, availability, legal permission, approval probability or financial feasibility. Saved proposals and results remain only in this browser.</p>

@@ -14,3 +14,8 @@
 .gp-ai-entry,.gp-ai-review{margin:18px 0 28px;padding:20px;border:1px solid #c5c9be;background:#f7f8f3;font-size:16px;line-height:1.5}.gp-ai-entry p,.gp-ai-review p{font-size:16px;margin:0 0 15px}.gp-ai-review h2{font-size:25px;margin:0 0 10px}.gp-ai-suggestion{border-top:1px solid #c5c9be;padding:14px 0}.gp-ai-suggestion label{display:flex;gap:12px;align-items:flex-start;cursor:pointer}.gp-ai-suggestion input{width:20px;height:20px;flex:none;margin-top:3px;accent-color:#71520b}.gp-ai-suggestion label span span{display:block;margin-top:5px}.gp-ai-suggestion label span span:last-child{color:#4d584f}.gp-ai-suggestion p{margin:0}.gp-ai-question{padding:14px;background:#eef0e8}.gp-ai-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.gp-ai-error{padding:14px 17px;background:#fff0e9;border-left:3px solid #b94727;color:#82301d;font-size:16px}
 @media(max-width:760px){.gp-region-map{height:260px}}
 @media(max-width:350px){.gp-region-map{height:220px}}
+
+.gp-project-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin: 0 0 28px; padding-bottom: 14px; border-bottom: 1px solid var(--gp-line); font-size: 12px; }
+.gp-project-actions > .gp-text-button { min-height: 44px; white-space: nowrap; }
+.gp-project-actions .cloud-save-control { flex-wrap: wrap; min-width: 0; max-width: 100%; }
+.gp-project-actions .cloud-save-message { position: static; box-shadow: none; width: auto; max-width: 100%; }

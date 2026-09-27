@@ -1,6 +1,7 @@
 import { chromium, expect } from '@playwright/test'
 import assert from 'node:assert/strict'
 import { mkdir } from 'node:fs/promises'
+import { mockSignedInAccount } from './fixture-account.mjs'
 
 const origin = process.env.APP_ORIGIN ?? 'http://127.0.0.1:5173'
 const screenshots = '/tmp/housing-explorer-verify'
@@ -16,11 +17,13 @@ await mkdir(screenshots, { recursive: true })
 
 async function run(width, aiMode) {
   const context = await browser.newContext({ viewport: { width, height: 900 } })
+  await mockSignedInAccount(context)
   const page = await context.newPage()
   const calls = { ai: 0, candidates: 0, parcel: 0 }
   let failParcelOnce = true
   await context.route('**/*', async route => {
     const url = new URL(route.request().url())
+    if (url.pathname === '/api/config' || url.hostname === 'example.supabase.co') return route.fallback()
     if (url.pathname === '/api/assist') {
       calls.ai += 1
       if (aiMode === 'success') {
@@ -58,7 +61,6 @@ async function run(width, aiMode) {
   await page.getByLabel('Other needs or assumptions (optional)').fill('At least 5,000 sq ft')
   await page.getByRole('button', { name: 'Confirm criteria and find records' }).click()
   await expect(page.getByText('Not evaluated: At least 5,000 sq ft')).toBeVisible()
-  await page.getByRole('button', { name: 'Find candidate records' }).click()
   await expect(page.getByText('Candidate records')).toBeVisible()
   await expect(page.getByText('More records match these filters.')).toBeVisible()
   await page.getByRole('radio', { name: /SYNTHETIC TEST PARCEL/ }).check()
@@ -95,7 +97,6 @@ async function verifyRefreshedRecord(mode) {
   await page.getByLabel('What would you like to do?').fill('I want to build a home')
   await page.getByLabel('New construction').check()
   await page.getByRole('button', { name: 'Confirm criteria and find records' }).click()
-  await page.getByRole('button', { name: 'Find candidate records' }).click()
   await page.getByRole('radio', { name: /SYNTHETIC TEST PARCEL/ }).check()
   await page.getByRole('button', { name: `Inspect parcel ${parcelId}` }).click()
   if (mode === 'changed') {
@@ -119,6 +120,7 @@ await verifyRefreshedRecord('changed')
 await verifyRefreshedRecord('missing')
 
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+await mockSignedInAccount(context)
 const page = await context.newPage()
 let aiCalls = 0
 await context.route('**/api/assist', async route => {

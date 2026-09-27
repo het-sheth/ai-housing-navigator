@@ -1,3 +1,29 @@
+# Connected application checkpoint, September 27, 2026
+
+The chosen stopping point is the tested feature branch before production provisioning and deployment. PR #19 remains merged at `403f1c19caee4ac2d8488d10b4d5bd9d6845473a`. Current work is `feat/connected-live-app` in `/tmp/ai-housing-consolidated`. Preserve the original dirty checkout and all earlier worktrees.
+
+The user authorized connecting and deploying the app, selected email magic-link login and renewed OpenRouter permission within existing limits. The implementation adds `/account`, explicit owned immutable cloud snapshots, validated restore with device backups, public runtime configuration and authenticated hosted AI. Explorer accepts multiple manual activities without prose and runs search on confirmation. Parcel confirmation requires actual returned assessment or boundary evidence. Results expose supplementary source provenance without completing rubric checks. Failed walkthrough reruns retain the previous findings and next actions.
+
+OpenRouter uses the existing `deepseek/deepseek-v4-flash-0731` configuration for suggested work activities only. Jev / TypeSafe AI is not integrated. Public-data search and screening do not depend on AI. Numeric scores remain withheld until the required rubric is complete.
+
+Review fixed direct browser access to AI reservations: only the server can invoke the reservation RPC after verifying the user's bearer. Production requires `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, server-only `SUPABASE_SECRET_KEY`, `OPENROUTER_API_KEY` and `AI_ENABLED=true`. Public config never returns server keys. Further review caught cloud-restore archive identity collisions and unreachable snapshots after the first 100 saves; the account implementation now uses fresh local identities and a Load older projects path.
+
+Astra found a mobile header collision from cloud controls. Cloud save and export now live in the project toolbar, with Account in the shared header. The DevTools recheck passed at 390px and 1440px, and navigation includes bounding-box checks at 320px, 390px and 1440px. Remaining UX refinement: move manual Explorer activities ahead of optional AI and associate the disabled AI explanation accessibly. See [UI refinements](ui-refinement.md).
+
+Supabase CLI login/project discovery, reviewed migration execution, email delivery and redirects, production secrets, two-user RLS checks and real login/save/reopen/AI tests remain pending. Vercel CLI is authenticated as `het-sheth`; its production variables were empty at audit. The user received terminal login instructions and the Vercel environment settings link. The last audited production deployment is `dpl_EYscUyX6Rgo9hPrru49SWkFh5nLx`, an older build. Do not assume pushes deploy automatically.
+
+## Checkpoint verification
+
+All 267 unit tests across 34 files, typecheck, lint and production build exited 0 before checkpoint publication. The built account regression passed eight synthetic flows: unavailable configuration, failed email request, failed callback cleanup, older snapshots, owned list, comparison restore with backup, explicit save and sign-out. Manual multi-activity search without prose, Explorer with mocked authenticated AI, failed walkthrough rerun retention, Explorer-to-comparison and navigation at 320px/390px/1440px also passed. These checks made no paid AI requests. Real database policies, email delivery and provider behavior remain unverified. The existing Three.js bundle warning remains.
+
+## Resume
+
+1. Read the connected-app plan and exact branch status. Check the recorded final verification below before changing code. Keep credentials out of files, chat and tool output.
+2. Discover the existing Supabase project after the user's login. Do not create another project. Apply the reviewed migration, configure callback URLs and inspect delivery restrictions.
+3. Add the required production variables through the authorized provider tools or user-entered secret UI. Validate owner isolation and server-only reservation permissions against the real database.
+4. Integrate through a feature PR, then deploy and test the actual hosted public APIs, magic-link login, save/reopen and one bounded AI request. A mock or missing-config page is not a live integration test.
+5. Update this handoff and the project wiki with exact release evidence. Continue page-by-page UX refinement after connection verification.
+
 # Consolidated application handoff, September 27, 2026
 
 The user has authorized merging the combined foundation into `main` via PR #19, then refining individual pages. The root route now opens the animated landing page with three entry cards. A shared header connects Home, Assess a property, Explore properties and Compare proposals on desktop and mobile, with an explicit current-page state. `/welcome` remains a home alias and the historical Lanark demo moves to `/prototype`, including its hosted rewrite. This resolves the adversarial navigation finding. Supplementary observation provenance in results and the inherited walkthrough confirmation behavior when both parcel sources fail remain known follow-ups. The DevTools visual review informed the shared shell; [the refinement list](ui-refinement.md) records next page-level work. This foundation is not a claim that every page or source integration is finished. Keep original branches and dirty worktrees; do not deploy as part of this merge.
