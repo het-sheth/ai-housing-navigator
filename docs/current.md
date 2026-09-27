@@ -2,6 +2,14 @@
 
 ## Publish and stop checkpoint
 
+Published walkthrough: https://ai-housing-navigator.vercel.app/projects/new . Deployment `dpl_EYscUyX6Rgo9hPrru49SWkFh5nLx` built application commit `12ee746` and is READY in production. Vercel project: `hets-projects-aab6adc0/ai-housing-navigator`. Both `feat/clear-project-results` and `feat/property-explorer` are pushed. Walkthrough draft [PR #3](https://github.com/het-sheth/ai-housing-navigator/pull/3) is open; no new PR was merged and main was not pushed.
+
+Hosted verification passed: isolated Chromium completed Mountford search, explicit confirmation, real parcel boundary and assessment, then a synthetic proposal's live screening response with HTTP 200, `pending`, `score: null` and seven checks without numeric points. Desktop and 390px mobile showed real tiles and boundary with no overflow or page errors. Edits cleared prior results; a simulated source error preserved inputs. Zero AI calls. Screenshots: `/tmp/housing-hosted-verify/screenshots/assessment-{1440,390}.png`. Read-only deployed API checks returned the expected 405 for GET assist and 400 for missing property query. All 117 tests, typecheck, lint and build passed before deployment; the existing Three.js chunk warning remains.
+
+Deployment is via CLI. Automatic GitHub-to-Vercel linking failed during setup, so future pushes are not confirmed to auto-deploy. Do not mistake the successful manual deployment for a working Git integration. Deploy again explicitly from a reviewed checkpoint when authorized. No credentials were inspected, transferred or printed. Hosted `/api/assist` is an explicit disabled endpoint and cannot make a provider call. The local API was restored to `npm run api:dev`; real corrected-prompt inference is still unverified.
+
+The session stops at this published checkpoint. Next session starts with the user's rejected Review/Next actions screens and the planned explorer/comparison, not another discovery pass. The deployment does not imply the design is accepted or the full product is finished.
+
 The user explicitly authorized pushing the feature work and deploying the website to Vercel, then stopping. This supersedes earlier no-deployment instructions for this checkpoint only. Do not push main directly or merge the new PR. Preserve and push both `feat/clear-project-results` and `feat/property-explorer`.
 
 Latest UI feedback: the user dislikes the walkthrough after Key questions. Review and Next actions are not accepted UI. Record that feedback rather than redesigning while closing the session; revisit those screens first when work resumes. Preserve the original right-hand map layout unless the user changes that preference.

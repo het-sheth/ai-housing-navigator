@@ -2,6 +2,8 @@
 
 ## Latest instruction: publish checkpoint and stop
 
+Published and verified: https://ai-housing-navigator.vercel.app/projects/new . Application commit `12ee746`, production deployment `dpl_EYscUyX6Rgo9hPrru49SWkFh5nLx`. Both feature branches pushed; walkthrough draft PR created without merge. Hosted live property and screening browser flow passes on desktop/mobile, with AI disabled and score withheld. Vercel automatic GitHub linking failed; deployment succeeded via CLI. Read current.md for exact limits. Session stopped, resume only at user direction.
+
 Push both feature branches and deploy the walkthrough checkpoint to Vercel, with live public-record API adapters and explicitly unavailable hosted AI. No paid inference or credential transfer. The user rejects the Review and Next actions UI after Key questions; these need redesign next session and are not accepted. Finish deployment verification, record URLs in current.md, then stop. No new PR merge or main push.
 
 ## Latest instruction: finish walkthrough, isolate explorer
