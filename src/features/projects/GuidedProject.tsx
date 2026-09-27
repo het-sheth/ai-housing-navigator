@@ -43,6 +43,7 @@ export default function GuidedProject() {
   const [archives, setArchives] = useState<Draft[]>([])
   const [invalidArchives, setInvalidArchives] = useState(0)
   const [resumed, setResumed] = useState(false)
+  const [savedResumeStep, setSavedResumeStep] = useState<Draft['step'] | null>(null)
   const propertyAbort = useRef<AbortController | null>(null)
   const propertyEpoch = useRef(0)
   const screeningEpoch = useRef(0)
@@ -56,12 +57,15 @@ export default function GuidedProject() {
   const writeBlocked = useRef(false)
   const clearInProgress = useRef(false)
   const previousStep = useRef<number | null>(null)
+  const focusPropertyAfterChange = useRef(false)
 
   useEffect(() => {
     let active = true
     loadDraft().then(saved => {
       if (!active) return
-      setDraft(saved ?? createDraft())
+      if (saved?.step === 5) skipSave.current = true
+      setDraft(saved?.step === 5 ? { ...saved, step: 0 } : saved ?? createDraft())
+      setSavedResumeStep(saved?.step === 5 ? saved.step : null)
       setResumed(Boolean(saved))
       setStorage(saved ? 'Recovered from this device' : 'Device only')
       void listArchivedDrafts().then(result => { if (active) { setArchives(result.drafts); setInvalidArchives(result.invalidCount) } }).catch(() => { if (active) setStorageError(true) })
@@ -98,6 +102,13 @@ export default function GuidedProject() {
   }, [draft])
 
   useEffect(() => {
+    if (draft?.step === 1 && draft.parcelId === null && focusPropertyAfterChange.current) {
+      focusPropertyAfterChange.current = false
+      document.getElementById('gp-property')?.focus()
+    }
+  }, [draft?.step, draft?.parcelId])
+
+  useEffect(() => {
     if (!draft) return
     const alignCurrentStep = () => {
       const current = progress.current?.querySelector<HTMLButtonElement>('[aria-current="step"]')
@@ -116,6 +127,7 @@ export default function GuidedProject() {
   const summary = summarizeDraft(draft)
   const update = (change: Partial<Draft>, editing = true) => {
     if (clearInProgress.current) return
+    setSavedResumeStep(null)
     if (editing) { screeningEpoch.current += 1; screeningAbort.current?.abort(); setScreeningResult(null); setScreeningStatus('idle'); setScreeningError('') }
     aiAbort.current?.abort()
     aiAbort.current = null
@@ -129,6 +141,10 @@ export default function GuidedProject() {
     setDraft(current => current ? { ...current, ...change, revision: current.revision + 1, updatedAt: new Date().toISOString(), ...(editing ? { confirmedAt: null } : {}) } : current)
   }
   const go = (step: number) => update({ step: step as Draft['step'] }, false)
+  const changeParcel = () => {
+    focusPropertyAfterChange.current = true
+    update({ step: 1, parcelId: null, propertyConfirmed: false, propertyEvidence: null })
+  }
   const toggleActivity = (id: Draft['activities'][number], tentative: boolean) => {
     const field = tentative ? 'tentativeActivities' : 'activities'
     const other = tentative ? 'activities' : 'tentativeActivities'
@@ -286,6 +302,7 @@ export default function GuidedProject() {
       skipSave.current = true
       setDraft(fresh)
       setResumed(false)
+      setSavedResumeStep(null)
       setPropertyDetail(null)
       setPropertySearch(null)
       setCandidate(null)
@@ -315,8 +332,9 @@ export default function GuidedProject() {
     try {
       await restoreArchivedDraft(draft, saved)
       skipSave.current = true
-      setDraft(saved)
+      setDraft(saved.step === 5 ? { ...saved, step: 0 } : saved)
       setResumed(true)
+      setSavedResumeStep(saved.step === 5 ? saved.step : null)
       setPropertyDetail(null)
       setPropertySearch(null)
       setCandidate(null)
@@ -380,6 +398,7 @@ export default function GuidedProject() {
       skipSave.current = true
       writeBlocked.current = false
       setDraft(createDraft())
+      setSavedResumeStep(null)
       setPropertyDetail(null)
       setPropertySearch(null)
       setCandidate(null)
@@ -404,20 +423,20 @@ export default function GuidedProject() {
   return <div className="gp" data-testid="guided-workspace">
     <header className="gp-header"><a className="gp-brand" href="/"><span className="gp-mark">412</span><span>Housing Navigator<small>Independent project workspace</small></span></a><div className="gp-header-actions"><span className="gp-local">Device only</span><button className="gp-text-button" onClick={download}>Export brief <span aria-hidden="true">↗</span></button></div></header>
     <nav className="gp-progress" ref={progress} aria-label="Project progress"><ol>{STEPS.map((name, index) => <li key={name} className={draft.step === index ? 'is-current' : draft.step > index ? 'is-past' : ''}><button disabled={index > draft.step} aria-current={draft.step === index ? 'step' : undefined} onClick={() => go(index)}><span>{String(index + 1).padStart(2, '0')}</span><span>{name}</span></button></li>)}</ol></nav>
-    <main className="gp-layout"><section className="gp-workspace" aria-label="Project questions"><details className="gp-project-menu" data-testid="projects-control"><summary>Projects {resumed && <span>Resumed on this device</span>}</summary><div className="gp-project-menu-content"><button className="gp-text-button" type="button" disabled={clearing || writeBlocked.current} onClick={() => void startNew()}>Start new project</button>{archives.length > 0 && <div><strong>Saved on this device</strong>{archives.map(saved => <button className="gp-text-button" type="button" key={saved.id} onClick={() => void restore(saved)}>Restore {saved.propertyQuery || 'Untitled project'} · {saved.updatedAt.slice(0, 10)}</button>)}</div>}{invalidArchives > 0 && <p role="alert">{invalidArchives} saved project record{invalidArchives === 1 ? '' : 's'} could not be opened. The device data was preserved.</p>}</div></details><div className="gp-eyebrow">Your project / {String(draft.step + 1).padStart(2, '0')}</div><h1 ref={heading} tabIndex={-1}>{TITLES[draft.step]}</h1><p className="gp-intro">{INTRO[draft.step]}</p>
+    <main className="gp-layout"><section className="gp-workspace" aria-label="Project questions"><details className="gp-project-menu" data-testid="projects-control"><summary>Projects {resumed && <span>Resumed on this device</span>}</summary><div className="gp-project-menu-content"><button className="gp-text-button" type="button" disabled={clearing || writeBlocked.current} onClick={() => void startNew()}>Start new project</button>{archives.length > 0 && <div><strong>Saved on this device</strong>{archives.map(saved => <button className="gp-text-button" type="button" key={saved.id} onClick={() => void restore(saved)}>Restore {saved.propertyQuery || 'Untitled project'} · {saved.updatedAt.slice(0, 10)}</button>)}</div>}{invalidArchives > 0 && <p role="alert">{invalidArchives} saved project record{invalidArchives === 1 ? '' : 's'} could not be opened. The device data was preserved.</p>}</div></details>{savedResumeStep !== null && <div className="gp-recovery" role="status"><strong>Saved project ready</strong><p>Your project was at {STEPS[savedResumeStep]}. Review from Your purpose or return to the saved stage.</p><button className="gp-secondary" type="button" onClick={() => go(savedResumeStep)}>Resume saved stage</button></div>}<div className="gp-eyebrow">Your project / {String(draft.step + 1).padStart(2, '0')}</div><h1 ref={heading} tabIndex={-1}>{TITLES[draft.step]}</h1><p className="gp-intro">{INTRO[draft.step]}</p>
       {writeBlocked.current && <div className="gp-recovery" role="alert"><strong>Device draft needs attention</strong><p>The saved data may still be on this device. Changes made here cannot be saved until you explicitly clear it. Export any work you enter before leaving.</p><button className="gp-secondary" disabled={clearing} onClick={() => void reset()}>Clear saved draft and start fresh</button></div>}
       <div className="gp-step" key={draft.step}>
         {draft.step === 0 && <><fieldset className="gp-fieldset"><legend>I am here as a</legend><div className="gp-role-grid">{ROLES.map(role => <button key={role.id} className={`gp-choice ${draft.role === role.id ? 'is-active' : ''}`} aria-pressed={draft.role === role.id} onClick={() => update({ role: role.id })}>{role.label}<span aria-hidden="true">{draft.role === role.id ? '✓' : '↗'}</span></button>)}</div></fieldset><fieldset className="gp-fieldset"><legend>Right now, I want to</legend><div className="gp-decisions">{DECISIONS.map(decision => <label key={decision.id} className={draft.decision === decision.id ? 'is-active' : ''}><input type="radio" name="decision" value={decision.id} checked={draft.decision === decision.id} onChange={() => update({ decision: decision.id as Draft['decision'] })} /><span><strong>{decision.label}</strong><small>{decision.note}</small></span></label>)}</div></fieldset></>}
-        {draft.step === 1 && <PropertyStep query={draft.propertyQuery} parcelId={draft.parcelId} historical={historical} confirmedLive={draft.propertyConfirmed && draft.propertyEvidence === 'live'} searchResult={propertySearch} candidate={candidate} detail={propertyDetail} status={propertyStatus} error={propertyError} onQuery={value => update({ propertyQuery: value, parcelId: null, propertyConfirmed: false, propertyEvidence: null })} onSearch={() => void search()} onCandidate={setCandidate} onConfirm={() => void confirmProperty()} onRefresh={() => void refreshProperty()} />}
+        {draft.step === 1 && <PropertyStep query={draft.propertyQuery} parcelId={draft.parcelId} historical={historical} confirmedLive={draft.propertyConfirmed && draft.propertyEvidence === 'live'} searchResult={propertySearch} candidate={candidate} detail={propertyDetail} status={propertyStatus} error={propertyError} onQuery={value => update({ propertyQuery: value, parcelId: null, propertyConfirmed: false, propertyEvidence: null })} onSearch={() => void search()} onCandidate={setCandidate} onConfirm={() => void confirmProperty()} onRefresh={() => void refreshProperty()} onChangeParcel={changeParcel} />}
         {draft.step === 2 && <><label className="gp-label" htmlFor="gp-description">Describe the work in your own words</label><textarea id="gp-description" className="gp-input" rows={4} maxLength={4000} placeholder="Repair the existing house. Maybe add a bedroom at the back, but not another dwelling…" value={draft.description} onChange={event => update({ description: event.target.value })} /><div className="gp-ai-entry"><p>Use AI to suggest work activities from your words. You review them before anything is added.</p><Button variant="secondary" disabled={!draft.description.trim() || aiStatus === 'loading'} onClick={() => void suggestWork()} data-testid="suggest-work-button">{aiStatus === 'loading' ? 'Finding suggestions…' : 'Suggest work from my description'}</Button></div>{aiStatus === 'error' && <p className="gp-ai-error" role="alert">{aiError}</p>}{aiStatus === 'review' && aiResult && <IntakeReview result={aiResult} selected={aiSelected} onToggle={id => setAiSelected(current => current.includes(id) ? current.filter(value => value !== id) : [...current, id])} onApply={applyWork} onDiscard={() => { setAiStatus('idle'); setAiResult(null); setAiSelected([]) }} />}<fieldset className="gp-fieldset"><legend>Which work is part of your proposal?</legend><p className="gp-helper">Select all that apply. A bedroom does not imply another dwelling.</p><div className="gp-activities">{ACTIVITIES.map(activity => <div className="gp-activity" key={activity.id}><label><input type="checkbox" checked={draft.activities.includes(activity.id)} onChange={() => toggleActivity(activity.id, false)} /><span>{activity.label}</span></label><button className={draft.tentativeActivities.includes(activity.id) ? 'is-tentative' : ''} aria-pressed={draft.tentativeActivities.includes(activity.id)} aria-label={`Mark ${activity.label} as tentative`} onClick={() => toggleActivity(activity.id, true)}>{draft.tentativeActivities.includes(activity.id) ? 'Tentative ✓' : 'Maybe'}</button></div>)}</div></fieldset></>}
         {draft.step === 2 && <div className="gp-screening-inputs"><p className="gp-helper">These answers are your proposal assumptions. County records do not supply them.</p><fieldset className="gp-fieldset"><legend>Proposed housing form</legend><div className="gp-segments">{([{ id: 'detached', label: 'Detached' }, { id: 'attached', label: 'Attached' }, { id: 'unknown', label: 'Unknown' }] as const).map(choice => <label key={choice.id} className={draft.housingForm === choice.id ? 'is-active' : ''}><input type="radio" name="housing-form" checked={draft.housingForm === choice.id} onChange={() => update({ housingForm: choice.id })} />{choice.label}</label>)}</div></fieldset><fieldset className="gp-fieldset"><legend>Will the work disturb the ground?</legend><div className="gp-segments">{([{ id: 'yes', label: 'Yes' }, { id: 'no', label: 'No' }, { id: 'unknown', label: 'Unknown' }] as const).map(choice => <label key={choice.id} className={draft.groundDisturbance === choice.id ? 'is-active' : ''}><input type="radio" name="ground-disturbance" checked={draft.groundDisturbance === choice.id} onChange={() => update({ groundDisturbance: choice.id })} />{choice.label}</label>)}</div></fieldset></div>}
         {draft.step === 3 && <><div className="gp-financial"><span className="gp-kicker">Financial readiness</span><p>These answers identify missing preparation. They do not establish financial viability.</p>{([{ id: 'budget', label: 'A preliminary project budget' }, { id: 'value', label: 'Expected rents, sales or completed value' }, { id: 'funding', label: 'A potential funding or subsidy path' }] as const).map(question => <fieldset key={question.id}><legend>{question.label}</legend><div className="gp-segments">{(['yes', 'no', 'unknown'] as const).map(answer => <label key={answer} className={draft.financial[question.id] === answer ? 'is-active' : ''}><input type="radio" name={question.id} checked={draft.financial[question.id] === answer} onChange={() => update({ financial: { ...draft.financial, [question.id]: answer } })} />{answer === 'yes' ? 'Yes' : answer === 'no' ? 'Not yet' : 'Unknown'}</label>)}</div></fieldset>)}</div><details className="gp-details"><summary>Homes and community outcomes <span>Optional / unknown is okay</span></summary><div className="gp-counts">{([{ id: 'existingHomes', label: 'Existing homes' }, { id: 'proposedHomes', label: 'Proposed total homes' }, { id: 'homesRetained', label: 'Homes retained' }] as const).map(item => <label key={item.id}>{item.label}<input className="gp-input" type="number" min="0" max="100000" step="1" placeholder="Unknown" value={countInputError?.id === item.id ? countInputError.value : draft[item.id] ?? ''} aria-invalid={countInputError?.id === item.id} aria-describedby={countInputError?.id === item.id ? 'gp-count-error' : undefined} onChange={event => updateHomeCount(item.id, event.target.value)} /></label>)}</div>{countInputError && <p id="gp-count-error" className="gp-count-error" role="alert">{countInputError.message}</p>}{countError && <p className="gp-count-error" role="alert">Homes retained cannot exceed existing or proposed homes.</p>}<label className="gp-label" htmlFor="gp-affordability">Affordability goal</label><input id="gp-affordability" className="gp-input" value={draft.affordabilityGoal} maxLength={1000} placeholder="Unknown, or describe your goal" onChange={event => update({ affordabilityGoal: event.target.value })} /><label className="gp-label" htmlFor="gp-uses">Essential non-housing uses</label><input id="gp-uses" className="gp-input" value={draft.essentialUses} maxLength={1000} placeholder="e.g. neighborhood grocery, or unknown" onChange={event => update({ essentialUses: event.target.value })} /></details></>}
-        {draft.step === 4 && <><div className="gp-review-row"><div><span className="gp-kicker">Property</span><h2>{draft.propertyQuery || 'Not identified'}</h2><p>{selected ? 'Historical Lanark research example selected' : draft.propertyConfirmed && draft.propertyEvidence === 'live' ? `Parcel ${draft.parcelId} selected from live lookup; municipality needs verification` : 'Identity and municipality unresolved'}</p></div><button className="gp-text-button" onClick={() => go(1)}>Edit property</button></div><div className="gp-review-row"><div><span className="gp-kicker">Your words</span><p className="gp-original">{draft.description || 'No written description supplied.'}</p><div className="gp-tags">{draft.activities.map(id => <span key={id}>{ACTIVITIES.find(activity => activity.id === id)?.label}</span>)}{draft.tentativeActivities.map(id => <span key={id} className="is-tentative">Maybe: {ACTIVITIES.find(activity => activity.id === id)?.label}</span>)}</div><p>Proposed housing form: {draft.housingForm}. Ground disturbance: {draft.groundDisturbance}.</p></div><button className="gp-text-button" onClick={() => go(2)}>Edit work</button></div><div className="gp-review-row"><div><span className="gp-kicker">Intended outcomes</span><div className="gp-outcomes"><span><strong>{draft.homesRetained ?? '?'}</strong>homes retained</span><span><strong>{summary.netNew ?? '?'}</strong>net new homes</span></div><p>{draft.affordabilityGoal || 'Affordability goal unknown'} · {draft.essentialUses || 'Essential non-housing uses unknown'}</p><p>Financial feasibility: Unassessed</p></div><button className="gp-text-button" onClick={() => go(3)}>Edit answers</button></div><p className="gp-note">Confirmation saves your intentions. Run the available property checks on the next screen; they do not determine permission or financial feasibility.</p></>}
-        {draft.step === 5 && <ResultsStep draft={draft} summary={summary} historical={historical} assessment={screeningResult} assessmentStatus={screeningStatus} assessmentError={screeningError} onRun={() => void runAssessment()} />}
+        {draft.step === 4 && <><div className="gp-review-row"><div><span className="gp-kicker">Property</span><h2>{draft.propertyQuery || 'Not identified'}</h2><p>{selected ? 'Historical Lanark research example selected' : draft.propertyConfirmed && draft.propertyEvidence === 'live' ? `Parcel ${draft.parcelId} selected from live lookup; municipality needs verification` : 'Identity and municipality unresolved'}</p></div><button className="gp-text-button" onClick={changeParcel}>Change parcel</button></div><div className="gp-review-row"><div><span className="gp-kicker">Your words</span><p className="gp-original">{draft.description || 'No written description supplied.'}</p><div className="gp-tags">{draft.activities.map(id => <span key={id}>{ACTIVITIES.find(activity => activity.id === id)?.label}</span>)}{draft.tentativeActivities.map(id => <span key={id} className="is-tentative">Maybe: {ACTIVITIES.find(activity => activity.id === id)?.label}</span>)}</div><p>Proposed housing form: {draft.housingForm}. Ground disturbance: {draft.groundDisturbance}.</p></div><button className="gp-text-button" onClick={() => go(2)}>Edit work</button></div><div className="gp-review-row"><div><span className="gp-kicker">Intended outcomes</span><div className="gp-outcomes"><span><strong>{draft.homesRetained ?? '?'}</strong>homes retained</span><span><strong>{summary.netNew ?? '?'}</strong>net new homes</span></div><p>{draft.affordabilityGoal || 'Affordability goal unknown'} · {draft.essentialUses || 'Essential non-housing uses unknown'}</p><p>Financial feasibility: Unassessed</p></div><button className="gp-text-button" onClick={() => go(3)}>Edit answers</button></div><p className="gp-note">Confirmation saves your intentions. Run the available property checks on the next screen; they do not determine permission or financial feasibility.</p></>}
+        {draft.step === 5 && <ResultsStep draft={draft} summary={summary} historical={historical} assessment={screeningResult} assessmentStatus={screeningStatus} assessmentError={screeningError} onRun={() => void runAssessment()} onChangeParcel={changeParcel} onEditProposal={() => go(2)} />}
       </div>
       {notice && <p className="gp-feedback" role="status">{notice}</p>}
       <div className="gp-navigation">{draft.step > 0 ? <button className="gp-text-button" onClick={() => go(draft.step - 1)}>← Back</button> : <a className="gp-text-button" href="/">← Home</a>}<span>{draft.step < 5 ? `${draft.step + 1} of 6` : 'Your next move'}</span>{draft.step < 5 ? <button className="gp-primary" onClick={next}>{draft.step === 4 ? 'Confirm & prepare brief' : 'Continue'} <span aria-hidden="true">↗</span></button> : <button className="gp-primary" onClick={download}>Export project brief <span aria-hidden="true">↗</span></button>}</div>
-    </section><aside className="gp-aside"><SiteContextMap historical={historical} detail={draft.propertyConfirmed && draft.propertyEvidence === 'live' ? propertyDetail : null} /></aside></main>
+    </section><aside className="gp-aside"><SiteContextMap historical={historical} detail={draft.propertyConfirmed && draft.propertyEvidence === 'live' ? propertyDetail : null} savedParcelId={draft.propertyConfirmed && draft.propertyEvidence === 'live' ? draft.parcelId : null} loading={propertyStatus === 'loading'} loadError={propertyError} onLoadCurrentRecords={() => void refreshProperty()} /></aside></main>
     <footer className="gp-footer"><p className={storageError ? 'gp-error' : ''} role="status" data-testid="draft-save-status"><span className="gp-storage-dot" aria-hidden="true" />{storage}</p><button className="gp-text-button" disabled={clearing} onClick={() => void reset()}>{clearing ? 'Clearing…' : 'Clear draft'}</button><a href="/">Historical Lanark comparison ↗</a></footer>
   </div>
 }

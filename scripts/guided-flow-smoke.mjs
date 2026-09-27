@@ -2,7 +2,7 @@ import { chromium, expect } from '@playwright/test'
 import assert from 'node:assert/strict'
 
 const browser = await chromium.launch({ executablePath: '/usr/bin/chromium', headless: true })
-const origin = 'http://127.0.0.1:5173'
+const origin = process.env.APP_ORIGIN ?? 'http://127.0.0.1:5173'
 
 async function storedValue(page) {
   return page.evaluate(async () => {
@@ -107,7 +107,7 @@ try {
   await page.getByRole('button', { name: 'Mark Addition as tentative' }).click()
   await page.getByRole('button', { name: 'Continue' }).click()
 
-  // Unknown financial inputs should put financial diligence ahead of proposal review.
+  // Unknown financial inputs remain saved for a later source check.
   await expect(page.getByText('Unknown', { exact: true }).first()).toBeVisible()
   await page.getByText('Homes and community outcomes').click()
   await page.getByLabel('Homes retained').fill('2')
@@ -132,16 +132,10 @@ try {
   await expect(page.getByText('Financial feasibility: Unassessed')).toBeVisible()
   await page.getByRole('button', { name: 'Confirm & prepare brief' }).click()
   const actions = page.getByTestId('next-action-list')
-  await expect(actions).toBeVisible()
-  const actionTitles = await actions.locator('h2').allTextContents()
-  assert.match(actionTitles[0], /Confirm the property and municipality/i)
-  assert.match(actionTitles[1], /financial assumptions/i)
-  assert.ok(actionTitles.some(title => /proposed work/i.test(title)))
+  await expect(actions).toHaveCount(0)
+  await expect(page.getByTestId('assessment-panel')).toContainText('Confirm a property')
   const coverage = page.locator('.gp-result-details')
-  await expect(coverage).toBeVisible()
-  await expect(coverage).not.toHaveAttribute('open', '')
-  await coverage.locator('summary').click()
-  await expect(coverage.locator('.gp-result-outcomes').getByText('Unassessed', { exact: true })).toBeVisible()
+  await expect(coverage).toHaveCount(0)
 
   // Editing confirmed inputs returns the project to an unconfirmed review state.
   await page.getByRole('button', { name: /back/i }).click()
@@ -169,7 +163,7 @@ try {
 
   assert.deepEqual(errors, [], 'Guided route should not throw browser errors')
   assert.equal(assistantRequests, 0, 'Guided storage flow must not call AI')
-  console.log('Guided browser flow passed: storage recovery, generic-property isolation, mixed scope, financial task order, invalidation, and export')
+  console.log('Guided browser flow passed: storage recovery, generic-property isolation, mixed scope, unrun results, invalidation, and export')
   await context.close()
 
   const failureContext = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true })
