@@ -12,7 +12,7 @@ September 26, 2026, Eastern. Work resumed at the user's direction. The user auth
 - No numeric Development Ease result is shown until every required rubric factor is assessed. Data acquisition is not assessed feasibility. Financial feasibility and infrastructure remain unassessed; historical regional indexes are not project costs or parcel comparables.
 - Jev is not integrated. Hosted AI remains disabled. No paid model request, credential change, authentication connection or cloud storage provisioning is included.
 - Explorer and proposal comparison remain separate unfinished worktrees. Their code is not in this publication batch.
-- Chrome DevTools MCP was researched and documented, not installed. See [browser debugging](browser-debugging.md).
+- Chrome DevTools MCP is registered in the user-level Codex CLI configuration according to the [tooling note](browser-debugging.md). Native Chrome tools are absent from this agent session, and a prior CLI native call failed at Chromium launch. An approval-reviewed isolated stdio probe returned `about:blank`; no app page was inspected.
 
 ## Next work
 

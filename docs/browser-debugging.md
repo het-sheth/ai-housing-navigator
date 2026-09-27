@@ -1,41 +1,27 @@
-# Chrome DevTools MCP assessment
+# Chrome DevTools MCP in Codex CLI
 
-Checked September 26, 2026. Chrome DevTools MCP is not configured in the local Codex MCP server list and no Chrome DevTools tools are exposed in this session. Plugin directory search returned no matching plugin. No browser connection or installation was performed.
+Checked September 27, 2026 on het-legion. The [wiki CLI note](https://github.com/het-sheth/ai-housing-hackathon-wiki/blob/docs/chrome-devtools-cli/docs/chrome-devtools-mcp-cli.md) records a user-level Codex stdio registration for `chrome-devtools`. In its CLI session, the native server exposed 30 tools, but native `list_pages` failed when Chromium could not start inside the command sandbox. The wiki note is pending publication on a separate branch. No native Chrome DevTools tool is exposed in this current agent session, so registration alone does not make it callable here.
 
-The machine has Node v25.2.1, npm 11.6.2 and Chromium 148.0.7778.178 at `/usr/bin/chromium`. Google Chrome was not found on PATH. The upstream project documents Node LTS and Chrome requirements; it officially supports Google Chrome and Chrome for Testing. Chromium compatibility is not guaranteed.
+An approval-reviewed isolated stdio probe outside that sandbox succeeded in this session. It initialized MCP protocol `2025-03-26`, read `tools/list` before calling a tool, found 30 tools, and called `list_pages` with its empty argument schema. The result included `about:blank`. This verifies the narrow workaround, not an app inspection or general Chromium support. No global Codex configuration was changed. No personal browser profile, credentials, project data or paid AI endpoint was used.
 
-## Fit for this repository
+The machine has Node v25.2.1 and Chromium 148.0.7778.178 at `/usr/bin/chromium`. Google Chrome was not found on PATH during the earlier check. Chrome DevTools MCP officially supports Google Chrome and Chrome for Testing; the installed Chromium worked for the bounded probe but is not guaranteed by upstream.
 
-Use it for interactive diagnosis of browser network requests, console errors, map rendering and performance traces. It can help distinguish a failed API call, missing source response and rendering problem. It does not replace API contract tests, source validation or repeatable browser regression scripts.
+## Use for this repository
 
-For the Housing Navigator, keep a temporary browser profile, block the AI endpoint during verification, and inspect synthetic drafts only. Do not attach to a personal browser profile. Preserve the existing no-paid-inference constraint.
+Chrome DevTools MCP can inspect browser network requests, console errors, map rendering and performance traces. It complements API contract tests and repeatable browser regressions. Use synthetic project data and an isolated profile. Block `/api/assist` before inspecting the local app so browser checks make no paid AI request. Never attach to a personal browser profile.
 
-## Reviewed setup example, not executed
-
-After providing a supported Chrome installation and Node LTS, the documented Codex stdio setup can be adapted as follows:
+In a Codex CLI session, check `codex mcp list` for registration and try the native tools only if they are actually exposed. If native `list_pages` fails with the documented Chromium socket error, use an approval-reviewed elevated stdio command with these browser arguments:
 
 ```sh
-codex mcp add chrome-devtools -- npx -y chrome-devtools-mcp@latest \
-  --isolated --headless \
-  --no-usage-statistics --no-performance-crux \
-  --redact-network-headers \
-  --blocked-url-pattern='http://127.0.0.1:5173/api/assist*' \
-  --blocked-url-pattern='http://127.0.0.1:5175/api/assist*' \
-  --blocked-url-pattern='https://ai-housing-navigator.vercel.app/api/assist*'
+npx -y chrome-devtools-mcp@latest \
+  --executablePath=/usr/bin/chromium --isolated --headless \
+  --no-usage-statistics --no-performance-crux
 ```
 
-This changes the user's Codex MCP configuration when executed. It is a setup example, not evidence that the integration is connected. For reproducible tooling, replace `@latest` with a version verified during installation. Use the full tool set for network and console inspection; upstream's slim mode only exposes navigation, evaluation and screenshots.
-
-## Verification after connection
-
-1. Confirm the server is listed and its tools are available in the active client.
-2. Open a synthetic local walkthrough in the isolated browser.
-3. Confirm property lookup and screening requests, named source failures and no AI requests.
-4. Reproduce saved-stage recovery and parcel replacement, inspect console output, and capture the desktop/mobile map state.
-5. Keep automated API and browser regressions as the repeatable verification record.
+An earlier bounded JSON-RPC probe and prior failure evidence are in the wiki CLI note. Request `initialize`, send `notifications/initialized`, inspect `tools/list` schemas, then call only the needed tool. For app inspection, add explicit blocked URL patterns for `/api/assist` and limit navigation to a synthetic local app session. Do not change the global sandbox policy based on an assumption that it controls native MCP launches. Recheck native access after a runtime change and retire the workaround when it succeeds.
 
 ## Sources
 
 - [Chrome DevTools MCP](https://github.com/ChromeDevTools/chrome-devtools-mcp)
 - [Server configuration](https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/configuration.md)
-- [Codex MCP setup](https://developers.openai.com/codex/mcp)
+- [Official OpenAI documentation: Codex MCP setup](https://learn.chatgpt.com/docs/extend/mcp)

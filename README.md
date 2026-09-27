@@ -2,7 +2,7 @@
 
 A guided housing proposal workspace with live public-record lookup and bounded Pittsburgh screening. The user confirms a parcel, describes work and runs source checks to see findings, missing evidence and next actions. Numeric scoring is withheld until every required rubric factor is assessed. Current coverage does not meet that gate.
 
-Start with [flow.md](flow.md), [architecture](docs/architecture.md), [source coverage](docs/source-coverage.md) and the [current handoff](docs/current.md). The [all-source integration plan](docs/source-integration-plan.md) distinguishes the 60-entry catalog from working source retrieval. [Chrome DevTools MCP notes](docs/browser-debugging.md) describe the reviewed, not-yet-connected debugging option.
+Start with [flow.md](flow.md), [architecture](docs/architecture.md), [source coverage](docs/source-coverage.md) and the [current handoff](docs/current.md). The [all-source integration plan](docs/source-integration-plan.md) distinguishes the 60-entry catalog from working source retrieval. [Chrome DevTools MCP notes](docs/browser-debugging.md) describe the CLI registration, native launch limitation and verified isolated stdio workaround.
 
 ## Run
 
