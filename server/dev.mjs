@@ -2,6 +2,7 @@ import { createServer } from 'node:http'
 import { Readable } from 'node:stream'
 import { handleAssist } from './ai/intake.mjs'
 import { handleProperty } from './property/live.mjs'
+import { handleCandidates } from './property/candidates.mjs'
 import { handleScreening } from './screening/run.mjs'
 
 const host = '127.0.0.1'
@@ -16,7 +17,9 @@ createServer(async (incoming, outgoing) => {
       duplex: incoming.method === 'POST' ? 'half' : undefined,
     })
     const pathname = new URL(request.url).pathname
-    const response = pathname.startsWith('/api/property/')
+    const response = pathname === '/api/property/candidates'
+      ? await handleCandidates(request)
+      : pathname.startsWith('/api/property/')
       ? await handleProperty(request)
       : pathname === '/api/screening/run'
         ? await handleScreening(request)
