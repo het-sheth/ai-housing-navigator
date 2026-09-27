@@ -1,4 +1,14 @@
-# Walkthrough integration checkpoint, September 27, 2026
+# Consolidated application handoff, September 27, 2026
+
+The user's current direction is to combine the published application branches. `feat/consolidate-application` is the isolated integration branch. The guided walkthrough, bounded property Explorer and same-parcel proposal A/B comparison now share the current map component and public API source stack. The Explorer map identifies an unconfirmed selected candidate and offers parcel inspection retry after a failed load. The comparison map identifies a restored saved parcel before its boundary is reloaded and offers a current-record retry after failure. The map draws a County outline only from a matching loaded parcel response.
+
+The branch preserves original reviewed feature heads as Git ancestors, including `feat/property-explorer` (`80f20c1`), `feat/proposal-comparison` (`dd2a0ee`), `feat/walkthrough-recovery` (`046ac96`), `feat/source-hud-data` (`e2b0041`) and `feat/source-lodes-employment` (`9d1645c`). It also merges `feat/explorer-comparison-integration` (`b9a926b`) into `feat/walkthrough-integration` (`80c3242`). All 16 published application PR heads #3 through #18 are ancestors. The older `feat/source-transit-gtfs` commit `59b262f` and its dirty worktree remain preserved but excluded; the reviewed transit source `feat/source-gtfs-feed` (`d060b4a`) is included. See [the consolidation record](application-consolidation.md) for merge resolution, verification and remaining source limits.
+
+Every numeric Development Ease Score and range remains withheld because seven required rubric factors have not all been assessed. Finance remains a separate diligence task and unassessed. Supplementary `sourceObservations` do not complete rubric checks. Auth and cloud storage remain unconnected; hosted AI remains disabled. This consolidation does not deploy or make paid AI requests. The guided Review and Next actions design has functional verification, but no user acceptance claim. Preserve all original worktrees, especially the dirty original checkout.
+
+On the consolidated tree, `npm test` passed 235 tests across 28 files; `npm run typecheck`, `npm run lint` and `npm run build` exited 0. Production-preview browser flows for walkthrough, Explorer, comparison and page handoff passed with synthetic public API responses, zero real AI requests and desktop/mobile checks. The walkthrough browser script now reads its saved IndexedDB draft directly, so the same regression runs against built assets. The existing Three.js chunk-size warning remains. These fixtures verify state transitions and UI contracts, not live-source availability or acceptance of the design.
+
+# Historical walkthrough integration checkpoint, September 27, 2026
 
 The isolated worktree `/tmp/ai-housing-walkthrough-integration` is on `feat/walkthrough-integration`. It starts from reviewed documentation head `94fb5ab` (PR #13), which includes backend head `e2d91aa` through `95cb190`. The original checkout remains dirty and untouched. The integrated commits are `93935f7` from walkthrough recovery `046ac96` (PR #5), `99da5aa` from HUD CHAS `e2b0041` (PR #14), and `244a289` plus `323ba9a` from LODES `f280ca4` plus `9d1645c` (PR #15). The one router conflict was resolved with both adapters retained; the registry includes both bounded source entries.
 
@@ -10,7 +20,7 @@ Native Chrome DevTools tools were discovered, but this session's `list_pages` re
 
 The Development Ease Score remains null until all seven required rubric factors are assessed. Financial feasibility is separate and unassessed. HUD CHAS and LODES supply historical aggregate context, not project feasibility or parcel approval. The earlier 60-source probe table is dated; it has not been rerun after these integrations. Preserve the original checkout and all existing worktrees.
 
-# Priority for the next implementation session, September 27, 2026
+# Historical priority before consolidation, September 27, 2026
 
 The user's latest priority is to consolidate and demonstrate the single-property walkthrough first, close critical evidence gaps next, and treat completion of all 60 catalog integrations as a separate milestone. This handoff changes documentation only. The earlier paused checkpoint below remains historical; the next orchestrator may resume under the user's latest direction. No merge, deployment, outreach or paid AI call is authorized by this update. The Development Ease Score stays null until all seven required rubric factors are assessed. Financial feasibility remains separate and unassessed; it is not an eighth factor in the current rubric.
 
@@ -24,7 +34,7 @@ The user's latest priority is to consolidate and demonstrate the single-property
 
 Resume prompt: Start from this priority and the reviewed PR heads, not from the original dirty checkout. Use focused Sol implementation/review tasks and Luna only for bounded support; keep prompts and handoffs compact below 300k context without assuming an exact counter. Complete the integration and walkthrough demonstration before opening separate rule, process and infrastructure PRs. Keep the all-60 source milestone separate, preserve unknowns and source dates, and seek review before any factor becomes assessed.
 
-# Paused at the user's request, September 27, 2026
+# Historical paused checkpoint, September 27, 2026
 
 The user asked to stop at a good point. Current slices are committed, reviewed and published as focused draft PRs. Start no further implementation until the user resumes. No merge, deployment, paid AI call, credential change or worktree deletion was performed.
 

@@ -1,6 +1,6 @@
 # Application Consolidation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Combine the reviewed walkthrough, source, Explorer and proposal comparison branches into one reviewable application branch with working routes and truthful parcel map states.
 
@@ -34,10 +34,10 @@
 
 **Interfaces:** Pages pass `historical`, `detail`, `savedParcelId`, `loading`, `loadError` and `onLoadCurrentRecords` to `SiteContextMap`. The candidate API remains `GET /api/property/candidates` and exact parcel detail remains `GET /api/property/parcel?pin=<ID>`.
 
-- [ ] Merge `origin/feat/explorer-comparison-integration` and inspect all overlapping route and API files.
-- [ ] Write focused regression for map identity and retry behavior; run it to see the missing contract fail.
-- [ ] Implement the minimum page changes for the map contract, then run focused regressions and typecheck.
-- [ ] Check that all routes and source adapters remain reachable and source observations remain distinct from rubric checks.
+- [x] Merge `origin/feat/explorer-comparison-integration` and inspect all overlapping route and API files.
+- [x] Write focused regression for map identity and retry behavior; run it to see the missing contract fail.
+- [x] Implement the minimum page changes for the map contract, then run focused regressions and typecheck.
+- [x] Check that all routes and source adapters remain reachable and source observations remain distinct from rubric checks.
 
 ### Task 2: Preserve reviewed ancestry
 
@@ -45,9 +45,9 @@
 
 **Interfaces:** Merge commits preserve original heads `property-explorer`, `proposal-comparison`, `walkthrough-recovery`, `source-hud-data` and `source-lodes-employment` as ancestors.
 
-- [ ] Compare each original head with its already integrated equivalent and verify content equivalence before resolving conflicts.
-- [ ] Merge each reviewed original head and record any conflict resolution in the handoff.
-- [ ] Verify each reviewed head is an ancestor of the consolidated branch.
+- [x] Compare each original head with its already integrated equivalent and verify content equivalence before resolving conflicts.
+- [x] Merge each reviewed original head and record any conflict resolution in the handoff.
+- [x] Verify each reviewed head is an ancestor of the consolidated branch.
 
 ### Task 3: Verify and hand off
 
@@ -55,7 +55,7 @@
 
 **Interfaces:** Browser scripts use synthetic public API fixtures and block AI requests.
 
-- [ ] Run all four project gates and inspect exit codes.
-- [ ] Run production-preview browser smoke scripts for walkthrough, Explorer, comparison and page handoff at desktop and mobile widths.
-- [ ] Update the current handoff and add a concise consolidation record with exact included refs, verification and source limits.
-- [ ] Inspect the final diff, commit integration changes using the repository convention and report the final head.
+- [x] Run all four project gates and inspect exit codes.
+- [x] Run production-preview browser smoke scripts for walkthrough, Explorer, comparison and page handoff at desktop and mobile widths.
+- [x] Update the current handoff and add a concise consolidation record with exact included refs, verification and source limits.
+- [x] Inspect the final diff, commit integration changes using the repository convention and report the final head.

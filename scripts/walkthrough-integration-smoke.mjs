@@ -67,7 +67,18 @@ function screeningResult(input) {
 }
 
 async function storedDraft(page) {
-  return page.evaluate(async () => (await import('/src/features/projects/draft-store.ts')).loadDraft())
+  return page.evaluate(() => new Promise((resolve, reject) => {
+    const request = indexedDB.open('housing-navigator-drafts', 1)
+    request.onerror = () => reject(request.error)
+    request.onsuccess = () => {
+      const database = request.result
+      const transaction = database.transaction('drafts', 'readonly')
+      const draft = transaction.objectStore('drafts').get('current')
+      draft.onsuccess = () => resolve(draft.result ?? null)
+      draft.onerror = () => reject(draft.error)
+      transaction.oncomplete = () => database.close()
+    }
+  }))
 }
 
 async function searchAndConfirm(page, query, parcelId) {

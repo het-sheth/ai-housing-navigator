@@ -1,5 +1,7 @@
 # Explorer and comparison page integration
 
+This is the earlier page-branch handoff. The pages are now combined with the walkthrough and source stack on `feat/consolidate-application`. The current map contract uses a selected candidate state for Explorer and a saved parcel state for comparison, with real inspection and current-record retry callbacks. See [the consolidated handoff](application-consolidation.md).
+
 ## For Humans
 
 The `/explore` page lets a user confirm bounded County assessment search criteria, inspect one returned parcel and open `/compare?parcelId=<encoded ID>`. The comparison page treats that ID as a suggestion. It loads current County observations for the exact string ID only after a second explicit confirmation, then permits two independent proposal screens. Editing one proposal clears only its own result. Both pages keep the existing right-hand 2D site map.
@@ -17,18 +19,11 @@ This branch starts at walkthrough checkpoint `40ad242`. The comparison feature `
 3. `ProposalComparison` preloads only the URL ID. It calls the same exact-parcel endpoint after user confirmation, keeps A/B input and dated result snapshots in browser localStorage plus a per-parcel in-memory cache for the current page session, and calls `POST /api/screening/run` independently for each side. The cache prevents a failed storage write from reverting unsaved A/B work during parcel switches. Abort and epoch checks reject stale results after edits or parcel changes.
 4. `scripts/pages-handoff-smoke.mjs` runs the real built pages with synthetic public API responses, intercepts AI, checks exact-ID handoff, confirmation, independent results, side invalidation, return navigation, loaded production font and desktop/mobile overflow. The feature scripts cover each page more deeply.
 
-### Integration with newer walkthrough and source work
+### Current integration with walkthrough and source work
 
-`323ba9a` and this branch share base `40ad242`. A read-only three-way `git merge-tree 40ad242 HEAD 323ba9a` found no text conflict markers. Both sides edit `server/dev.mjs` and `server/hosted/api.test.ts`; the merge combines the candidates route with the source registry/query routes and combines their tests. Recheck these files after a real merge, including API route dispatch order and all four project gates.
+The consolidated merge combines the candidate route with the source registry and query routes. `/api/property/candidates` dispatches before the broader property handler. Both hosted and local API adapters retain the source endpoints. The merged code passed all four project gates; see [the consolidated handoff](application-consolidation.md).
 
-There is a TypeScript interface change beyond textual merging: the newer `SiteContextMap` requires `savedParcelId: string | null`, `loading: boolean`, `loadError: string` and `onLoadCurrentRecords: () => void`. The two page components currently pass only `historical` and `detail`. After the source-stack merge, adapt the call sites as follows:
-
-| Page | `savedParcelId` | `loading` | `loadError` | `onLoadCurrentRecords` |
-| --- | --- | --- | --- | --- |
-| Explorer | `null`, because a candidate selection is not a saved or confirmed parcel | `phase === 'loading'` from parcel inspection | `''` while no current detail exists; the page already shows inspection errors in its panel | A no-op callback, because Explorer has no saved-parcel map state; its Inspect parcel button owns retry |
-| Comparison | `comparison?.parcelId === parcelInput.trim() ? comparison.parcelId : null`, from restored or edited device-local comparison state | `parcelLoading` from exact County confirmation | `parcelError` from the same confirmation | `() => { void confirmParcel() }`, retrying the exact ID shown in the input |
-
-Keep the existing `detail` guards. A candidate or URL parameter alone cannot make the map imply a confirmed County parcel. The source stack also adds optional `sourceObservations` to screening results; comparison can display them in a later scoped change, but must not count them as completed rubric checks. A text merge may succeed while TypeScript still fails on the map props until the page call sites are adapted.
+`SiteContextMap` receives `savedParcelId`, optional `selectedParcelId`, `loading`, `loadError` and a current-record callback. Explorer passes its selected candidate ID only as `selectedParcelId`, exposes the inspection error and retries `inspect()`. Comparison passes the matching, restored comparison ID as `savedParcelId`, exposes the exact-parcel load error and retries `confirmParcel()`. Neither a candidate nor a URL parameter draws a parcel boundary before matching County detail loads. Optional `sourceObservations` remain distinct from rubric checks.
 
 ### Plan and verification
 
