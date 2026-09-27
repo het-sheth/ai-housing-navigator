@@ -36,6 +36,7 @@ async function run(width, aiMode) {
       calls.candidates += 1
       assert.equal(url.searchParams.get('use'), 'vacant_land')
       assert.equal(url.searchParams.get('zip'), '15217')
+      assert.deepEqual([...url.searchParams.keys()].sort(), ['use', 'zip'], 'Only recorded use and ZIP may be sent as search filters')
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(candidateSearch) })
       return
     }
@@ -53,14 +54,17 @@ async function run(width, aiMode) {
   page.on('pageerror', error => errors.push(error.message))
   await page.goto(`${origin}/explore`)
   await expect(page.getByRole('heading', { name: 'Find a parcel to study.' })).toBeVisible()
-  await page.getByLabel('What would you like to do?').fill('I want to build a home on a vacant parcel')
+  await page.screenshot({ path: `${screenshots}/explorer-form-${width}.png`, fullPage: true })
+  await page.getByLabel('Describe your idea in your own words (optional)').fill('I want to build a home on a vacant parcel')
+  await page.getByText('Optional: ask AI to suggest work activities').click()
   await page.getByRole('button', { name: 'Suggest activities with AI' }).click()
-  await expect(page.getByRole('status')).toContainText('AI interpretation is unavailable')
+  await expect(page.locator('.ex-ai-optional').getByRole('status')).toContainText('AI interpretation is unavailable')
   await page.getByLabel('New construction').check()
   await page.getByLabel('Preferred postal ZIP (optional)').fill('15217')
   await page.getByLabel('Other needs or assumptions (optional)').fill('At least 5,000 sq ft')
   await page.getByRole('button', { name: 'Confirm criteria and find records' }).click()
-  await expect(page.getByText('Not evaluated: At least 5,000 sq ft')).toBeVisible()
+  await expect(page.getByText('Other needs: At least 5,000 sq ft')).toBeVisible()
+  await expect(page.getByText('Project notes, not searched')).toBeVisible()
   await expect(page.getByText('Candidate records')).toBeVisible()
   await expect(page.getByText('More records match these filters.')).toBeVisible()
   await page.getByRole('radio', { name: /SYNTHETIC TEST PARCEL/ }).check()
@@ -79,7 +83,7 @@ async function run(width, aiMode) {
   await page.screenshot({ path: `${screenshots}/explorer-${width}.png`, fullPage: true })
   await page.getByRole('button', { name: 'Edit criteria' }).click()
   await expect(page.getByText('Candidate records')).toHaveCount(0)
-  await expect(page.getByLabel('What would you like to do?')).toHaveValue('I want to build a home on a vacant parcel')
+  await expect(page.getByLabel('Describe your idea in your own words (optional)')).toHaveValue('I want to build a home on a vacant parcel')
   await context.close()
 }
 
@@ -94,7 +98,7 @@ async function verifyRefreshedRecord(mode) {
     ...detail, assessment: { ...detail.assessment, sourceDate: '2026-09-10', record: { ...detail.assessment.record, address: 'SECOND SYNTHETIC ADDRESS', useDescription: 'SINGLE FAMILY' } },
   } : { ...detail, assessment: { ...detail.assessment, status: 'unavailable', sourceDate: null, record: null } }) }))
   await page.goto(`${origin}/explore`)
-  await page.getByLabel('What would you like to do?').fill('I want to build a home')
+  await page.getByLabel('Describe your idea in your own words (optional)').fill('I want to build a home')
   await page.getByLabel('New construction').check()
   await page.getByRole('button', { name: 'Confirm criteria and find records' }).click()
   await page.getByRole('radio', { name: /SYNTHETIC TEST PARCEL/ }).check()
@@ -119,6 +123,40 @@ async function verifyRefreshedRecord(mode) {
 await verifyRefreshedRecord('changed')
 await verifyRefreshedRecord('missing')
 
+const zeroContext = await browser.newContext({ viewport: { width: 390, height: 844 } })
+const zeroPage = await zeroContext.newPage()
+const zeroParcelId = '0046R00029000000'
+const zeroAddress = '0 MOUNTFORD AVE'
+const longIdea = 'Convert an existing six-story building into housing. Keep the ground-floor clinic. Repair the roof and windows. Retain the current apartments. Add accessible homes where feasible. Verify utilities, access, lawful use and financing before deciding.'
+const zeroCandidate = { ...candidate, parcelId: zeroParcelId, address: zeroAddress }
+const zeroDetail = { ...detail, parcelId: zeroParcelId, assessment: { ...detail.assessment, record: { ...detail.assessment.record, parcelId: zeroParcelId, address: zeroAddress } } }
+let zeroAiCalls = 0
+await zeroContext.route('**/api/assist', route => { zeroAiCalls += 1; return route.abort() })
+await zeroContext.route('**/api/property/candidates?*', route => {
+  const url = new URL(route.request().url())
+  assert.deepEqual([...url.searchParams.keys()], ['use'], 'Proposal prose, activities and other needs must not be search filters')
+  return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...candidateSearch, candidates: [zeroCandidate], coverage: 'Allegheny County assessment records with recorded use VACANT LAND. No postal ZIP filter was applied. First 20 returned records only.' }) })
+})
+await zeroContext.route('**/api/property/parcel?*', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(zeroDetail) }))
+await zeroPage.goto(`${origin}/explore`)
+await zeroPage.getByLabel('Repair/remodel', { exact: true }).check()
+await zeroPage.getByLabel('Describe your idea in your own words (optional)').fill(longIdea)
+await zeroPage.getByLabel('Other needs or assumptions (optional)').fill('Near transit, under budget')
+await zeroPage.getByRole('button', { name: 'Confirm criteria and find records' }).click()
+await expect(zeroPage.locator('.ex-idea-full')).toHaveText(longIdea)
+await expect(zeroPage.getByText('Other needs: Near transit, under budget')).toBeVisible()
+await expect(zeroPage.getByRole('radio', { name: /MOUNTFORD AVE · Parcel 0046R00029000000/ })).toBeVisible()
+await zeroPage.getByRole('radio', { name: /MOUNTFORD AVE · Parcel 0046R00029000000/ }).check()
+await zeroPage.getByRole('button', { name: `Inspect parcel ${zeroParcelId}` }).click()
+await expect(zeroPage.locator('.ex-detail h2')).toHaveText(`MOUNTFORD AVE · Parcel ${zeroParcelId}`)
+await expect(zeroPage.locator('.ex-observations')).toContainText(zeroAddress)
+await expect(zeroPage.locator('.ex-handoff-note')).toContainText('not transferred')
+await zeroPage.screenshot({ path: `${screenshots}/explorer-zero-address-mobile.png`, fullPage: true })
+await zeroPage.getByRole('button', { name: 'Edit criteria' }).click()
+await expect(zeroPage.getByLabel('Describe your idea in your own words (optional)')).toHaveValue(longIdea)
+assert.equal(zeroAiCalls, 0)
+await zeroContext.close()
+
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
 await mockSignedInAccount(context)
 const page = await context.newPage()
@@ -129,13 +167,17 @@ await context.route('**/api/assist', async route => {
   await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ schemaVersion: 1, operation: 'intake', draftId: input.draftId, draftRevision: input.draftRevision, suggestions: [{ activityId: 'new_construction', intent: 'confirmed_candidate', quote: 'build a home', reason: 'The idea expressly includes construction.' }], question: 'How many homes are planned?' }) })
 })
 await page.goto(`${origin}/explore`)
-await page.getByLabel('What would you like to do?').fill('I want to build a home')
+await page.getByLabel('Describe your idea in your own words (optional)').fill('I want to build a home')
 await page.getByLabel('Addition', { exact: true }).check()
+await page.getByText('Optional: ask AI to suggest work activities').click()
 await page.getByRole('button', { name: 'Suggest activities with AI' }).click()
-await expect(page.getByRole('status')).toContainText('AI proposed work activities')
-await expect(page.getByLabel('New construction')).toBeChecked()
+await expect(page.locator('.ex-ai-optional').getByRole('status')).toContainText('AI proposed work activities')
+await expect(page.getByLabel('New construction', { exact: true })).not.toBeChecked()
 await expect(page.getByLabel('Addition', { exact: true })).toBeChecked()
+await expect(page.getByRole('button', { name: 'Confirm criteria and find records' })).toBeDisabled()
 await expect(page.getByText('Question to resolve: How many homes are planned?')).toBeVisible()
+await page.getByRole('button', { name: 'Apply selected suggestions' }).click()
+await expect(page.getByLabel('New construction', { exact: true })).toBeChecked()
 assert.equal(aiCalls, 1)
 await context.close()
 await browser.close()

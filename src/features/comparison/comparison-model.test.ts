@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ScreeningCheck, ScreeningResult } from '../projects/screening-client'
-import { compareChecks, compareInputs, createComparison, resultMatchesInput, updateProposal, visibleScore } from './comparison-model'
+import { compareActions, compareChecks, compareInputs, compareObservations, createComparison, resultMatchesInput, updateProposal, visibleScore } from './comparison-model'
 
 const parcelId = '0046R00029000000'
 const check = (id: string, reason: string): ScreeningCheck => ({ id, label: id, status: 'unknown', reason, sourceUrl: 'https://example.org/source', sourceDate: null, retrievedAt: '2026-09-27T10:00:00Z' })
@@ -21,13 +21,14 @@ describe('proposal comparison model', () => {
     expect(changed.proposals.B.result).toEqual(result())
   })
 
-  it('compares exact inputs and shows changed, unchanged and absent source checks', () => {
+  it('compares exact inputs and separates findings from coverage differences', () => {
     const proposal = { ...createComparison(parcelId).proposals.A.input, activities: ['new_construction'] as const, proposedHomes: 1, housingForm: 'detached' as const }
     expect(resultMatchesInput(result(), parcelId, { ...proposal, activities: [...proposal.activities] })).toBe(true)
     expect(resultMatchesInput(result(), parcelId, { ...proposal, activities: [...proposal.activities], proposedHomes: 2 })).toBe(false)
-    const differences = compareChecks(result([check('flood', 'Needs review'), check('slope', 'Same')]), result([check('flood', 'Mapped flag'), check('slope', 'Same')]))
-    expect(differences.map(item => item.kind)).toEqual(['changed', 'unchanged'])
-    expect(compareChecks(result([check('flood', 'Needs review')]), result([]))).toEqual([expect.objectContaining({ id: 'flood', kind: 'missing' })])
+    const differences = compareChecks(result([{ ...check('flood', 'Mapped hazard'), status: 'mapped_flag' }, check('slope', 'Same')]), result([{ ...check('flood', 'Minimal hazard'), status: 'screened_low_friction' }, check('slope', 'Same')]))
+    expect(differences.map(item => item.kind)).toEqual(['finding_changed', 'shared'])
+    expect(compareChecks(result([check('flood', 'Needs review')]), result([]))).toEqual([expect.objectContaining({ id: 'flood', kind: 'coverage_changed' })])
+    expect(compareChecks(result([check('flood', 'Unknown')]), result([{ ...check('flood', 'Unsupported'), status: 'unsupported' }]))[0].kind).toBe('coverage_changed')
   })
 
   it('withholds all score numbers for incomplete coverage', () => {
@@ -40,5 +41,33 @@ describe('proposal comparison model', () => {
     const a = { ...createComparison(parcelId).proposals.A.input, proposedHomes: 1 }
     const b = { ...a, proposedHomes: 2 }
     expect(compareInputs(a, b)).toEqual([{ label: 'Proposed homes', a: '1', b: '2' }])
+  })
+
+  it('does not call proposal-dependent wording a changed public fact', () => {
+    const a = result([{ ...check('zoning-use', 'Supported use'), status: 'screened_low_friction' }])
+    const b = { ...result([{ ...check('zoning-use', 'Outside narrow rule'), status: 'unsupported' }]), proposal: { ...result().proposal, proposedHomes: 2 } }
+    expect(compareChecks(a, b)[0].kind).toBe('coverage_changed')
+    const slopeA = result([{ ...check('slope', 'Disturbance yes'), status: 'mapped_flag' }])
+    const slopeB = { ...result([{ ...check('slope', 'Disturbance no'), status: 'mapped_flag' }]), proposal: { ...result().proposal, groundDisturbance: 'no' as const } }
+    expect(compareChecks(slopeA, slopeB)[0].kind).toBe('coverage_changed')
+  })
+
+  it('deduplicates identical next actions and retains side ownership', () => {
+    const a = { ...result(), nextActions: ['Review FEMA panel', 'Ask utility provider'] }
+    const b = { ...result(), nextActions: ['Review FEMA panel', 'Check setbacks'] }
+    expect(compareActions(a, b)).toEqual([
+      { text: 'Review FEMA panel', sides: ['A', 'B'] },
+      { text: 'Ask utility provider', sides: ['A'] },
+      { text: 'Check setbacks', sides: ['B'] },
+    ])
+  })
+
+  it('compares supplementary source facts without treating retrieval dates as changed evidence', () => {
+    const observation = { id: 'mapped-landslide', status: 'mapped_flag' as const, coverage: 'mapped_intersection_only' as const, sourceUrl: 'https://example.org/landslide', sourceDate: null, retrievedAt: '2026-09-27T10:00:00Z', count: 1, summary: 'Mapped intersection' }
+    const a = { ...result(), sourceObservations: [observation] }
+    const b = { ...result(), sourceObservations: [{ ...observation, retrievedAt: '2026-09-28T10:00:00Z' }] }
+    expect(compareObservations(a, b)[0].changed).toBe(false)
+    b.sourceObservations[0].summary = 'Source conflict'
+    expect(compareObservations(a, b)[0].changed).toBe(true)
   })
 })
