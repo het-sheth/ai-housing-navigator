@@ -13,7 +13,7 @@ flowchart LR
     WALK[Assess a property]
     EXP[Explore properties]
     COMP[Compare proposals]
-    ACCOUNT[Account and email magic link]
+    ACCOUNT[Account, guest access and email magic link]
     LOCAL[(Device drafts and archives)]
     MAP[Leaflet site context]
     HOME --> WALK & EXP & COMP & ACCOUNT
@@ -28,7 +28,7 @@ flowchart LR
     ASSIST[AI intake: origin, payload and bearer validation]
   end
   subgraph Supabase[Supabase]
-    AUTH[Auth: email magic links]
+    AUTH[Auth: guest sessions and email magic links]
     SAVED[(Owned immutable project snapshots)]
     LIMITS[(Atomic AI usage reservations)]
   end
@@ -47,7 +47,7 @@ flowchart LR
 
 The home page is `/`; shared navigation links `/projects/new`, `/explore`, `/compare` and `/account`. `/welcome` aliases home, and `/prototype` retains the historical example. Local development uses Vite and `server/dev.mjs`. Hosted public-source routes delegate to the same handlers and remain available without login.
 
-`GET /api/config` exposes only the Supabase URL, publishable key and AI capability flag. The browser Supabase client handles email magic-link sessions. Magic-link delivery and redirect URLs must be configured in the existing project. A logged-in user explicitly saves a walkthrough draft or comparison snapshot to `saved_projects`. Row-level policies restrict access to its owner. Restoring validates the payload and preserves existing device work. Walkthrough screening results remain session-local and are not part of the draft snapshot; comparison snapshots retain dated results.
+`GET /api/config` exposes only the Supabase URL, publishable key and AI capability flag. The browser Supabase client handles guest and email magic-link sessions. Guest access is explicit and creates a distinct authenticated UUID. Guest cloud access is not recoverable after sign-out, clearing browser data or changing devices. Email delivery currently uses the built-in sender restricted to project-team addresses; public judges use guest access. Exact production callback URLs are configured in Supabase. A logged-in user explicitly saves a walkthrough draft or comparison snapshot to `saved_projects`. Row-level policies restrict access to its owner. Restoring validates the payload and preserves existing device work. Walkthrough screening results remain session-local and are not part of the draft snapshot; comparison snapshots retain dated results.
 
 Hosted `/api/assist` verifies the Supabase bearer token, reserves a request through a server-only Postgres RPC and checks the existing OpenRouter key budget before requesting intake suggestions. AI only suggests activities from the user's words, which the user reviews. It does not search for suitable properties or determine feasibility. Missing configuration fails closed. Shared usage reservations prevent independent serverless instances from bypassing the app limits. The provider key and `SUPABASE_SECRET_KEY` stay on the server. Only service_role can execute the reservation function; it receives the verified user UUID.
 

@@ -24,3 +24,9 @@ No credential file reads or secret output. No paid infrastructure. Existing AI l
 - AI limits must hold across serverless instances and invalid auth must never invoke the model.
 - Production callback origin and public config must never expose a privileged key.
 - An unavailable provider must preserve the user's inputs and dated findings.
+
+## Approved release amendment, September 27
+
+The user approved public judge access through an explicit Try as a guest action using Supabase anonymous Auth. Retain email magic-link login for supported addresses. Default Supabase email delivery is restricted to project-team addresses; no public email service or domain is being provisioned. A guest receives an authenticated UUID and uses existing owner RLS and shared AI quotas. Disclose that guest cloud access cannot be recovered after sign-out, clearing browser data or changing devices. Require confirmation before guest sign-out, preserve local work and do not silently create or upload guest projects.
+
+Release sequence: implement and independently review guest entry, enable only anonymous Auth, run full application checks and hosted guest persistence/isolation checks, merge PR #20, deploy and verify production, then update both wikis. Preserve the one completed live AI request; do not retry paid AI merely to repeat verification. No additional AI features or visual redesign are in scope.

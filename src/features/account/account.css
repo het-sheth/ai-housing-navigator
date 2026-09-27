@@ -11,6 +11,9 @@
 .account-email-row { display: flex; gap: 10px; }
 .account-email-row input { flex: 1; min-width: 0; min-height: 46px; padding: 10px 13px; border: 1px solid #777b70; background: white; color: #151713; font: inherit; }
 .account-email-row button, .account-item-actions button, .account-snapshot-list > li > button { min-height: 44px; padding: 9px 17px; border: 1px solid #151713; background: #151713; color: #f6e9c6; font: inherit; font-weight: 600; cursor: pointer; }
+.account-guest-button { min-height: 44px; padding: 9px 17px; border: 1px solid #151713; background: #151713; color: #f6e9c6; font: inherit; font-weight: 600; cursor: pointer; }
+.account-guest-button:hover { background: #33372b; }
+.account-guest-button:disabled { opacity: .55; cursor: wait; }
 .account-email-row button:hover, .account-item-actions button:hover, .account-snapshot-list > li > button:hover { background: #33372b; }
 .account-email-row button:disabled, .account-item-actions button:disabled { opacity: .55; cursor: wait; }
 .account-text-button { border: 0 !important; padding: 9px !important; background: transparent !important; color: #60450d !important; text-decoration: underline; font: inherit; cursor: pointer; }

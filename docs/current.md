@@ -1,3 +1,17 @@
+# Live connection release, September 27, 2026
+
+This section supersedes the pre-provisioning checkpoint below. Active work remains in `/tmp/ai-housing-consolidated` on `feat/connected-live-app`, PR #20. Preserve the dirty original checkout and earlier worktrees. The final deployment identity and release verification will be recorded in the project wiki handoff after promotion.
+
+The authorized free Supabase project is `rftlsrfkppkngugbgoqd` in US East. Migration `20260927000000_connected_accounts_and_ai.sql` is applied. Production Vercel configuration contains the five required variables, with server keys held as sensitive values. Two real test identities verified owner isolation, anonymous denial, no owner spoof/update, private-schema exclusion and service-only quota reservation.
+
+The user approved explicit guest access for public judges using Supabase anonymous Auth. Each guest has an authenticated UUID and owner-scoped snapshots; existing global AI caps remain unchanged. Guest cloud access cannot be recovered after sign-out, clearing browser data or changing devices. Email magic links remain available for project-team addresses using the built-in sender. General public email delivery is not configured and actual mailbox delivery remains unverified.
+
+Staged hosting at code commit `c1ed4b5` passed live public-record candidate/parcel/screening requests and an admin-generated Auth link callback, cloud save/reopen, device backup and sign-out. The link check did not send email. One authenticated hosted AI request returned HTTP 200, verified from request metadata after a test-harness cleanup error hid its original output. The harness was corrected and disposable fixtures removed; no extra paid retry was made. Public records remain independent of AI, and numeric scores remain withheld.
+
+Guest implementation and final production verification are the remaining release steps. No additional AI features or page redesign are in this release.
+
+# Historical checkpoint
+
 # Connected application checkpoint, September 27, 2026
 
 The chosen stopping point is the tested feature branch before production provisioning and deployment. PR #19 remains merged at `403f1c19caee4ac2d8488d10b4d5bd9d6845473a`. Current work is `feat/connected-live-app` in `/tmp/ai-housing-consolidated`. Preserve the original dirty checkout and all earlier worktrees.

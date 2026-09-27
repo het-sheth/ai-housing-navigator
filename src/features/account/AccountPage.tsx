@@ -24,6 +24,7 @@ export default function AccountPage() {
   const [session, setSession] = useState<Session | null>(null)
   const [email, setEmail] = useState('')
   const [sending, setSending] = useState(false)
+  const [startingGuest, setStartingGuest] = useState(false)
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
   const [snapshots, setSnapshots] = useState<CloudSnapshot[]>([])
@@ -133,8 +134,22 @@ export default function AccountPage() {
     finally { setSending(false) }
   }
 
+  async function startGuest() {
+    if (!client || startingGuest) return
+    setStartingGuest(true)
+    setError('')
+    setNotice('')
+    try {
+      const { data, error: authError } = await client.auth.signInAnonymously()
+      if (authError || !data.session?.user.id || !data.session.user.is_anonymous) throw new Error('guest_sign_in_failed')
+      setNotice('Guest access is ready. Save a snapshot when you want a cloud copy.')
+    } catch { setError('Guest access could not start. Your device drafts are still here. Try again.') }
+    finally { setStartingGuest(false) }
+  }
+
   async function signOut() {
     if (!client) return
+    if (session?.user.is_anonymous && !window.confirm('Sign out of this guest account? It cannot be recovered after sign-out or clearing browser data. Device drafts remain in this browser.')) return
     setError('')
     const { error: authError } = await client.auth.signOut()
     if (authError) { setError('Sign-out failed. Try again.'); return }
@@ -186,11 +201,11 @@ export default function AccountPage() {
   }
 
   return <div className="account-page"><AppHeader current="/account" /><main className="account-main">
-    <div className="account-heading"><span className="gp-kicker">Your account</span><h1>Keep a copy you can reopen</h1><p>Sign in with an email link to save a snapshot of an assessment or comparison. Device drafts stay on this browser until you clear them.</p></div>
+    <div className="account-heading"><span className="gp-kicker">Your account</span><h1>Keep a copy you can reopen</h1><p>Sign in to save a snapshot of an assessment or comparison. Device drafts stay on this browser until you clear them.</p></div>
     {client === undefined ? <section className="account-card" role="status">Checking account availability...</section>
       : client === null ? <section className="account-card"><h2>Account saving is unavailable</h2><p>Cloud storage is not connected right now. You can keep working on this device and return when it is available.</p><a href="/projects/new">Return to your assessment</a></section>
-        : session ? <section className="account-card" aria-label="Signed-in account"><div className="account-card-title"><div><span className="gp-kicker">Signed in</span><h2>{session.user.email ?? 'Your account'}</h2></div><button type="button" className="account-text-button" onClick={() => void signOut()}>Sign out</button></div><p>Saved snapshots belong to this account. Reopening a walkthrough archives the current device draft first.</p></section>
-          : <section className="account-card"><h2>Sign in by email</h2><form onSubmit={event => void sendLink(event)}><label htmlFor="account-email">Email address</label><div className="account-email-row"><input id="account-email" type="email" required autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="you@example.com" /><button type="submit" disabled={sending}>{sending ? 'Sending...' : 'Send sign-in link'}</button></div></form><p>New email addresses can create an account. The link returns to this account page.</p></section>}
+        : session ? <section className="account-card" aria-label="Signed-in account"><div className="account-card-title"><div><span className="gp-kicker">Signed in</span><h2>{session.user.is_anonymous ? 'Guest account' : session.user.email ?? 'Your account'}</h2></div><button type="button" className="account-text-button" onClick={() => void signOut()}>{session.user.is_anonymous ? 'Sign out of guest account' : 'Sign out'}</button></div><p>Saved snapshots belong to this account. Reopening a walkthrough archives the current device draft first.</p>{session.user.is_anonymous && <p role="note">This guest account cannot be recovered after you sign out or clear this browser's data. Export anything you need first.</p>}</section>
+          : <><section className="account-card"><h2>Continue as a guest</h2><p>Use a guest account to save cloud snapshots without an email link. Guest access starts only when you choose it.</p><button className="account-guest-button" type="button" onClick={() => void startGuest()} disabled={startingGuest}>{startingGuest ? 'Starting guest access...' : 'Try as a guest'}</button><p>A guest account cannot be recovered after sign-out or clearing browser data. Export anything you need before leaving it.</p></section><section className="account-card"><h2>Sign in by email</h2><form onSubmit={event => void sendLink(event)}><label htmlFor="account-email">Email address</label><div className="account-email-row"><input id="account-email" type="email" required autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="you@example.com" /><button type="submit" disabled={sending}>{sending ? 'Sending...' : 'Send sign-in link'}</button></div></form><p>Email links currently reach approved team addresses only. Judges can use guest access.</p></section></>}
     {notice && <p className="account-notice" role="status">{notice}</p>}
     {error && <p className="account-error" role="alert">{error}</p>}
     {session && client && <section className="account-card"><div className="account-card-title"><div><span className="gp-kicker">Cloud snapshots</span><h2>Saved projects</h2></div><button type="button" className="account-text-button" onClick={() => setReload(value => value + 1)}>Refresh list</button></div>{listLoading ? <p role="status">Loading your saved projects...</p> : listOwner === session.user.id && snapshots.length === 0 ? <p>No cloud snapshots yet. Use Save to account in an assessment or comparison.</p> : listOwner === session.user.id ? <><ul className="account-snapshot-list">{snapshots.map(snapshot => <li key={snapshot.id}><div><strong>{snapshot.title}</strong><span>{snapshot.kind === 'walkthrough' ? 'Property assessment' : 'Proposal comparison'} · {new Date(snapshot.created_at).toLocaleString()}</span></div><div className="account-item-actions"><button type="button" onClick={() => void reopen(snapshot)} disabled={Boolean(actionId)}>Open</button><button type="button" className="account-text-button" onClick={() => void remove(snapshot)} disabled={Boolean(actionId)}>Delete</button></div></li>)}</ul>{hasMore && <button type="button" className="account-load-more" disabled={moreLoading} onClick={() => void loadOlder()}>{moreLoading ? 'Loading older projects...' : 'Load older projects'}</button>}</> : null}</section>}
