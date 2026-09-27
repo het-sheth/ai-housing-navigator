@@ -1,5 +1,9 @@
 # All 60 public source query outcomes
 
+## Follow-on LODES workplace integration, September 27, 2026
+
+Source 28 now has a bounded query of the complete Pennsylvania 2023 LODES workplace all-jobs file. It sums matched blocks for an exact county FIPS or 2020 Census tract. The result is historical employment context, not commuting flows, parcel evidence or development feasibility. If no blocks match, the adapter returns `incomplete` without a numeric total. The table below records an earlier probe of backend commit `e2d91aa`; its source 28 row is historical. The full 60-source probe has not been rerun after HUD and LODES integration.
+
 ## Follow-on HUD county integration, September 27, 2026
 
 Source 20 now has a bounded, exact county query against [HUD's CHAS county layer](https://services.arcgis.com/VTyQ9soqVukalItT/ArcGIS/rest/services/ACS_5YR_CHAS_Estimate_Data_by_County/FeatureServer/4). A live query for county FIPS `42003` returned one matching Allegheny record: 545,695 occupied housing units (T2_EST1) and 53,055 renter households at or below 30% of HUD area median family income (T8_EST69). These are 2013-2017 special-tabulation county counts, not parcel findings or current housing demand. [HUD's CHAS page](https://www.huduser.gov/portal/datasets/cp.html) describes a newer 2018-2022 release, which this adapter does not parse. The original 60-source table below remains the recorded probe of backend commit `e2d91aa`, before this integration.
@@ -81,7 +85,7 @@ The primary probe recorded a USGS elevation error for ID 36. One separate bounde
 
 ## Interpretation and remaining work
 
-Reference metadata does not mean a document was fully read or its rules implemented. Incomplete responses disclose sampling, coverage or response limits. Public bulk paths still need parser or selector work, including CHAS, income limits, LIHTC, LODES, ResStock and Access Across America. Other entries need explicit geography or dataset selection. Access requirements and provider failures are described below; they do not imply a source does not exist.
+Reference metadata does not mean a document was fully read or its rules implemented. Incomplete responses disclose sampling, coverage or response limits. At the recorded probe, public bulk paths still needed parser or selector work, including CHAS, income limits, LIHTC, LODES, ResStock and Access Across America. The follow-on sections above describe the narrower CHAS and LODES adapters now integrated. Other entries need explicit geography or dataset selection. Access requirements and provider failures are described below; they do not imply a source does not exist.
 
 Historical HUD FY2024 rents and historical Opportunity Atlas cohorts are not current market estimates. Supplementary observations and catalog query results are not automatically scored. Financial feasibility, site investigation, infrastructure and the reviewed proposal process remain incomplete.
 

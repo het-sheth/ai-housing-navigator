@@ -1,6 +1,7 @@
 import { sources } from '../../domain'
 import { ACTIVITIES, type Draft, type DraftSummary } from './contracts'
 import { hasCompleteScreen, type ScreeningCheck, type ScreeningResult } from './screening-client'
+import { resultActions } from './result-actions'
 
 type Props = {
   draft: Draft
@@ -31,7 +32,7 @@ export function ResultsStep({ draft, summary, historical, assessment, assessment
   const incomplete = !assessment || !hasCompleteScreen(assessment) || draft.tentativeActivities.length > 0
   const findings = assessment?.checks.filter(check => ['mapped_flag', 'screened_low_friction'].includes(check.status)).sort((a, b) => (a.status === 'mapped_flag' ? 0 : 1) - (b.status === 'mapped_flag' ? 0 : 1)) ?? []
   const unfinished = assessment?.checks.filter(check => !['mapped_flag', 'screened_low_friction'].includes(check.status)) ?? []
-  const actions = assessment?.nextActions ?? []
+  const actions = resultActions(assessment, summary)
   const title = assessment ? incomplete ? 'Assessment incomplete' : `${assessment.score?.lower}–${assessment.score?.upper} / 100` : assessmentStatus === 'loading' ? 'Checking property' : assessmentStatus === 'error' ? 'Checks unavailable' : canRun ? 'Ready to check' : 'Confirm a property'
 
   return <>
