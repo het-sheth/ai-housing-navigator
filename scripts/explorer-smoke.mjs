@@ -10,7 +10,7 @@ const retrievedAt = '2026-09-27T12:00:00.000Z'
 const geometry = { type: 'Polygon', coordinates: [[[-80.0075, 40.4638], [-80.0076, 40.4638], [-80.0076, 40.4639], [-80.0075, 40.4638]]] }
 const candidate = { parcelId, address: 'SYNTHETIC TEST PARCEL', city: 'PITTSBURGH', municipality: '25th Ward - PITTSBURGH', zip: '15217', recordedUse: 'VACANT LAND', sourceDate: '2026-09-01', matched: 'Assessment recorded use: VACANT LAND; Pittsburgh-labeled municipality' }
 const candidateSearch = { status: 'candidates', candidates: [candidate], truncated: true, retrievedAt, sourceUrl, sourceDate: '2026-09-01', coverage: 'Allegheny County assessment records with a Pittsburgh-labeled municipality and recorded use VACANT LAND and postal ZIP 15217. First 20 returned records only.', unknowns: ['Confirmed City jurisdiction', 'Proposal suitability', 'Lot-area suitability'] }
-const detail = { parcelId, assessment: { status: 'available', record: { parcelId, useDescription: 'VACANT LAND' }, sourceDate: '2026-09-01', retrievedAt, sourceUrl }, boundary: { status: 'available', geometry, sourceDate: null, retrievedAt, sourceUrl: 'https://gisdata.alleghenycounty.us/arcgis/rest/services/EGIS/Web_Parcels/MapServer/0', sourceCrs: 'EPSG:2272', displayCrs: 'EPSG:4326', modifiedOn: null } }
+const detail = { parcelId, assessment: { status: 'available', record: { parcelId, address: candidate.address, municipality: candidate.municipality, zip: candidate.zip, useDescription: 'VACANT LAND' }, sourceDate: '2026-09-01', retrievedAt, sourceUrl }, boundary: { status: 'available', geometry, sourceDate: null, retrievedAt, sourceUrl: 'https://gisdata.alleghenycounty.us/arcgis/rest/services/EGIS/Web_Parcels/MapServer/0', sourceCrs: 'EPSG:2272', displayCrs: 'EPSG:4326', modifiedOn: null } }
 const browser = await chromium.launch({ executablePath: '/usr/bin/chromium', headless: true })
 await mkdir(screenshots, { recursive: true })
 
@@ -77,6 +77,41 @@ async function run(width, aiMode) {
 
 await run(1440, 'unavailable')
 await run(390, 'unavailable')
+
+async function verifyRefreshedRecord(mode) {
+  const context = await browser.newContext({ viewport: { width: 1100, height: 900 } })
+  const page = await context.newPage()
+  await context.route('**/api/property/candidates?*', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(candidateSearch) }))
+  await context.route('**/api/property/parcel?*', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mode === 'changed' ? {
+    ...detail, assessment: { ...detail.assessment, sourceDate: '2026-09-10', record: { ...detail.assessment.record, address: 'SECOND SYNTHETIC ADDRESS', useDescription: 'SINGLE FAMILY' } },
+  } : { ...detail, assessment: { ...detail.assessment, status: 'unavailable', sourceDate: null, record: null } }) }))
+  await page.goto(`${origin}/explore`)
+  await page.getByLabel('What would you like to do?').fill('I want to build a home')
+  await page.getByLabel('New construction').check()
+  await page.getByRole('button', { name: 'Confirm criteria and find records' }).click()
+  await page.getByRole('button', { name: 'Find candidate records' }).click()
+  await page.getByRole('radio', { name: /SYNTHETIC TEST PARCEL/ }).check()
+  await page.getByRole('button', { name: `Inspect parcel ${parcelId}` }).click()
+  if (mode === 'changed') {
+    await expect(page.getByRole('alert')).toContainText('Search and refreshed records differ')
+    await expect(page.getByRole('alert')).toContainText('Search: SYNTHETIC TEST PARCEL')
+    await expect(page.getByRole('alert')).toContainText('Refreshed: SECOND SYNTHETIC ADDRESS')
+    await expect(page.getByRole('alert')).toContainText('Search: VACANT LAND')
+    await expect(page.getByRole('alert')).toContainText('Refreshed: SINGLE FAMILY')
+    await expect(page.getByRole('alert')).toContainText('Sep 1, 2026')
+    await expect(page.getByRole('alert')).toContainText('Sep 10, 2026')
+  } else {
+    await expect(page.getByRole('alert')).toContainText('The search match has not been reconfirmed')
+    await expect(page.getByRole('alert')).not.toContainText('records differ')
+  }
+  await expect(page.getByRole('link', { name: /Compare proposals on this parcel/ })).toHaveAttribute('href', `/compare?parcelId=${parcelId}`)
+  await page.locator('.ex-detail').screenshot({ path: `${screenshots}/explorer-${mode}-record.png` })
+  await context.close()
+}
+
+await verifyRefreshedRecord('changed')
+await verifyRefreshedRecord('missing')
+
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
 const page = await context.newPage()
 let aiCalls = 0

@@ -38,7 +38,7 @@ function normalizeRow(row, expectedUse, zip) {
     zip: typeof row.PROPERTYZIP === 'string' ? row.PROPERTYZIP : null,
     recordedUse: typeof row.USEDESC === 'string' && row.USEDESC.trim() ? row.USEDESC : null,
     sourceDate: validDate(row.ASOFDATE),
-    matched: expectedUse ? `Assessment recorded use: ${expectedUse}; Pittsburgh-labeled municipality` : 'Pittsburgh-labeled assessment municipality',
+    matched: `${expectedUse ? `Assessment recorded use: ${expectedUse}; ` : ''}Pittsburgh-labeled assessment municipality${zip ? `; postal ZIP ${zip}` : ''}`,
   }
 }
 
@@ -56,13 +56,13 @@ export async function handleCandidates(request, { fetcher = fetch, now = () => n
   query.searchParams.set('q', JSON.stringify({ MUNIDESC: 'PITTSBURGH' }))
   query.searchParams.set('fields', fields)
   query.searchParams.set('limit', '21')
-  const retrievedAt = now()
   try {
     const result = await requestRows(query, fetcher)
     const candidates = result.records.map(row => normalizeRow(row, recordedUse, zip))
     if (new Set(candidates.map(item => item.parcelId)).size !== candidates.length) throw new Error('source_duplicate_identifier')
     const shown = candidates.slice(0, 20)
     const sourceDate = shown.length && shown.every(item => item.sourceDate && item.sourceDate === shown[0].sourceDate) ? shown[0].sourceDate : null
+    const retrievedAt = now()
     return json({
       status: shown.length ? 'candidates' : 'no_match', candidates: shown,
       truncated: result.total > 20 || candidates.length > 20, retrievedAt, sourceUrl, sourceDate,
@@ -70,6 +70,6 @@ export async function handleCandidates(request, { fetcher = fetch, now = () => n
       unknowns: ['Confirmed City jurisdiction', 'Proposal suitability', 'Current physical condition', 'Lawful use', 'Availability or control', 'Zoning and site hazards', 'Lot-area suitability'],
     })
   } catch {
-    return json({ status: 'error', candidates: [], truncated: false, retrievedAt, sourceUrl, sourceDate: null, message: 'Assessment candidate search is unavailable. Retry later.' }, 502)
+    return json({ status: 'error', candidates: [], truncated: false, retrievedAt: now(), sourceUrl, sourceDate: null, message: 'Assessment candidate search is unavailable. Retry later.' }, 502)
   }
 }
