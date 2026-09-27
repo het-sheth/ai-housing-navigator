@@ -52,4 +52,20 @@ describe('comparison storage', () => {
     entries.set('housing-navigator-comparison-v1:0046R00029000000', JSON.stringify(parsed))
     expect(() => loadComparison(saved.parcelId)).toThrow(/invalid/)
   })
+
+  it('validates saved metric scores without rejecting eligible pending findings', () => {
+    const saved = createComparison('0046R00029000000')
+    const parsed = JSON.parse(JSON.stringify(saved))
+    parsed.proposals.A.result = {
+      status: 'pending', score: null, rubricVersion: 'test', parcelId: saved.parcelId,
+      proposal: { activities: [], proposedHomes: null, housingForm: 'unknown', groundDisturbance: 'unknown' },
+      municipality: 'Pittsburgh', checks: [{ id: 'flood', label: 'Flood', status: 'screened_low_friction', reason: 'Whole parcel X', sourceUrl: 'https://hazards.fema.gov/layer', sourceDate: null, retrievedAt: '2026-09-27T10:00:00Z', metricScore: { value: 2, max: 2, scope: 'Whole parcel minimal-hazard X', rule: 'FEMA X minimal-hazard' } }],
+      nextActions: [], retrievedAt: '2026-09-27T10:00:00Z', caveat: 'Incomplete',
+    }
+    entries.set('housing-navigator-comparison-v1:0046R00029000000', JSON.stringify(parsed))
+    expect(loadComparison(saved.parcelId)?.proposals.A.result?.checks[0].metricScore?.value).toBe(2)
+    parsed.proposals.A.result.checks[0].metricScore.scope = ''
+    entries.set('housing-navigator-comparison-v1:0046R00029000000', JSON.stringify(parsed))
+    expect(() => loadComparison(saved.parcelId)).toThrow(/invalid/)
+  })
 })

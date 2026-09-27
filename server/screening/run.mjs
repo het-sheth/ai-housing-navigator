@@ -5,8 +5,7 @@ const slopeLayer = 'https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/se
 const floodLayer = 'https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28'
 const ruleUrl = 'https://ecode360.com/45476538'
 const activities = ['repair_remodel', 'addition', 'interior_conversion', 'additional_dwelling', 'partial_demolition_rebuild', 'demolition', 'new_construction', 'site_work', 'mixed_use', 'other_uncertain']
-const rubricVersion = 'pittsburgh-screen-v1-provisional-2026-09-26'
-const weights = { 'zoning-use': 15, 'zoning-other': 25, flood: 12, slope: 10, undermining: 8, process: 15, infrastructure: 15 }
+const rubricVersion = 'pittsburgh-metric-screen-v2-provisional-2026-09-27'
 const headers = { 'content-type': 'application/json', 'cache-control': 'no-store' }
 
 function json(body, status = 200) { return new Response(JSON.stringify(body), { status, headers }) }
@@ -101,9 +100,8 @@ export async function spatial(layer, geometry, relation, fields, fetcher) {
   return data.features.map(feature => feature.attributes)
 }
 
-function check(id, label, status, reason, now, sourceUrl = null, sourceDate = null, earned = null) {
-  const weight = weights[id]
-  return { id, label, status, maxPoints: weight, points: earned === null ? { lower: 0, upper: weight } : { lower: earned, upper: earned }, reason, sourceUrl, sourceDate, retrievedAt: sourceUrl ? now : null }
+function check(id, label, status, reason, now, sourceUrl = null, sourceDate = null, metricScore = null) {
+  return { id, label, status, reason, sourceUrl, sourceDate, retrievedAt: sourceUrl ? now : null, ...(metricScore ? { metricScore } : {}) }
 }
 
 function underminingReason(status) {
@@ -118,13 +116,7 @@ function underminingReason(status) {
 }
 
 function pending(input, checks, municipality, actions, now, sourceObservations = []) {
-  const publicChecks = checks.map(item => {
-    const evidence = { ...item }
-    delete evidence.points
-    delete evidence.maxPoints
-    return evidence
-  })
-  return json({ status: 'pending', score: null, rubricVersion, parcelId: input.parcelId, proposal: input.proposal, municipality, checks: publicChecks, sourceObservations, nextActions: actions, retrievedAt: now, caveat: 'Development Ease Score withheld until all required rubric checks are assessed. No permission or financial feasibility determination.' })
+  return json({ status: 'pending', score: null, rubricVersion, parcelId: input.parcelId, proposal: input.proposal, municipality, checks, sourceObservations, nextActions: actions, retrievedAt: now, caveat: 'No overall Development Ease Score is calculated. Narrow metric screens do not establish permission or financial feasibility.' })
 }
 
 function featureCode(value) { return typeof value === 'string' ? value.trim().toUpperCase() : '' }
@@ -187,7 +179,7 @@ export async function handleScreening(request, { fetcher = fetch, now = () => ne
   if (zone) {
     const supportedUse = /^R1D(?:-|$)/.test(zone) && input.proposal.proposedHomes === 1 && input.proposal.housingForm === 'detached' && !input.proposal.activities.some(item => ['additional_dwelling', 'mixed_use', 'other_uncertain'].includes(item))
     const missingInputs = input.proposal.proposedHomes === null || input.proposal.housingForm === 'unknown'
-    checks.push(check('zoning-use', 'Bounded zoning use-table screen', supportedUse ? 'screened_low_friction' : missingInputs ? 'unknown' : 'unsupported', supportedUse ? `Mapped ${zone}; the published City use table lists one detached housing unit in R1D. This is a provisional use-table screen only, not project permission.` : `Mapped ${zone}; this proposal is outside the narrow one-detached-home R1D use-table screen or needs explicit form and unit inputs.`, at, ruleUrl, null, supportedUse ? 15 : null))
+    checks.push(check('zoning-use', 'Bounded zoning use-table screen', supportedUse ? 'screened_low_friction' : missingInputs ? 'unknown' : 'unsupported', supportedUse ? `Mapped ${zone}; the published City use table lists one detached housing unit in R1D. This is a provisional use-table screen only, not project permission.` : `Mapped ${zone}; this proposal is outside the narrow one-detached-home R1D use-table screen or needs explicit form and unit inputs.`, at, ruleUrl, null, supportedUse ? { value: 2, max: 2, scope: `One detached home on a parcel wholly mapped ${zone}`, rule: 'Published City R1D use table lists one detached housing unit' } : null))
   }
   checks.push(check('zoning-other', 'Other zoning requirements', 'unknown', 'Overlays, dimensions, nonconformity and current City interpretation were not evaluated.', at, zoningLayer))
 
@@ -201,21 +193,21 @@ export async function handleScreening(request, { fetcher = fetch, now = () => ne
   if (slopeResult.status === 'rejected') checks.push(check('slope', 'Mapped 25 percent slope', 'error', 'City slope layer did not return a complete result.', at, slopeLayer))
   else if (slopeResult.value.some(item => !['YES', 'NO'].includes(featureCode(item.slope25)))) checks.push(check('slope', 'Mapped 25 percent slope', 'unknown', 'Intersecting City slope feature has an unrecognized flag.', at, slopeLayer))
   else if (slopeResult.value.some(item => featureCode(item.slope25) === 'YES')) {
-    const point = input.proposal.groundDisturbance === 'yes' ? 0 : input.proposal.groundDisturbance === 'no' ? 5 : null
     const reason = input.proposal.groundDisturbance === 'yes'
       ? 'The parcel intersects mapped steep slope and proposed ground disturbance is yes, adding mapped site friction. A survey and work-location review remain needed.'
       : input.proposal.groundDisturbance === 'no'
         ? 'The parcel intersects mapped steep slope and proposed ground disturbance is no. The mapped condition still needs survey and work-location review.'
         : 'The parcel intersects mapped steep slope and proposed ground disturbance is unknown. A survey and work-location review remain needed.'
-    checks.push(check('slope', 'Mapped 25 percent slope', 'mapped_flag', reason, at, slopeLayer, null, point))
-  } else checks.push(check('slope', 'Mapped 25 percent slope', 'screened_low_friction', 'No City 25 percent slope feature was returned for the full parcel. This does not establish actual grade.', at, slopeLayer, null, 10))
+    checks.push(check('slope', 'Mapped 25 percent slope', 'mapped_flag', reason, at, slopeLayer))
+  } else checks.push(check('slope', 'Mapped 25 percent slope', 'screened_low_friction', 'No City 25 percent slope feature was returned for the full parcel. This does not establish actual grade.', at, slopeLayer))
 
   if (floodResult.status === 'rejected') checks.push(check('flood', 'FEMA mapped flood zone', 'error', 'FEMA flood layer did not return a complete result.', at, floodLayer))
   else {
     const [zones, coveringZones] = floodResult.value
     if (!zones.length || zones.some(item => !featureCode(item.FLD_ZONE))) checks.push(check('flood', 'FEMA mapped flood zone', 'unknown', 'No interpretable FEMA zone returned; map coverage or panel must be checked.', at, floodLayer))
-    else if (zones.some(item => featureCode(item.SFHA_TF) === 'T' || /^(A|V)/.test(featureCode(item.FLD_ZONE)))) checks.push(check('flood', 'FEMA mapped flood zone', 'mapped_flag', 'FEMA maps a special flood hazard or A/V zone intersecting the parcel. Confirm panel and effective date.', at, floodLayer, null, 0))
-    else if (zones.length === 1 && coveringZones.length === 1 && Number.isSafeInteger(zones[0].OBJECTID) && zones[0].OBJECTID > 0 && featureCode(zones[0].FLD_ZONE) === 'X' && featureCode(zones[0].ZONE_SUBTY) === 'AREA OF MINIMAL FLOOD HAZARD' && zones[0].OBJECTID === coveringZones[0].OBJECTID) checks.push(check('flood', 'FEMA mapped flood zone', 'screened_low_friction', 'One returned FEMA minimal-hazard zone contains the whole parcel. This is a map screen, not a flood determination.', at, floodLayer, null, 12))
+    else if (zones.some(item => /^(A|V)/.test(featureCode(item.FLD_ZONE)) && featureCode(item.SFHA_TF) && featureCode(item.SFHA_TF) !== 'T')) checks.push(check('flood', 'FEMA mapped flood zone', 'unknown', 'FEMA A/V zone and special flood hazard flag conflict in the returned feature. Confirm the effective panel and source attributes before scoring.', at, floodLayer))
+    else if (zones.some(item => featureCode(item.SFHA_TF) === 'T' || /^(A|V)/.test(featureCode(item.FLD_ZONE)))) checks.push(check('flood', 'FEMA mapped flood zone', 'mapped_flag', 'FEMA maps a special flood hazard or A/V zone intersecting the parcel. Confirm panel and effective date.', at, floodLayer, null, zones.some(item => /^(A|V)/.test(featureCode(item.FLD_ZONE))) ? { value: 0, max: 2, scope: 'An explicit FEMA A/V hazard zone intersects the parcel', rule: 'Intersecting FEMA A/V zone is a mapped hazard flag' } : null))
+    else if (zones.length === 1 && coveringZones.length === 1 && Number.isSafeInteger(zones[0].OBJECTID) && zones[0].OBJECTID > 0 && featureCode(zones[0].FLD_ZONE) === 'X' && featureCode(zones[0].ZONE_SUBTY) === 'AREA OF MINIMAL FLOOD HAZARD' && zones[0].OBJECTID === coveringZones[0].OBJECTID) checks.push(check('flood', 'FEMA mapped flood zone', 'screened_low_friction', 'One returned FEMA minimal-hazard zone contains the whole parcel. This is a map screen, not a flood determination.', at, floodLayer, null, { value: 2, max: 2, scope: 'One FEMA minimal-hazard X zone covers the whole parcel', rule: 'Whole-parcel FEMA X minimal-hazard map coverage' }))
     else checks.push(check('flood', 'FEMA mapped flood zone', 'unknown', 'Returned FEMA zone details require panel review before scoring.', at, floodLayer))
   }
   const sourceObservations = await sourceObservationsPromise
@@ -233,10 +225,6 @@ export async function handleScreening(request, { fetcher = fetch, now = () => ne
   actions.push('Review zoning overlays, dimensions, lawful baseline and applicable City process for this proposal.')
   actions.push('Confirm utility capacity and access with the relevant providers before relying on development feasibility.')
   actions.push('Establish project budget, rents or sales assumptions, and funding path; financial feasibility is unassessed.')
-  const use = checks.find(item => item.id === 'zoning-use')
-  const allRequiredAssessed = Object.keys(weights).every(id => checks.some(item => item.id === id && ['screened_low_friction', 'mapped_flag'].includes(item.status) && item.points.lower === item.points.upper))
-  if (use?.status !== 'screened_low_friction' || !allRequiredAssessed) return pending(input, checks, 'Pittsburgh', actions, at, sourceObservations)
-  const score = checks.reduce((sum, item) => ({ lower: sum.lower + item.points.lower, upper: sum.upper + item.points.upper }), { lower: 0, upper: 0 })
-  return json({ status: 'scored', score, rubricVersion, parcelId: input.parcelId, proposal: input.proposal, municipality: 'Pittsburgh', checks, sourceObservations, nextActions: actions, retrievedAt: at, caveat: 'Preliminary mapped friction screen only. No permission or financial feasibility determination.' })
+  return pending(input, checks, 'Pittsburgh', actions, at, sourceObservations)
 }
 import { collectSourceObservations } from './observations.mjs'

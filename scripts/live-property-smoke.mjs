@@ -53,6 +53,12 @@ async function isolate(context, mode = 'live') {
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ parcelId: '0000000000000003', assessment: { status: 'error', sourceDate: null, retrievedAt, sourceUrl: 'https://data.wprdc.org/dataset/property-assessments', record: null }, boundary: { status: 'available', sourceDate: null, retrievedAt, sourceUrl: 'https://example.invalid/synthetic-boundary', sourceCrs: 'EPSG:4326', displayCrs: 'EPSG:4326', geometry: { type: 'Polygon', coordinates: [[[-80.01, 40.45], [-80.0101, 40.4501], [-80.0102, 40.45], [-80.01, 40.45]]] } } }) })
         return
       }
+      if (mode === 'confirm-race') {
+        const parcelId = url.searchParams.get('pin')
+        const retrievedAt = new Date().toISOString()
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ parcelId, assessment: { status: 'available', sourceDate: '2026-09-01', retrievedAt, sourceUrl: 'https://data.wprdc.org/dataset/property-assessments', record: { parcelId, address: 'CANDIDATE 1 RD', city: 'PITTSBURGH', municipality: '25th Ward - PITTSBURGH', zip: '15214', classification: 'RESIDENTIAL', useDescription: 'Residential', lotAreaSqFt: 1600, yearBuilt: null } }, boundary: { status: 'unavailable', sourceDate: null, retrievedAt, sourceUrl: 'https://gisdata.alleghenycounty.us/arcgis/rest/services/EGIS/Web_Parcels/MapServer/0', geometry: null } }) })
+        return
+      }
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ parcelId: url.searchParams.get('pin'), assessment: { status: 'unavailable', sourceDate: null, retrievedAt: new Date().toISOString(), sourceUrl: 'https://data.wprdc.org/dataset/property-assessments', record: null }, boundary: { status: 'unavailable', sourceDate: null, retrievedAt: new Date().toISOString(), sourceUrl: 'https://gisdata.alleghenycounty.us/arcgis/rest/services/EGIS/Web_Parcels/MapServer/0', geometry: null } }) })
       return
     }
@@ -143,10 +149,7 @@ try {
   await page.reload()
   await expect(page.getByTestId('guided-workspace')).toBeVisible()
   await expect(page.getByLabel('Street address or parcel ID')).toHaveValue('2003 Mountford Ave')
-  await expect(page.getByText('Saved identity. Records have not been loaded in this visit.')).toBeVisible()
-  await expect(page.getByTestId('property-source-results')).toHaveCount(0)
-  await expect(page.getByTestId('site-map-parcel-boundary')).toHaveCount(0)
-  await propertySummary.getByRole('button', { name: 'Load current records' }).click()
+  await expect(page.getByTestId('property-source-results')).toBeVisible({ timeout: 20000 })
   await expect(page.getByTestId('site-map-parcel-boundary')).toBeVisible({ timeout: 20000 })
   const refreshedSources = page.getByTestId('property-source-results')
   await refreshedSources.locator('summary').click()
@@ -157,8 +160,7 @@ try {
   await expect(page.getByTestId('site-map-parcel-boundary')).toBeVisible()
   await page.reload()
   await expect(page.locator('.gp-map-context')).toContainText(`Parcel ${parcelId} saved`)
-  await page.locator('.gp-map-context').getByRole('button', { name: 'Load current records' }).click()
-  await expect(page.locator('.gp-map-context').getByRole('alert')).toContainText('Parcel refresh failed')
+  await expect(page.locator('.gp-map-context').getByRole('alert')).toContainText('The saved parcel map could not load')
   await expect(page.locator('.gp-map-context').getByRole('button', { name: 'Retry current records' })).toBeVisible()
   await page.unroute('**/api/property/parcel?**')
   await page.locator('.gp-map-context').getByRole('button', { name: 'Retry current records' }).click()
@@ -298,15 +300,14 @@ try {
   await expect(resumedPage.getByRole('button', { name: 'Resume saved stage' })).toBeVisible()
   await expect.poll(async () => await resumedPage.evaluate(async () => (await import('/src/features/projects/draft-store.ts')).loadDraft().then(draft => draft?.step))).toBe(5)
   await resumedPage.getByRole('button', { name: 'Resume saved stage' }).click()
-  await expect(resumedPage.getByRole('heading', { name: 'Your next action.' })).toBeVisible()
-  await expect(resumedPage.getByText('Retained proposal from saved results')).toBeVisible()
+  await expect(resumedPage.getByRole('heading', { name: 'What the checks found' })).toBeVisible()
   await expect(resumedPage.getByTestId('next-action-list')).toHaveCount(0)
   await resumedPage.getByRole('button', { name: 'Edit proposal' }).click()
   await expect(resumedPage.getByLabel('Describe the work in your own words')).toHaveValue('Retained proposal from saved results')
   await resumedPage.getByLabel('Describe the work in your own words').fill('Updated proposal after resume')
   await resumedPage.getByRole('button', { name: 'Continue' }).click()
   await resumedPage.getByRole('button', { name: 'Continue' }).click()
-  await resumedPage.getByRole('button', { name: /Confirm & prepare brief/ }).click()
+  await expect(resumedPage.getByRole('heading', { name: 'Check your project' })).toBeVisible()
   await resumedPage.getByRole('button', { name: 'Change parcel' }).click()
   await expect(resumedPage.getByLabel('Street address or parcel ID')).toBeFocused()
   await expect(resumedPage.getByLabel('Street address or parcel ID')).toHaveValue('Saved query road')

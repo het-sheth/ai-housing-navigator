@@ -17,7 +17,7 @@ function expectUnscored(body: { status: string; score: unknown; checks: Array<Re
   }
 }
 
-function sources(options: { municipality?: string; zone?: string; zoneStatus?: string; slope?: boolean; slopeValue?: string; flood?: string; floodId?: number | null; fail?: string; parcelPin?: string; noParcel?: boolean; mappedLayers?: string[]; underminingFlag?: string; underminingFlags?: string[]; landslideFlag?: string; permitRows?: Array<Record<string, unknown>>; permitTotal?: number; overlayTransferLimit?: boolean } = {}) {
+function sources(options: { municipality?: string; zone?: string; zoneStatus?: string; slope?: boolean; slopeValue?: string; flood?: string; floodSfha?: string; floodId?: number | null; floodCovering?: boolean; fail?: string; parcelPin?: string; noParcel?: boolean; mappedLayers?: string[]; underminingFlag?: string; underminingFlags?: string[]; landslideFlag?: string; permitRows?: Array<Record<string, unknown>>; permitTotal?: number; overlayTransferLimit?: boolean } = {}) {
   const calls: URL[] = []
   const fetcher = vi.fn(async (value: string | URL | Request) => {
     const url = new URL(String(value))
@@ -27,7 +27,7 @@ function sources(options: { municipality?: string; zone?: string; zoneStatus?: s
     if (url.pathname.includes('AlleghenyCountyMunicipalBoundaries')) return response({ features: [{ attributes: { OBJECTID: 1, NAME: options.municipality ?? 'PITTSBURGH', MUNICODE: options.municipality === 'SHARPSBURG' ? 852 : 100 } }] })
     if (url.pathname.includes('Zoning/MapServer')) return response({ features: [{ attributes: { OBJECTID: 2, zon_new: options.zone ?? 'R1D-L', full_zoning_type: 'R1D-L', status: options.zoneStatus ?? 'Approved' } }] })
     if (url.pathname.includes('PGHWebSlope25')) return response({ features: options.slope || options.slopeValue ? [{ attributes: { slope25: options.slopeValue ?? 'Yes' } }] : [] })
-    if (url.hostname === 'hazards.fema.gov') return response({ features: [{ attributes: { OBJECTID: options.floodId === null ? undefined : options.floodId ?? 3, FLD_ZONE: options.flood ?? 'X', ZONE_SUBTY: 'AREA OF MINIMAL FLOOD HAZARD' } }] })
+    if (url.hostname === 'hazards.fema.gov') return response({ features: options.floodCovering === false && url.searchParams.get('spatialRel') === 'esriSpatialRelWithin' ? [] : [{ attributes: { OBJECTID: options.floodId === null ? undefined : options.floodId ?? 3, FLD_ZONE: options.flood ?? 'X', ZONE_SUBTY: 'AREA OF MINIMAL FLOOD HAZARD', SFHA_TF: options.floodSfha } }] })
     if (url.pathname.includes('/api/3/action/datastore_search')) return response({ success: true, result: { total: options.permitTotal ?? options.permitRows?.length ?? 0, records: options.permitRows ?? [] } })
     if (url.pathname.includes('/PGHWebUndermined/') && url.searchParams.get('returnCountOnly') !== 'true') return response({ features: (options.underminingFlags ?? (options.underminingFlag || options.mappedLayers?.includes('PGHWebUndermined') ? [options.underminingFlag ?? 'Yes'] : [])).map((flag, index) => ({ attributes: { objectid: 11 + index, undermined: flag } })) })
     if (url.pathname.includes('/PGHWebLandslideProne/') && url.searchParams.get('returnCountOnly') !== 'true') return response({ features: options.landslideFlag || options.mappedLayers?.includes('PGHWebLandslideProne') ? [{ attributes: { objectid: 12, landslideprone: options.landslideFlag ?? 'Yes' } }] : [] })
@@ -45,6 +45,8 @@ describe('preliminary Pittsburgh screening', () => {
     expect(body.parcelId).toBe(pin)
     expect(body.proposal).toEqual(input.proposal)
     expect(body.checks.find((check: { id: string }) => check.id === 'zoning-use').status).toBe('screened_low_friction')
+    expect(body.checks.find((check: { id: string }) => check.id === 'zoning-use').metricScore).toMatchObject({ value: 2, max: 2, scope: expect.stringContaining('R1D'), rule: expect.stringContaining('use table') })
+    expect(body.checks.find((check: { id: string }) => check.id === 'flood').metricScore).toMatchObject({ value: 2, max: 2, scope: expect.stringContaining('whole parcel'), rule: expect.stringContaining('minimal-hazard') })
     expect(body.checks.find((check: { id: string }) => check.id === 'zoning-other').status).toBe('unknown')
     expect(calls.some(url => url.searchParams.get('spatialRel') === 'esriSpatialRelWithin')).toBe(true)
     expect(body.nextActions.some((action: string) => action.includes('utility'))).toBe(true)
@@ -54,6 +56,7 @@ describe('preliminary Pittsburgh screening', () => {
     const { fetcher } = sources({ slope: true })
     const body = await (await handleScreening(request(), { fetcher })).json()
     expect(body.checks.find((check: { id: string }) => check.id === 'slope').status).toBe('mapped_flag')
+    expect(body.checks.find((check: { id: string }) => check.id === 'slope')).not.toHaveProperty('metricScore')
     expectUnscored(body)
     expect(body.checks.find((check: { id: string }) => check.id === 'slope').reason).toContain('ground disturbance is yes')
     expect(body.nextActions[0]).toContain('mapped slope')
@@ -100,6 +103,26 @@ describe('preliminary Pittsburgh screening', () => {
     const body = await (await handleScreening(request({ ...input, proposal: { ...input.proposal, housingForm: 'unknown' } }), { fetcher })).json()
     expect(body.status).toBe('pending')
     expect(body.checks.find((check: { id: string }) => check.id === 'zoning-use').status).toBe('unknown')
+    expect(body.checks.find((check: { id: string }) => check.id === 'zoning-use')).not.toHaveProperty('metricScore')
+  })
+
+  it('scores an intersecting FEMA A/V hazard flag but not incomplete coverage', async () => {
+    const hazard = await (await handleScreening(request(), { fetcher: sources({ flood: 'AE' }).fetcher })).json()
+    expectUnscored(hazard)
+    expect(hazard.checks.find((check: { id: string }) => check.id === 'flood').metricScore).toMatchObject({ value: 0, max: 2, scope: expect.stringContaining('intersects'), rule: expect.stringContaining('A/V') })
+
+    const sfhaOnly = await (await handleScreening(request(), { fetcher: sources({ flood: 'X', floodSfha: 'T' }).fetcher })).json()
+    expect(sfhaOnly.checks.find((check: { id: string }) => check.id === 'flood').status).toBe('mapped_flag')
+    expect(sfhaOnly.checks.find((check: { id: string }) => check.id === 'flood')).not.toHaveProperty('metricScore')
+
+    const conflict = await (await handleScreening(request(), { fetcher: sources({ flood: 'AE', floodSfha: 'F' }).fetcher })).json()
+    expect(conflict.checks.find((check: { id: string }) => check.id === 'flood').status).toBe('unknown')
+    expect(conflict.checks.find((check: { id: string }) => check.id === 'flood').reason).toContain('conflict')
+    expect(conflict.checks.find((check: { id: string }) => check.id === 'flood')).not.toHaveProperty('metricScore')
+
+    const incomplete = await (await handleScreening(request(), { fetcher: sources({ floodCovering: false }).fetcher })).json()
+    expectUnscored(incomplete)
+    expect(incomplete.checks.find((check: { id: string }) => check.id === 'flood')).not.toHaveProperty('metricScore')
   })
 
   it('keeps failed hazard source independent without showing a partial interval', async () => {
@@ -107,6 +130,7 @@ describe('preliminary Pittsburgh screening', () => {
     const body = await (await handleScreening(request(), { fetcher })).json()
     expectUnscored(body)
     expect(body.checks.find((check: { id: string }) => check.id === 'flood').status).toBe('error')
+    expect(body.checks.find((check: { id: string }) => check.id === 'flood')).not.toHaveProperty('metricScore')
     expect(body.checks.find((check: { id: string }) => check.id === 'slope').status).toBe('screened_low_friction')
   })
 
@@ -116,6 +140,7 @@ describe('preliminary Pittsburgh screening', () => {
     expectUnscored(body)
     expect(body.checks).toHaveLength(7)
     expect(body.sourceObservations.find((item: { id: string }) => item.id === 'pli-permits')).toMatchObject({ status: 'available', coverage: 'exact_parcel_record_search', count: 1, sourceDate: null, retrievedAt: '2026-09-26T20:00:00.000Z' })
+    expect(body.checks.find((item: { id: string }) => item.id === 'zoning-other')).not.toHaveProperty('metricScore')
     const permitRequest = calls.find(url => url.searchParams.get('resource_id') === 'f4d1177a-f597-4c32-8cbf-7885f56253f6')
     expect(permitRequest?.searchParams.get('filters')).toBe(JSON.stringify({ parcel_num: pin }))
     expect(permitRequest?.searchParams.get('fields')).not.toMatch(/owner|contact|email/i)
