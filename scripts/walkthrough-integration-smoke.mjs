@@ -104,6 +104,10 @@ try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true })
   const requests = { assist: 0, search: 0, parcel: 0, screening: 0 }
   let screeningMode = 'result'
+  let releaseScreening
+  let screeningGate
+  let screeningDate = retrievedAt
+  let parcelMode = 'result'
   await context.route('**/*', async route => {
     const url = new URL(route.request().url())
     if (url.pathname === '/api/assist') {
@@ -119,11 +123,16 @@ try {
     }
     if (url.pathname === '/api/property/parcel') {
       requests.parcel += 1
+      if (parcelMode === 'error') {
+        await route.fulfill({ status: 502, contentType: 'application/json', body: '{"error":"synthetic_source_failure"}' })
+        return
+      }
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(parcelDetail(url.searchParams.get('pin'))) })
       return
     }
     if (url.pathname === '/api/screening/run') {
       requests.screening += 1
+      if (screeningGate) await screeningGate
       if (screeningMode === 'error') {
         await route.fulfill({ status: 502, contentType: 'application/json', body: '{"error":"synthetic_source_failure"}' })
         return
@@ -131,7 +140,7 @@ try {
       const input = route.request().postDataJSON()
       assert.equal(typeof input.parcelId, 'string')
       assert.deepEqual(input.proposal, { activities: ['new_construction'], proposedHomes: 1, housingForm: 'detached', groundDisturbance: 'yes' })
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(screeningResult(input)) })
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...screeningResult(input), retrievedAt: screeningDate }) })
       return
     }
     if (url.hostname.endsWith('tile.openstreetmap.org')) {
@@ -221,6 +230,47 @@ try {
   assert.doesNotMatch(brief, /\b\d+\s*[–-]\s*\d+\s*\/\s*100\b/)
   assert.doesNotMatch(brief, /permission granted|approval probability/i)
 
+  screeningMode = 'error'
+  screeningGate = new Promise(resolve => { releaseScreening = resolve })
+  await page.getByTestId('run-assessment-button').click()
+  await expect(page.getByTestId('run-assessment-button')).toBeDisabled()
+  await expect(panel.getByText('The parcel intersects a mapped slope feature', { exact: false })).toBeVisible()
+  await expect(actions).toBeVisible()
+  await expect(panel.getByRole('status')).toContainText('Previous assessment')
+  await expect(panel.locator('time')).toHaveAttribute('datetime', retrievedAt)
+  releaseScreening()
+  screeningGate = null
+  await expect(panel.getByRole('alert')).toContainText('Property checks could not run')
+  await expect(panel).toContainText('Latest rerun failed')
+  await expect(panel.getByText('The parcel intersects a mapped slope feature', { exact: false })).toBeVisible()
+  assert.deepEqual(await actions.locator('h2').allTextContents(), visibleActions)
+  const failedDownloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: /Export project brief/ }).click()
+  const failedDownload = await failedDownloadPromise
+  const failedBriefPath = `${output}/walkthrough-failed-rerun-brief.md`
+  await failedDownload.saveAs(failedBriefPath)
+  const failedBrief = await readFile(failedBriefPath, 'utf8')
+  assert.ok(failedBrief.includes(`Run: ${retrievedAt}`))
+  assert.ok(failedBrief.includes('Latest rerun failed'))
+  assert.ok(failedBrief.includes('Mapped 25 percent slope: mapped_flag'))
+  for (const action of visibleActions) assert.ok(failedBrief.includes(action))
+  screeningMode = 'result'
+  screeningDate = '2026-09-27T15:00:00.000Z'
+  await page.getByTestId('run-assessment-button').click()
+  await expect(panel.getByRole('alert')).toHaveCount(0)
+  await expect(panel.locator('time')).toHaveAttribute('datetime', screeningDate)
+  await expect(panel).not.toContainText('Latest rerun failed')
+
+  await page.getByRole('button', { name: '02 Your property' }).click()
+  parcelMode = 'error'
+  await page.getByRole('button', { name: 'Refresh records', exact: true }).click()
+  await expect(page.getByText('Parcel refresh failed.', { exact: false }).first()).toBeVisible()
+  await goToResults(page)
+  await expect(panel).toContainText('The parcel intersects a mapped slope feature')
+  await expect(actions).toBeVisible()
+  await expect(panel.locator('time')).toHaveAttribute('datetime', screeningDate)
+  parcelMode = 'result'
+
   await expect.poll(async () => (await storedDraft(page))?.step).toBe(5)
   await page.reload()
   await expect(page.getByRole('button', { name: 'Resume saved stage' })).toBeVisible()
@@ -259,7 +309,7 @@ try {
   await expect(page.getByText('Build one detached home with revised access.')).toBeVisible()
   assert.deepEqual(pageErrors, [], 'Walkthrough must not throw browser errors')
   assert.equal(requests.assist, 0, 'Walkthrough must not request paid AI')
-  assert.deepEqual({ search: requests.search, parcel: requests.parcel, screening: requests.screening }, { search: 2, parcel: 2, screening: 4 })
+  assert.deepEqual({ search: requests.search, parcel: requests.parcel, screening: requests.screening }, { search: 2, parcel: 3, screening: 6 })
   console.log(JSON.stringify({ result: 'passed', requests, screenshots: [`${output}/walkthrough-desktop.png`, `${output}/walkthrough-mobile.png`], briefPath, pageErrors }, null, 2))
   await context.close()
 } finally {

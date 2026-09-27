@@ -251,11 +251,6 @@ export default function GuidedProject() {
   }
   const refreshProperty = async () => {
     if (!draft.parcelId) return
-    screeningEpoch.current += 1
-    screeningAbort.current?.abort()
-    setScreeningResult(null)
-    setScreeningStatus('idle')
-    setScreeningError('')
     const controller = new AbortController()
     const draftId = draft.id
     const parcelId = draft.parcelId
@@ -276,7 +271,6 @@ export default function GuidedProject() {
     screeningAbort.current = controller
     setScreeningStatus('loading')
     setScreeningError('')
-    setScreeningResult(null)
     try {
       const result = await requestScreening(draft, fetch, controller.signal)
       if (controller.signal.aborted || screeningEpoch.current !== epoch || draftRef.current?.id !== draftId) return
@@ -371,6 +365,8 @@ export default function GuidedProject() {
     lines.push('', '## Proposal screening inputs', `Housing form: ${draft.housingForm}`, `Ground disturbance: ${draft.groundDisturbance}`)
     if (screeningResult) {
       const complete = hasCompleteScreen(screeningResult) && draft.tentativeActivities.length === 0
+      if (screeningStatus === 'error') lines.push('', 'Latest rerun failed. This brief retains the dated assessment and actions from the previous successful run.')
+      if (screeningStatus === 'loading') lines.push('', 'A rerun is in progress. This brief retains the dated assessment and actions from the previous successful run.')
       lines.push('', '## Property screening', `Status: ${complete ? 'Preliminary mapped screen' : 'Incomplete, no Development Ease Score'}`, `Run: ${screeningResult.retrievedAt}`, `Rubric: ${screeningResult.rubricVersion}`, `Tentative activities: ${draft.tentativeActivities.length ? 'Not evaluated in this screen' : 'None'}`, ...screeningResult.checks.flatMap(check => [`- ${check.label}: ${check.status}. ${check.reason}`, `  Source: ${check.sourceUrl || 'Unavailable'} | source date: ${check.sourceDate || 'Unknown'} | retrieved: ${check.retrievedAt || 'Not checked'}`]), screeningResult.caveat)
       if (complete) lines.push(`Preliminary mapped interval: ${screeningResult.score?.lower} to ${screeningResult.score?.upper} of 100`)
     }
