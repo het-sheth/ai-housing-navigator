@@ -18,6 +18,7 @@ async function run(width, aiMode) {
   const context = await browser.newContext({ viewport: { width, height: 900 } })
   const page = await context.newPage()
   const calls = { ai: 0, candidates: 0, parcel: 0 }
+  let failParcelOnce = true
   await context.route('**/*', async route => {
     const url = new URL(route.request().url())
     if (url.pathname === '/api/assist') {
@@ -38,6 +39,7 @@ async function run(width, aiMode) {
     if (url.pathname === '/api/property/parcel') {
       calls.parcel += 1
       assert.equal(url.searchParams.get('pin'), parcelId)
+      if (failParcelOnce) { failParcelOnce = false; await route.fulfill({ status: 502, body: '{}' }); return }
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(detail) })
       return
     }
@@ -60,14 +62,18 @@ async function run(width, aiMode) {
   await expect(page.getByText('Candidate records')).toBeVisible()
   await expect(page.getByText('More records match these filters.')).toBeVisible()
   await page.getByRole('radio', { name: /SYNTHETIC TEST PARCEL/ }).check()
+  await expect(page.locator('.ex-map')).toContainText(`Candidate parcel ${parcelId} selected`)
   await page.getByRole('button', { name: `Inspect parcel ${parcelId}` }).click()
+  await expect(page.locator('.ex-map')).toContainText('Parcel records could not be loaded')
+  await expect(page.locator('.ex-map')).toContainText('not yet confirmed')
+  await page.locator('.ex-map').getByRole('button', { name: 'Retry parcel inspection' }).click()
   await expect(page.getByText('Selected parcel / ' + parcelId)).toBeVisible()
   await expect(page.getByTestId('site-map-parcel-boundary')).toBeVisible()
   await page.waitForFunction(() => [...document.querySelectorAll('img.leaflet-tile')].some(image => image.complete && image.naturalWidth > 0), undefined, { timeout: 15000 })
   await expect(page.getByRole('link', { name: /Compare proposals on this parcel/ })).toHaveAttribute('href', `/compare?parcelId=${parcelId}`)
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true)
   assert.deepEqual(errors, [])
-  assert.deepEqual(calls, { ai: 1, candidates: 1, parcel: 1 })
+  assert.deepEqual(calls, { ai: 1, candidates: 1, parcel: 2 })
   await page.screenshot({ path: `${screenshots}/explorer-${width}.png`, fullPage: true })
   await page.getByRole('button', { name: 'Edit criteria' }).click()
   await expect(page.getByText('Candidate records')).toHaveCount(0)

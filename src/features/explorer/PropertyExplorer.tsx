@@ -156,7 +156,7 @@ export default function PropertyExplorer() {
           </section>}
         </>}
       </section>
-      <aside className="ex-map-panel" aria-label="Site context"><div className="ex-map-heading"><span className="ex-eyebrow">Live map / 2D site context</span><h2>{detail?.boundary.status === 'available' ? refreshedAddress : 'Allegheny County'}</h2><p>{detail ? 'Selected County parcel boundary when available' : 'Choose and inspect a candidate to view its mapped outline'}</p></div><div className="ex-map"><SiteContextMap historical={false} detail={detail} /></div><p className="ex-map-footer">OpenStreetMap streets and County parcel geometry. Map tiles and parcel sources have separate coverage and dates.</p></aside>
+      <aside className="ex-map-panel" aria-label="Site context"><div className="ex-map-heading"><span className="ex-eyebrow">Live map / 2D site context</span><h2>{detail?.boundary.status === 'available' ? refreshedAddress : 'Allegheny County'}</h2><p>{detail ? 'Selected County parcel boundary when available' : 'Choose and inspect a candidate to view its mapped outline'}</p></div><div className="ex-map"><SiteContextMap historical={false} detail={detail} savedParcelId={null} selectedParcelId={candidate?.parcelId ?? null} loading={phase === 'loading'} loadError={error} onLoadCurrentRecords={() => void inspect()} /></div><p className="ex-map-footer">OpenStreetMap streets and County parcel geometry. Map tiles and parcel sources have separate coverage and dates.</p></aside>
     </main>
   </div>
 }

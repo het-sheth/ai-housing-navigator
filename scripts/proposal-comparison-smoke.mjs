@@ -24,12 +24,14 @@ try {
   let assistantRequests = 0
   let screeningCalls = 0
   let failNext = false
+  let failPropertyNext = false
   let holdNext = false
   let releaseHeld = null
   await context.route('**/api/assist', route => { assistantRequests += 1; return route.abort() })
   await context.route('**/api/property/parcel?**', async route => {
     const id = new URL(route.request().url()).searchParams.get('pin')
     await new Promise(resolve => setTimeout(resolve, 60))
+    if (failPropertyNext) { failPropertyNext = false; return route.fulfill({ status: 502, body: '{}' }) }
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(detail(id)) })
   })
   await context.route('**/api/screening/run', route => {
@@ -95,6 +97,13 @@ try {
   await page.reload()
   await expect(a.getByLabel('What would you do here?')).toHaveValue('Revised plan again')
   await expect(b.getByTestId('result-B')).toContainText('Needs review')
+  await expect(page.locator('.gp-aside')).toContainText(`Parcel ${parcelId} saved`)
+  failPropertyNext = true
+  await page.locator('.gp-aside').getByRole('button', { name: 'Load current records' }).click()
+  await expect(page.locator('.gp-aside')).toContainText('County parcel records could not load')
+  await expect(page.locator('.gp-aside')).toContainText(`Parcel ${parcelId} saved`)
+  await page.locator('.gp-aside').getByRole('button', { name: 'Retry current records' }).click()
+  await expect(page.getByTestId('site-map-parcel-boundary')).toBeVisible()
   await page.evaluate(() => {
     window.__comparisonOriginalSetItem = Storage.prototype.setItem
     Storage.prototype.setItem = () => { throw new DOMException('Quota exceeded', 'QuotaExceededError') }
