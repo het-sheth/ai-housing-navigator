@@ -1,4 +1,4 @@
-const regionalIds = new Set([17, 18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 59, 60])
+const regionalIds = new Set([17, 18, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 59, 60])
 const laiLayer = 'https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Location_Affordability_Index_v3/FeatureServer/0'
 const qcewDocs = 'https://www.bls.gov/cew/additional-resources/open-data/csv-data-slices.htm'
 const ppiUrl = 'https://api.bls.gov/publicAPI/v1/timeseries/data/WPU00000000'
@@ -13,8 +13,7 @@ const hudFmrLayer = 'https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/se
 
 const references = {
   17: ['https://api.census.gov/data/2024/acs/acs5', 'county or tract', 'The ACS API query returned a Missing Key page without a registered key. Public bulk ACS files exist but are not parsed by this adapter; no ACS metric is inferred.'],
-  20: ['https://www.huduser.gov/portal/datasets/cp.html', 'county or tract part', 'The CHAS API needs a bearer token, while public Pennsylvania bulk files are available. This adapter has not parsed their table-specific special-tabulation geographies or selected a CHAS metric.'],
-  23: ['https://www.huduser.gov/portal/dataset/fmr-api.html', 'HUD income-limit area', 'The HUD Income Limits API needs a bearer token. Public files require fiscal year, HUD income-limit area, and household size before an applicable limit can be reported.'],
+  23: ['https://www.huduser.gov/portal/datasets/il/il26/Section8-FY26.xlsx', 'HUD income-limit area', 'The FY2026 Section 8 workbook returned an HTTP 202 access challenge on a bounded HEAD and ranged GET on September 27, 2026. The HUD API requires a bearer token. No area or household-size limit is inferred.'],
   24: ['https://www.huduser.gov/lihtc/', 'project or building', 'HUD offers a selective LIHTC county query and a public project archive, but this adapter has not parsed that query. The direct archive probe received a site challenge. Nearby projects are not a site subsidy determination.'],
   25: ['https://preservationdatabase.org/', 'subsidized property', 'National Housing Preservation Database access requires registration; no public anonymous record query is configured.'],
   26: ['https://www.huduser.gov/portal/datasets/usps.html', 'census tract', 'USPS vacancy data are distributed as tract aggregates through HUD downloads; no verified bounded tract endpoint is configured.'],
@@ -331,6 +330,11 @@ async function hudFmr(catalogId, context, fetcher, retrievedAt) {
 export async function queryRegionalSource(catalogId, context, { fetcher = fetch, now = () => new Date().toISOString() } = {}) {
   if (!regionalIds.has(catalogId)) return null
   const retrievedAt = now()
+  if (catalogId === 23) {
+    if (!/^\d{5}$/.test(context.countyFips ?? '') || context.year === undefined) return result(23, 'needs_input', 'HUD income-limit area', 'catalog_scope_only_no_record_join', 'https://www.huduser.gov/portal/datasets/il.html', retrievedAt, 'Provide a five-digit county FIPS and fiscal year. A HUD income-limit area, household size and program must also be selected before a limit can be reported.')
+    if (context.year !== 2026) return result(23, 'unsupported', 'HUD income-limit area', 'catalog_scope_only_no_record_join', 'https://www.huduser.gov/portal/datasets/il.html', retrievedAt, 'This adapter has not verified a bounded official workbook path for the requested year or parsed an applicable area and household-size limit.')
+    return result(23, 'unavailable', 'HUD income-limit area', 'catalog_scope_only_no_record_join', references[23][0], retrievedAt, references[23][2], [], '2026')
+  }
   if (catalogId === 21) return lai(catalogId, context, fetcher, retrievedAt)
   if (catalogId === 18) return decennialTract(catalogId, context, fetcher, retrievedAt)
   if (catalogId === 29) return qcew(catalogId, context, fetcher, retrievedAt)

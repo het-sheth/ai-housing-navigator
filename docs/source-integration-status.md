@@ -1,5 +1,11 @@
 # All 60 public source query outcomes
 
+## Follow-on HUD county integration, September 27, 2026
+
+Source 20 now has a bounded, exact county query against [HUD's CHAS county layer](https://services.arcgis.com/VTyQ9soqVukalItT/ArcGIS/rest/services/ACS_5YR_CHAS_Estimate_Data_by_County/FeatureServer/4). A live query for county FIPS `42003` returned one matching Allegheny record: 545,695 occupied housing units (T2_EST1) and 53,055 renter households at or below 30% of HUD area median family income (T8_EST69). These are 2013-2017 special-tabulation county counts, not parcel findings or current housing demand. [HUD's CHAS page](https://www.huduser.gov/portal/datasets/cp.html) describes a newer 2018-2022 release, which this adapter does not parse. The original 60-source table below remains the recorded probe of backend commit `e2d91aa`, before this integration.
+
+Source 23 remains without an income-limit value. HUD lists the [FY2026 Section 8 workbook](https://www.huduser.gov/portal/datasets/il/il26/Section8-FY26.xlsx), effective May 1, 2026. On September 27, 2026, both a HEAD request and a 1 KiB ranged GET to that exact URL returned HTTP 202 with `x-amzn-waf-action: challenge` and no file bytes. The [HUD income limits API](https://www.huduser.gov/portal/dataset/fmr-api.html) requires a bearer token. This is a verified access barrier for that workbook from the current runtime, not evidence that other public years or routes are unavailable. A fiscal year, applicable HUD income-limit area, household size and program remain required before reporting a limit. No limit was inferred.
+
 Tested backend commit: `e2d91aaccf9c4d6af618386048049edbb80700c9`.
 
 Probe timestamp: `2026-09-27T03:33:31.498Z`. This is a bounded sample of the reviewed backend stack, not exhaustive dataset coverage.

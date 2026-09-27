@@ -2,6 +2,7 @@ import { queryWprdcSource } from './wprdc.mjs'
 import { queryCoreSource } from './core.mjs'
 import { querySpatialReferenceSource } from './spatial-reference.mjs'
 import { queryNcesSource } from './nces.mjs'
+import { queryHudSource } from './hud.mjs'
 
 const headers = { 'content-type': 'application/json', 'cache-control': 'no-store' }
 const contextKeys = new Set(['parcelId', 'municipality', 'zip', 'tract', 'countyFips', 'stateFips', 'year', 'metroCode', 'latitude', 'longitude'])
@@ -56,6 +57,8 @@ export function validEnvelope(value, catalogId) {
 }
 
 export async function querySource(catalogId, context, options = {}) {
+  const hud = await queryHudSource(catalogId, context, options)
+  if (hud) return hud
   const direct = await queryWprdcSource(catalogId, context, options) ?? await queryCoreSource(catalogId, context, options)
   if (direct) return direct
   const { queryRegionalSource } = await import('./regional.mjs')

@@ -279,11 +279,11 @@ const sources = [
     "granularity": "Custom geography; tract for selected tables",
     "catalogUrl": "https://www.huduser.gov/portal/datasets/cp.html",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "The HUD API requires a token; public CHAS bulk tables need measure and special-geography parsing before a bounded local value can be reported.",
-    "queryMode": "public_bulk_not_parsed",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://services.arcgis.com/VTyQ9soqVukalItT/ArcGIS/rest/services/ACS_5YR_CHAS_Estimate_Data_by_County/FeatureServer/4",
+    "note": "Only two documented county counts from HUD's historical 2013-2017 CHAS ArcGIS layer are queried. HUD has newer 2018-2022 CHAS data, but its public bulk tables are not parsed here.",
+    "queryMode": "live_county_aggregate",
+    "queryRequirements": ["countyFips"]
   },
   {
     "catalogId": 21,
@@ -325,7 +325,7 @@ const sources = [
     "storedInApplication": false,
     "runtimeStatus": "catalog_reference",
     "runtimeUrl": null,
-    "note": "The HUD API requires a token; public annual income limit files have not been parsed with area, year and household-size selection.",
+    "note": "The HUD API requires a token. The public FY2026 Section 8 workbook returned an HTTP 202 WAF challenge on a bounded HEAD and ranged GET on 2026-09-27; no income limit is inferred. Other years and access routes have not been ruled out.",
     "queryMode": "public_bulk_not_parsed",
     "queryRequirements": []
   },
