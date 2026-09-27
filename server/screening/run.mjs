@@ -42,9 +42,21 @@ async function body(request) {
 async function sourceJson(url, fetcher) {
   const response = await fetcher(url, { signal: AbortSignal.timeout(12000) })
   if (!response.ok) throw Error('source_http_error')
-  const raw = await response.text()
-  if (raw.length > 2_000_000) throw Error('source_too_large')
-  const parsed = JSON.parse(raw)
+  const reader = response.body?.getReader()
+  if (!reader) throw Error('source_empty_body')
+  const chunks = []
+  let length = 0
+  while (true) {
+    const part = await reader.read()
+    if (part.done) break
+    length += part.value.byteLength
+    if (length > 2_000_000) { await reader.cancel(); throw Error('source_too_large') }
+    chunks.push(part.value)
+  }
+  const bytes = new Uint8Array(length)
+  let offset = 0
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength }
+  const parsed = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes))
   if (parsed?.error) throw Error('source_application_error')
   return parsed
 }
@@ -73,7 +85,7 @@ function esriGeometry(geometry) {
   return { rings, spatialReference: { wkid: 4326 } }
 }
 
-async function exactParcel(pin, fetcher) {
+export async function exactParcel(pin, fetcher) {
   const url = new URL(`${parcelLayer}/query`)
   for (const [key, value] of Object.entries({ where: `PIN='${pin}'`, outFields: 'PIN', returnGeometry: 'true', outSR: '4326', f: 'geojson' })) url.searchParams.set(key, value)
   const data = await sourceJson(url.toString(), fetcher)
@@ -81,7 +93,7 @@ async function exactParcel(pin, fetcher) {
   return esriGeometry(data.features[0].geometry)
 }
 
-async function spatial(layer, geometry, relation, fields, fetcher) {
+export async function spatial(layer, geometry, relation, fields, fetcher) {
   const url = new URL(`${layer}/query`)
   for (const [key, value] of Object.entries({ where: '1=1', geometry: JSON.stringify(geometry), geometryType: 'esriGeometryPolygon', inSR: '4326', spatialRel: relation, outFields: fields, returnGeometry: 'false', f: 'json' })) url.searchParams.set(key, value)
   const data = await sourceJson(url.toString(), fetcher)

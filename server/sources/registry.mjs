@@ -6,11 +6,13 @@ const sources = [
     "granularity": "Parcel",
     "catalogUrl": "https://data.wprdc.org/dataset/property-assessments",
     "storedInApplication": false,
-    "runtimeStatus": "property_runtime",
+    "runtimeStatus": "runtime",
     "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
-    "note": "The existing property endpoint queries assessment context. A source-detail query for this catalog row is not connected in this branch.",
-    "queryMode": "property_only",
-    "queryRequirements": []
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
   },
   {
     "catalogId": 2,
@@ -19,11 +21,13 @@ const sources = [
     "granularity": "Transaction / parcel",
     "catalogUrl": "https://data.wprdc.org/dataset/real-estate-sales",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": [],
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "The organizer catalog URL is stale. The verified WPRDC property sales resource supports exact parcel lookup; individual sales are not nearby comparables.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ],
     "organizerUrl": "https://data.wprdc.org/dataset/allegheny-county-property-sale-transactions"
   },
   {
@@ -33,11 +37,13 @@ const sources = [
     "granularity": "Parcel polygon",
     "catalogUrl": "https://data.wprdc.org/dataset/allegheny-county-parcel-boundaries",
     "storedInApplication": false,
-    "runtimeStatus": "screening_runtime",
+    "runtimeStatus": "runtime",
     "runtimeUrl": "https://gisdata.alleghenycounty.us/arcgis/rest/services/EGIS/Web_Parcels/MapServer/0",
-    "note": "This source is used by the existing screening flow. A source-detail query for this catalog row is not connected in this branch.",
-    "queryMode": "screening_only",
-    "queryRequirements": []
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
   },
   {
     "catalogId": 4,
@@ -46,11 +52,13 @@ const sources = [
     "granularity": "Varies: parcel to county",
     "catalogUrl": "https://openac-alcogis.opendata.arcgis.com/",
     "storedInApplication": false,
-    "runtimeStatus": "screening_runtime",
+    "runtimeStatus": "partial",
     "runtimeUrl": "https://services1.arcgis.com/vdNDkVykv9vEWFX4/arcgis/rest/services/AlleghenyCountyMunicipalBoundaries/FeatureServer/0",
-    "note": "The existing screening flow queries the related County municipal boundaries layer only, not the GIS portal as a whole. A source-detail query is not connected in this branch.",
-    "queryMode": "screening_only",
-    "queryRequirements": []
+    "note": "Only the County municipality layer is queried; the portal is not integrated as a whole.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
   },
   {
     "catalogId": 5,
@@ -59,11 +67,13 @@ const sources = [
     "granularity": "Permit / address",
     "catalogUrl": "https://data.wprdc.org/dataset/pli-permits",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
   },
   {
     "catalogId": 6,
@@ -72,10 +82,10 @@ const sources = [
     "granularity": "Permit / address",
     "catalogUrl": "https://data.wprdc.org/dataset/city-of-pittsburgh-building-permit-summary",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/package_show",
+    "note": "The separate historical permit summary archive is queried only as a table index. No parcel records or complete cross-table parcel history are claimed.",
+    "queryMode": "live_archive_index",
     "queryRequirements": []
   },
   {
@@ -85,11 +95,13 @@ const sources = [
     "granularity": "Violation / address",
     "catalogUrl": "https://data.wprdc.org/dataset/pittsburgh-pli-violations-report",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
   },
   {
     "catalogId": 8,
@@ -98,11 +110,13 @@ const sources = [
     "granularity": "Property / address",
     "catalogUrl": "https://data.wprdc.org/dataset/condemned-properties",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
   },
   {
     "catalogId": 9,
@@ -111,11 +125,13 @@ const sources = [
     "granularity": "Zoning polygon",
     "catalogUrl": "https://data.wprdc.org/dataset/pittsburgh-zoning",
     "storedInApplication": false,
-    "runtimeStatus": "screening_runtime",
+    "runtimeStatus": "runtime",
     "runtimeUrl": "https://pghbridgis.pittsburghpa.gov/federated/rest/services/Zoning/MapServer/0",
-    "note": "This source is used by the existing screening flow. A source-detail query for this catalog row is not connected in this branch.",
-    "queryMode": "screening_only",
-    "queryRequirements": []
+    "note": "The runtime district endpoint differs from the supplied City viewer; equivalence and update cadence are unverified.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
   },
   {
     "catalogId": 10,
@@ -165,8 +181,8 @@ const sources = [
     "storedInApplication": false,
     "runtimeStatus": "catalog_reference",
     "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "note": "Interactive OneStopPGH public portal; no stable machine-readable exact parcel API verified.",
+    "queryMode": "unverified_record_access",
     "queryRequirements": []
   },
   {
@@ -176,11 +192,13 @@ const sources = [
     "granularity": "Parcel / property",
     "catalogUrl": "https://data.wprdc.org/dataset/city-owned-properties",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
   },
   {
     "catalogId": 15,
@@ -189,11 +207,13 @@ const sources = [
     "granularity": "Property / abatement",
     "catalogUrl": "https://data.wprdc.org/dataset/city-property-tax-abatements",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": [],
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "The organizer catalog URL is stale. The verified WPRDC abatement resource supports exact parcel lookup; a past award does not establish current eligibility.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ],
     "organizerUrl": "https://data.wprdc.org/dataset/city-of-pittsburgh-property-tax-abatements"
   },
   {
@@ -489,11 +509,13 @@ const sources = [
     "granularity": "Flood zone polygon / line",
     "catalogUrl": "https://www.fema.gov/flood-maps/national-flood-hazard-layer",
     "storedInApplication": false,
-    "runtimeStatus": "screening_runtime",
+    "runtimeStatus": "runtime",
     "runtimeUrl": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
-    "note": "This source is used by the existing screening flow. A source-detail query for this catalog row is not connected in this branch.",
-    "queryMode": "screening_only",
-    "queryRequirements": []
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
   },
   {
     "catalogId": 39,
@@ -515,11 +537,13 @@ const sources = [
     "granularity": "Slope polygon",
     "catalogUrl": "https://data.wprdc.org/dataset/25-or-greater-slope",
     "storedInApplication": false,
-    "runtimeStatus": "screening_runtime",
+    "runtimeStatus": "runtime",
     "runtimeUrl": "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/PGHWebSlope25/FeatureServer/0",
-    "note": "This source is used by the existing screening flow. A source-detail query for this catalog row is not connected in this branch.",
-    "queryMode": "screening_only",
-    "queryRequirements": []
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
   },
   {
     "catalogId": 41,
@@ -528,11 +552,13 @@ const sources = [
     "granularity": "Mine influence polygon",
     "catalogUrl": "https://data.wprdc.org/dataset/undermined-areas",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "runtimeStatus": "related_live_layer",
+    "runtimeUrl": "https://services1.arcgis.com/YZCmUqbcsUpOKfj7/arcgis/rest/services/PGHWebUndermined/FeatureServer/0",
+    "note": "A related City undermining map layer is queried. Equivalence to the catalog WPRDC download is unverified.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
   },
   {
     "catalogId": 42,
@@ -684,10 +710,10 @@ const sources = [
     "granularity": "Request / location",
     "catalogUrl": "https://data.wprdc.org/dataset/311-data",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "runtimeStatus": "aggregate_only",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "Only the overall 311 dataset count is queried. Sampled source rows lacked reliable tract codes, so no tract absence or parcel join is claimed.",
+    "queryMode": "aggregate_only",
     "queryRequirements": []
   },
   {
@@ -710,10 +736,10 @@ const sources = [
     "granularity": "Parcel",
     "catalogUrl": "https://data.wprdc.org/dataset/delinquent-real-estate-taxes",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "runtimeStatus": "aggregate_only",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "Only an overall public dataset record count is queried. Individual personal financial records are not retrieved or returned.",
+    "queryMode": "aggregate_only",
     "queryRequirements": []
   },
   {
@@ -723,10 +749,10 @@ const sources = [
     "granularity": "Parcel",
     "catalogUrl": "https://data.wprdc.org/dataset/city-of-pittsburgh-property-tax-delinquency",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "runtimeStatus": "aggregate_only",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "Only an overall public dataset record count is queried. Individual personal financial records are not retrieved or returned.",
+    "queryMode": "aggregate_only",
     "queryRequirements": []
   },
   {
@@ -736,10 +762,10 @@ const sources = [
     "granularity": "Parcel",
     "catalogUrl": "https://data.wprdc.org/dataset/allegheny-county-mortgage-foreclosure-records",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
+    "runtimeStatus": "aggregate_only",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "Only an overall public dataset record count is queried. Individual personal financial records are not retrieved or returned.",
+    "queryMode": "aggregate_only",
     "queryRequirements": []
   },
   {
@@ -749,11 +775,13 @@ const sources = [
     "granularity": "Parcel",
     "catalogUrl": "https://data.wprdc.org/dataset/city-owned-properties",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "Organizer catalog metadata only. A source-detail query for this row is not connected in this branch.",
-    "queryMode": "not_connected",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://data.wprdc.org/api/3/action/datastore_search",
+    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
+    "queryMode": "live_exact_parcel",
+    "queryRequirements": [
+      "parcelId"
+    ]
   },
   {
     "catalogId": 59,

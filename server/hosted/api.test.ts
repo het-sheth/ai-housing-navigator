@@ -4,6 +4,7 @@ import parcel from '../../api/property/parcel.mjs'
 import screening from '../../api/screening/run.mjs'
 import assist from '../../api/assist.mjs'
 import sources from '../../api/sources.mjs'
+import sourceQuery from '../../api/sources/query.mjs'
 
 const origin = 'https://housing-preview.vercel.app'
 const input = { parcelId: '0046R00029000000', proposal: { activities: [], proposedHomes: null, housingForm: 'unknown', groundDisturbance: 'unknown' } }
@@ -40,5 +41,14 @@ describe('hosted API functions', () => {
     const response = await sources.fetch(new Request(`${origin}/api/sources`))
     expect(response.status).toBe(200)
     expect((await response.json()).catalogCount).toBe(60)
+  })
+
+  it('keeps hosted source detail queries on the trusted origin', async () => {
+    vi.stubEnv('VERCEL_URL', 'housing-preview.vercel.app')
+    const body = JSON.stringify({ catalogId: 2, context: {} })
+    const accepted = await sourceQuery.fetch(new Request(`${origin}/api/sources/query`, { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body }))
+    expect(accepted.status).toBe(200)
+    expect((await accepted.json()).status).toBe('needs_input')
+    expect((await sourceQuery.fetch(new Request(`${origin}/api/sources/query`, { method: 'POST', headers: { origin: 'https://untrusted.test', 'content-type': 'application/json' }, body }))).status).toBe(403)
   })
 })
