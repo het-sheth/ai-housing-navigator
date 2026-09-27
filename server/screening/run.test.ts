@@ -17,7 +17,7 @@ function expectUnscored(body: { status: string; score: unknown; checks: Array<Re
   }
 }
 
-function sources(options: { municipality?: string; zone?: string; zoneStatus?: string; slope?: boolean; slopeValue?: string; flood?: string; floodId?: number | null; fail?: string; parcelPin?: string; noParcel?: boolean } = {}) {
+function sources(options: { municipality?: string; zone?: string; zoneStatus?: string; slope?: boolean; slopeValue?: string; flood?: string; floodId?: number | null; fail?: string; parcelPin?: string; noParcel?: boolean; mappedLayers?: string[]; underminingFlag?: string; underminingFlags?: string[]; landslideFlag?: string; permitRows?: Array<Record<string, unknown>>; permitTotal?: number; overlayTransferLimit?: boolean } = {}) {
   const calls: URL[] = []
   const fetcher = vi.fn(async (value: string | URL | Request) => {
     const url = new URL(String(value))
@@ -28,6 +28,10 @@ function sources(options: { municipality?: string; zone?: string; zoneStatus?: s
     if (url.pathname.includes('Zoning/MapServer')) return response({ features: [{ attributes: { OBJECTID: 2, zon_new: options.zone ?? 'R1D-L', full_zoning_type: 'R1D-L', status: options.zoneStatus ?? 'Approved' } }] })
     if (url.pathname.includes('PGHWebSlope25')) return response({ features: options.slope || options.slopeValue ? [{ attributes: { slope25: options.slopeValue ?? 'Yes' } }] : [] })
     if (url.hostname === 'hazards.fema.gov') return response({ features: [{ attributes: { OBJECTID: options.floodId === null ? undefined : options.floodId ?? 3, FLD_ZONE: options.flood ?? 'X', ZONE_SUBTY: 'AREA OF MINIMAL FLOOD HAZARD' } }] })
+    if (url.pathname.includes('/api/3/action/datastore_search')) return response({ success: true, result: { total: options.permitTotal ?? options.permitRows?.length ?? 0, records: options.permitRows ?? [] } })
+    if (url.pathname.includes('/PGHWebUndermined/') && url.searchParams.get('returnCountOnly') !== 'true') return response({ features: (options.underminingFlags ?? (options.underminingFlag || options.mappedLayers?.includes('PGHWebUndermined') ? [options.underminingFlag ?? 'Yes'] : [])).map((flag, index) => ({ attributes: { objectid: 11 + index, undermined: flag } })) })
+    if (url.pathname.includes('/PGHWebLandslideProne/') && url.searchParams.get('returnCountOnly') !== 'true') return response({ features: options.landslideFlag || options.mappedLayers?.includes('PGHWebLandslideProne') ? [{ attributes: { objectid: 12, landslideprone: options.landslideFlag ?? 'Yes' } }] : [] })
+    if (url.pathname.includes('/FeatureServer/0/query') && url.searchParams.get('returnCountOnly') === 'true') return response({ count: options.mappedLayers?.some(layer => url.pathname.includes(`/${layer}/`)) ? 1 : 0, exceededTransferLimit: options.overlayTransferLimit ?? false })
     throw new Error(`unexpected source ${url}`)
   })
   return { fetcher, calls }
@@ -104,6 +108,90 @@ describe('preliminary Pittsburgh screening', () => {
     expectUnscored(body)
     expect(body.checks.find((check: { id: string }) => check.id === 'flood').status).toBe('error')
     expect(body.checks.find((check: { id: string }) => check.id === 'slope').status).toBe('screened_low_friction')
+  })
+
+  it('returns exact-parcel permit history as a separate observation without changing score coverage', async () => {
+    const { fetcher, calls } = sources({ permitRows: [{ parcel_num: pin, permit_id: 'P-1', permit_type: 'Building', work_type: 'Addition', issue_date: '2025-06-01', status: 'Issued' }] })
+    const body = await (await handleScreening(request(), { fetcher, now: () => '2026-09-26T20:00:00.000Z' })).json()
+    expectUnscored(body)
+    expect(body.checks).toHaveLength(7)
+    expect(body.sourceObservations.find((item: { id: string }) => item.id === 'pli-permits')).toMatchObject({ status: 'available', coverage: 'exact_parcel_record_search', count: 1, sourceDate: null, retrievedAt: '2026-09-26T20:00:00.000Z' })
+    const permitRequest = calls.find(url => url.searchParams.get('resource_id') === 'f4d1177a-f597-4c32-8cbf-7885f56253f6')
+    expect(permitRequest?.searchParams.get('filters')).toBe(JSON.stringify({ parcel_num: pin }))
+    expect(permitRequest?.searchParams.get('fields')).not.toMatch(/owner|contact|email/i)
+  })
+
+  it('keeps mismatched and incomplete permit records from claiming complete coverage', async () => {
+    for (const options of [
+      { permitRows: [{ parcel_num: 'OTHER', permit_id: 'P-1' }] },
+      { permitRows: [{ parcel_num: pin, permit_id: 'P-1' }], permitTotal: 101 },
+    ]) {
+      const { fetcher } = sources(options)
+      const body = await (await handleScreening(request(), { fetcher })).json()
+      expectUnscored(body)
+      expect(body.sourceObservations.find((item: { id: string }) => item.id === 'pli-permits').status).not.toBe('available')
+    }
+  })
+
+  it('keeps mapped undermining and landslide intersections as evidence without awarding points', async () => {
+    const { fetcher } = sources({ mappedLayers: ['PGHWebUndermined', 'PGHWebLandslideProne'] })
+    const body = await (await handleScreening(request(), { fetcher })).json()
+    expectUnscored(body)
+    expect(body.checks.find((item: { id: string }) => item.id === 'undermining').status).toBe('mapped_flag')
+    expect(body.sourceObservations.find((item: { id: string }) => item.id === 'mapped-landslide')).toMatchObject({ status: 'mapped_flag', coverage: 'mapped_intersection_only', count: 1 })
+    expect(body.nextActions.some((action: string) => action.includes('undermining'))).toBe(true)
+    expect(body.nextActions.some((action: string) => action.includes('landslide'))).toBe(true)
+  })
+
+  it('keeps all viewer overlays separate from the fixed rubric checks and rejects incomplete map counts', async () => {
+    const { fetcher } = sources({ mappedLayers: ['InclusionaryHousingOverlayDistrict'], overlayTransferLimit: true })
+    const body = await (await handleScreening(request(), { fetcher })).json()
+    expectUnscored(body)
+    expect(body.checks).toHaveLength(7)
+    expect(body.sourceObservations).toHaveLength(14)
+    expect(body.sourceObservations.find((item: { id: string }) => item.id === 'inclusionary-housing').status).toBe('error')
+    expect(body.sourceObservations.find((item: { id: string }) => item.id === 'mapped-undermining').status).toBe('no_intersection')
+    expect(body.checks.find((item: { id: string }) => item.id === 'undermining').reason).toMatch(/No City undermining feature was returned/)
+  })
+
+  it('reports one failed viewer layer independently of other mapped observations', async () => {
+    const { fetcher } = sources({ fail: 'none' })
+    const selective = vi.fn(async (value: string | URL | Request, init?: RequestInit) => {
+      if (String(value).includes('/PGHWebUndermined/')) throw new Error('offline')
+      return fetcher(value, init)
+    })
+    const body = await (await handleScreening(request(), { fetcher: selective })).json()
+    expectUnscored(body)
+    expect(body.checks.find((item: { id: string }) => item.id === 'undermining').status).toBe('error')
+    expect(body.sourceObservations.find((item: { id: string }) => item.id === 'mapped-landslide').status).toBe('no_intersection')
+  })
+
+  it('does not turn intersecting no or unknown hazard flags into a positive mapped hazard', async () => {
+    const { fetcher } = sources({ underminingFlag: 'No', landslideFlag: 'Unknown' })
+    const body = await (await handleScreening(request(), { fetcher })).json()
+    expectUnscored(body)
+    expect(body.sourceObservations.find((item: { id: string }) => item.id === 'mapped-undermining').status).toBe('mapped_no_flag')
+    expect(body.sourceObservations.find((item: { id: string }) => item.id === 'mapped-landslide').status).toBe('unknown')
+    expect(body.checks.find((item: { id: string }) => item.id === 'undermining').status).toBe('unknown')
+    expect(body.checks.find((item: { id: string }) => item.id === 'undermining').reason).toMatch(/returned feature flag is No/)
+    expect(body.nextActions.some((action: string) => action.includes('mapped undermining'))).toBe(false)
+  })
+
+  it('describes an intersecting unknown undermining flag without claiming no feature', async () => {
+    const { fetcher } = sources({ underminingFlag: 'Maybe' })
+    const body = await (await handleScreening(request(input), { fetcher })).json()
+    expect(body.sourceObservations.find((item: { id: string }) => item.id === 'mapped-undermining').status).toBe('unknown')
+    expect(body.checks.find((item: { id: string }) => item.id === 'undermining')).toMatchObject({ status: 'unknown' })
+    expect(body.checks.find((item: { id: string }) => item.id === 'undermining').reason).toMatch(/intersects.*flag is unrecognized/)
+  })
+
+  it('preserves a known positive hazard alongside an unrecognized intersecting flag', async () => {
+    const { fetcher } = sources({ underminingFlags: ['Yes', 'Unknown'] })
+    const body = await (await handleScreening(request(), { fetcher })).json()
+    expectUnscored(body)
+    expect(body.sourceObservations.find((item: { id: string }) => item.id === 'mapped-undermining')).toMatchObject({ status: 'mapped_flag', count: 2 })
+    expect(body.sourceObservations.find((item: { id: string }) => item.id === 'mapped-undermining').summary).toContain('unrecognized')
+    expect(body.checks.find((item: { id: string }) => item.id === 'undermining').status).toBe('mapped_flag')
   })
 
   it('does not award flood points without a matched covering feature ID', async () => {

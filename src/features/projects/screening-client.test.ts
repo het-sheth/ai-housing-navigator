@@ -30,6 +30,29 @@ describe('screening request', () => {
     await expect(requestScreening(draft, wrongProposal)).rejects.toThrow('screening_invalid_response')
     const leakedPoints = vi.fn(async () => new Response(JSON.stringify({ ...base, checks: [{ id: 'flood', label: 'Flood', status: 'unknown', reason: 'Unknown', sourceUrl: null, sourceDate: null, retrievedAt: null, points: { lower: 0, upper: 12 } }] })))
     await expect(requestScreening(draft, leakedPoints)).rejects.toThrow('screening_invalid_response')
+    const malformedObservation = vi.fn(async () => new Response(JSON.stringify({ ...base, sourceObservations: [{ id: 'mapped-undermining', status: 'mapped_flag', count: -1 }] })))
+    await expect(requestScreening(draft, malformedObservation)).rejects.toThrow('screening_invalid_response')
+    const wrongEmptyCount = vi.fn(async () => new Response(JSON.stringify({ ...base, sourceObservations: [{ id: 'pli-permits', status: 'empty', coverage: 'exact_parcel_record_search', sourceUrl: 'https://example.org', sourceDate: null, retrievedAt: base.retrievedAt, count: 12, summary: 'Empty' }] })))
+    await expect(requestScreening(draft, wrongEmptyCount)).rejects.toThrow('screening_invalid_response')
+    const leakedObservationPoints = vi.fn(async () => new Response(JSON.stringify({ ...base, sourceObservations: [{ id: 'mapped-undermining', status: 'mapped_flag', coverage: 'mapped_intersection_only', sourceUrl: 'https://example.org', sourceDate: null, retrievedAt: base.retrievedAt, count: 1, summary: 'Flag', points: 8 }] })))
+    await expect(requestScreening(draft, leakedObservationPoints)).rejects.toThrow('screening_invalid_response')
+  })
+
+  it('accepts bounded supplemental observations without treating them as rubric checks', async () => {
+    const draft: Draft = { ...createDraft(), parcelId: '0046R00029000000', propertyConfirmed: true, propertyEvidence: 'live' }
+    const observation = { id: 'mapped-undermining', status: 'mapped_flag', coverage: 'mapped_intersection_only', sourceUrl: 'https://example.org/layer', sourceDate: null, retrievedAt: '2026-09-26T20:00:00Z', count: 1, summary: 'Mapped feature intersects the parcel.' }
+    const fetcher = vi.fn(async () => new Response(JSON.stringify({ status: 'pending', score: null, parcelId: draft.parcelId, proposal: { activities: [], proposedHomes: null, housingForm: 'unknown', groundDisturbance: 'unknown' }, municipality: 'Pittsburgh', checks: [], sourceObservations: [observation], nextActions: [], rubricVersion: 'test', retrievedAt: '2026-09-26T20:00:00Z', caveat: '' })))
+    const result = await requestScreening(draft, fetcher)
+    expect(result.sourceObservations).toEqual([observation])
+    expect(hasCompleteScreen(result)).toBe(false)
+  })
+
+  it('accepts no and unknown map flags as incomplete source observations', async () => {
+    const draft: Draft = { ...createDraft(), parcelId: '0046R00029000000', propertyConfirmed: true, propertyEvidence: 'live' }
+    const base = { id: 'mapped-undermining', coverage: 'mapped_intersection_only', sourceUrl: 'https://example.org/layer', sourceDate: null, retrievedAt: '2026-09-26T20:00:00Z', count: 1, summary: 'Review the mapped condition.' }
+    const fetcher = vi.fn(async () => new Response(JSON.stringify({ status: 'pending', score: null, parcelId: draft.parcelId, proposal: { activities: [], proposedHomes: null, housingForm: 'unknown', groundDisturbance: 'unknown' }, municipality: 'Pittsburgh', checks: [], sourceObservations: [{ ...base, status: 'mapped_no_flag' }, { ...base, id: 'mapped-landslide', status: 'unknown' }], nextActions: [], rubricVersion: 'test', retrievedAt: '2026-09-26T20:00:00Z', caveat: '' })))
+    const result = await requestScreening(draft, fetcher)
+    expect(result.sourceObservations?.map(item => item.status)).toEqual(['mapped_no_flag', 'unknown'])
   })
 
   it('withholds a score for missing checks or an interval with uncertainty', () => {

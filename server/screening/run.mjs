@@ -106,14 +106,25 @@ function check(id, label, status, reason, now, sourceUrl = null, sourceDate = nu
   return { id, label, status, maxPoints: weight, points: earned === null ? { lower: 0, upper: weight } : { lower: earned, upper: earned }, reason, sourceUrl, sourceDate, retrievedAt: sourceUrl ? now : null }
 }
 
-function pending(input, checks, municipality, actions, now) {
+function underminingReason(status) {
+  const reasons = {
+    mapped_flag: 'The parcel intersects or touches City mapped undermining. A mine map and site professional review are needed; this is not a subsidence finding.',
+    mapped_no_flag: 'The parcel intersects City mapped undermining, but the returned feature flag is No. This does not clear site risk; review mine maps and site conditions.',
+    unknown: 'The parcel intersects City mapped undermining, but the feature flag is unrecognized or incomplete. Review the source feature and site conditions.',
+    error: 'City mapped undermining could not be checked.',
+    no_intersection: 'No City undermining feature was returned. Historical mine maps may be incomplete; site conditions remain unassessed.',
+  }
+  return reasons[status] ?? 'Mapped undermining status needs source review; site conditions remain unassessed.'
+}
+
+function pending(input, checks, municipality, actions, now, sourceObservations = []) {
   const publicChecks = checks.map(item => {
     const evidence = { ...item }
     delete evidence.points
     delete evidence.maxPoints
     return evidence
   })
-  return json({ status: 'pending', score: null, rubricVersion, parcelId: input.parcelId, proposal: input.proposal, municipality, checks: publicChecks, nextActions: actions, retrievedAt: now, caveat: 'Development Ease Score withheld until all required rubric checks are assessed. No permission or financial feasibility determination.' })
+  return json({ status: 'pending', score: null, rubricVersion, parcelId: input.parcelId, proposal: input.proposal, municipality, checks: publicChecks, sourceObservations, nextActions: actions, retrievedAt: now, caveat: 'Development Ease Score withheld until all required rubric checks are assessed. No permission or financial feasibility determination.' })
 }
 
 function featureCode(value) { return typeof value === 'string' ? value.trim().toUpperCase() : '' }
@@ -158,6 +169,7 @@ export async function handleScreening(request, { fetcher = fetch, now = () => ne
     return pending(input, checks, 'other', actions, at)
   }
 
+  const sourceObservationsPromise = collectSourceObservations(input.parcelId, geometry, fetcher, at)
   let zone
   let unapprovedZone = false
   try {
@@ -206,17 +218,25 @@ export async function handleScreening(request, { fetcher = fetch, now = () => ne
     else if (zones.length === 1 && coveringZones.length === 1 && Number.isSafeInteger(zones[0].OBJECTID) && zones[0].OBJECTID > 0 && featureCode(zones[0].FLD_ZONE) === 'X' && featureCode(zones[0].ZONE_SUBTY) === 'AREA OF MINIMAL FLOOD HAZARD' && zones[0].OBJECTID === coveringZones[0].OBJECTID) checks.push(check('flood', 'FEMA mapped flood zone', 'screened_low_friction', 'One returned FEMA minimal-hazard zone contains the whole parcel. This is a map screen, not a flood determination.', at, floodLayer, null, 12))
     else checks.push(check('flood', 'FEMA mapped flood zone', 'unknown', 'Returned FEMA zone details require panel review before scoring.', at, floodLayer))
   }
-  checks.push(check('undermining', 'Mapped undermining', 'unknown', 'An authoritative parcel intersection has not yet run.', at))
+  const sourceObservations = await sourceObservationsPromise
+  const mapped = id => sourceObservations.find(item => item.id === id)
+  const undermining = mapped('mapped-undermining')
+  checks.push(check('undermining', 'Mapped undermining', undermining.status === 'mapped_flag' ? 'mapped_flag' : undermining.status === 'error' ? 'error' : 'unknown', underminingReason(undermining.status), at, undermining.sourceUrl))
   checks.push(check('process', 'Proposal review path', 'unknown', 'Current permit path for this work combination has not been reviewed.', at))
   checks.push(check('infrastructure', 'Infrastructure and access', 'unknown', 'Parcel-specific utility capacity and access have not been confirmed.', at))
   if (checks.some(item => item.id === 'slope' && item.status === 'mapped_flag')) actions.push('Review the mapped slope and proposed disturbance with a surveyor and the City.')
   if (checks.some(item => item.id === 'flood' && item.status === 'mapped_flag')) actions.push('Confirm the FEMA panel and applicable flood requirements with the local floodplain administrator.')
+  if (undermining.status === 'mapped_flag') actions.push('Review mapped undermining and site conditions with a qualified professional and the City.')
+  if (mapped('mapped-landslide').status === 'mapped_flag') actions.push('Review mapped landslide-prone area and proposed ground work with a qualified professional and the City.')
+  if (sourceObservations.some(item => !['mapped-undermining', 'mapped-landslide'].includes(item.id) && item.coverage === 'mapped_intersection_only' && item.status === 'mapped_flag')) actions.push('Confirm mapped City overlays and their current applicability to this proposal.')
+  if (mapped('pli-permits').status === 'available') actions.push('Review matching historical permit records with the City for relevance to the proposed work and lawful baseline.')
   actions.push('Review zoning overlays, dimensions, lawful baseline and applicable City process for this proposal.')
   actions.push('Confirm utility capacity and access with the relevant providers before relying on development feasibility.')
   actions.push('Establish project budget, rents or sales assumptions, and funding path; financial feasibility is unassessed.')
   const use = checks.find(item => item.id === 'zoning-use')
   const allRequiredAssessed = Object.keys(weights).every(id => checks.some(item => item.id === id && ['screened_low_friction', 'mapped_flag'].includes(item.status) && item.points.lower === item.points.upper))
-  if (use?.status !== 'screened_low_friction' || !allRequiredAssessed) return pending(input, checks, 'Pittsburgh', actions, at)
+  if (use?.status !== 'screened_low_friction' || !allRequiredAssessed) return pending(input, checks, 'Pittsburgh', actions, at, sourceObservations)
   const score = checks.reduce((sum, item) => ({ lower: sum.lower + item.points.lower, upper: sum.upper + item.points.upper }), { lower: 0, upper: 0 })
-  return json({ status: 'scored', score, rubricVersion, parcelId: input.parcelId, proposal: input.proposal, municipality: 'Pittsburgh', checks, nextActions: actions, retrievedAt: at, caveat: 'Preliminary mapped friction screen only. No permission or financial feasibility determination.' })
+  return json({ status: 'scored', score, rubricVersion, parcelId: input.parcelId, proposal: input.proposal, municipality: 'Pittsburgh', checks, sourceObservations, nextActions: actions, retrievedAt: at, caveat: 'Preliminary mapped friction screen only. No permission or financial feasibility determination.' })
 }
+import { collectSourceObservations } from './observations.mjs'
