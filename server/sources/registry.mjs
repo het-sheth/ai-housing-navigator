@@ -386,15 +386,15 @@ const sources = [
   {
     "catalogId": 28,
     "name": "LEHD Origin-Destination Employment Statistics (LODES)",
-    "geography": "United States",
-    "granularity": "Census block / flow",
+    "geography": "Pennsylvania",
+    "granularity": "County or 2020 Census tract workplace job aggregate",
     "catalogUrl": "https://lehd.ces.census.gov/data/",
     "storedInApplication": false,
-    "runtimeStatus": "catalog_reference",
-    "runtimeUrl": null,
-    "note": "The query mode and required inputs describe the bounded source-detail adapter; its response reports current availability and source-specific limits.",
-    "queryMode": "catalog_reference",
-    "queryRequirements": []
+    "runtimeStatus": "source_query",
+    "runtimeUrl": "https://lehd.ces.census.gov/data/lodes/LODES8/pa/wac/pa_wac_S000_JT00_2023.csv.gz",
+    "note": "The 2023 Pennsylvania WAC all-jobs file is summed by exact county or tract. This is workplace employment context, not origin-destination commuting or parcel evidence.",
+    "queryMode": "live_2023_pa_workplace_jobs",
+    "queryRequirements": ["countyFips or tract"]
   },
   {
     "catalogId": 29,

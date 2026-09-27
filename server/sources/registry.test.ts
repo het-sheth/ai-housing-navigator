@@ -17,6 +17,7 @@ describe('source coverage registry', () => {
     expect(body.sources.find((item: { catalogId: number }) => item.catalogId === 46).runtimeUrl).toMatch(/County_zhvi_.*\.csv$/)
     expect(body.sources.find((item: { catalogId: number }) => item.catalogId === 49).runtimeUrl).toMatch(/RDC_Inventory_Core_Metrics_County\.csv$/)
     expect(body.sources.find((item: { catalogId: number }) => item.catalogId === 22)).toMatchObject({ queryMode: 'live_point', queryRequirements: ['latitude', 'longitude'] })
+    expect(body.sources.find((item: { catalogId: number }) => item.catalogId === 28)).toMatchObject({ runtimeStatus: 'source_query', queryMode: 'live_2023_pa_workplace_jobs', queryRequirements: ['countyFips or tract'], runtimeUrl: 'https://lehd.ces.census.gov/data/lodes/LODES8/pa/wac/pa_wac_S000_JT00_2023.csv.gz' })
     expect(body.sources.find((item: { catalogId: number }) => item.catalogId === 52)).toMatchObject({ queryMode: 'live_2010_tract_context', queryRequirements: ['tract'] })
     expect(body.sources.find((item: { catalogId: number }) => item.catalogId === 54)).toMatchObject({ queryMode: 'live_school_location_context', runtimeStatus: 'source_query' })
     expect(body.sources.find((item: { catalogId: number }) => item.catalogId === 31)).toMatchObject({ queryMode: 'live_gtfs_feed_or_point', runtimeStatus: 'source_query' })
